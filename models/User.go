@@ -2,6 +2,8 @@ package models
 
 import (
 	"github.com/astaxie/beego/orm"
+	"github.com/chnzrb/myadmin/utils"
+	"sort"
 )
 
 func (a *User) TableName() string {
@@ -29,7 +31,7 @@ type User struct {
 	//Email              string                `orm:"size(256)"`
 	//Avatar             string                `orm:"size(256)"`
 	RoleIds            []int                 `orm:"-"`
-	RoleUserRel []*RoleUserRel `orm:"reverse(many)"` // 设置一对多的反向关系
+	RoleUserRel []*RoleUserRel `json:"-" orm:"reverse(many)"` // 设置一对多的反向关系
 	ResourceUrlForList []string              `orm:"-"`
 }
 
@@ -55,7 +57,19 @@ func UserPageList(params *UserQueryParam) ([]*User, int64) {
 		query = query.Filter("status", params.SearchStatus)
 	}
 
-	query.OrderBy(sortorder).Limit(params.Limit, params.Offset).RelatedSel().All(&data)
+	query.RelatedSel().OrderBy(sortorder).Limit(params.Limit, params.Offset).All(&data)
+	for _, v := range data {
+		_, error := orm.NewOrm().LoadRelated(v, "RoleUserRel")
+		utils.CheckError(error)
+		roleIds := make([] int, 0)
+		for _, e := range v.RoleUserRel{
+			roleIds = append(roleIds, e.Role.Id)
+		}
+		sort.Ints(roleIds)
+		v.RoleIds = roleIds
+		//_, error = orm.NewOrm().LoadRelated(v, "Role")
+		//utils.CheckError(error)
+	}
 	total, _ := query.Count()
 	return data, total
 }

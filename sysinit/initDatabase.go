@@ -36,13 +36,13 @@ func InitDatabase() {
 			dbPort+")/"+dbName+"?charset="+dbCharset, 30)
 	}
 	//如果是开发模式，则显示命令信息
-	//isDev := (beego.AppConfig.String("runmode") == "dev")
+	isDev := (beego.AppConfig.String("runmode") == "dev")
 	//自动建表
 	//orm.RunSyncdb("default", false, isDev)
 	initNode()
-	//if isDev {
-	//	orm.Debug = isDev
-	//}
+	if isDev {
+		orm.Debug = isDev
+	}
 }
 func initNode(){
 	dbhost := beego.AppConfig.String("center_db::db_host")

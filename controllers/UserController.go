@@ -55,12 +55,12 @@ func (c *UserController) DataGrid() {
 	for _, r := range data {
 		logs.Debug("rows:%v, %v", r.Id, r.RoleUserRel)
 	}
-	a := make([] int, 0)
-	b:= make([] *models.RoleUserRel, 0)
-	for _, r := range data {
-		r.RoleIds = a
-		r.RoleUserRel = b
-	}
+	//a := make([] int, 0)
+	//b:= make([] *models.RoleUserRel, 0)
+	//for _, r := range data {
+	//	r.RoleIds = a
+	//	r.RoleUserRel = b
+	//}
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
