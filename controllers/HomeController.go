@@ -9,6 +9,8 @@ import (
 	"github.com/astaxie/beego/logs"
 	"encoding/json"
 	//"fmt"
+	"github.com/astaxie/beego/orm"
+	"time"
 )
 
 type HomeController struct {
@@ -80,6 +82,14 @@ func (c *HomeController) DoLogin() {
 		logs.Info("CruSession:%v",   c.CruSession.SessionID())
 		logs.Info("登录成功:%v, %v, %v", user.Id, c.GetSession("user"), c.curUser.Id)
 		c.Ctx.SetCookie("myadminsessionid", c.CruSession.SessionID())
+
+		o := orm.NewOrm()
+		user.LastLoginTime = int(time.Now().Unix())
+		user.LastLoginIp = c.Ctx.Input.IP()
+
+		_, err := o.Update(user)
+		utils.CheckError(err)
+
 		c.Result(enums.Success, "登录成功",
 			struct {
 				Token string `json:"token"`

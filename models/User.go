@@ -20,8 +20,9 @@ type UserQueryParam struct {
 type User struct {
 	Id                 int
 	Name           		string `orm:"size(32)"`
-	Account           string `orm:"size(24)"`
+	Account           string `orm:"size(24)";"unique"`
 	Password            string `json:"-"`
+	ModifyPassword 		string `json:"Password" orm:"-"`
 	//IsSuper            bool
 	Status             int
 	LoginTimes         int

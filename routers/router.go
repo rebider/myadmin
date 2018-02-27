@@ -28,7 +28,7 @@ func init() {
 	//beego.Router("/role/index", &controllers.RoleController{}, "*:Index")
 	beego.Router("/role/roleList", &controllers.RoleController{}, "*:RoleList")
 	beego.Router("/role/edit/?:id", &controllers.RoleController{}, "*:Edit")
-	beego.Router("/role/delete", &controllers.RoleController{}, "Post:Delete")
+	beego.Router("/role/delete", &controllers.RoleController{}, "*:Delete")
 	beego.Router("/role/datalist", &controllers.RoleController{}, "Post:DataList")
 	beego.Router("/role/allocate", &controllers.RoleController{}, "Post:Allocate")
 	beego.Router("/role/updateseq", &controllers.RoleController{}, "Post:UpdateSeq")
@@ -52,7 +52,7 @@ func init() {
 	//beego.Router("/user/index", &controllers.UserController{}, "*:Index")
 	beego.Router("/user/userList", &controllers.UserController{}, "*:DataGrid")
 	beego.Router("/user/edit/?:id", &controllers.UserController{}, "*,Post:Edit")
-	beego.Router("/user/delete", &controllers.UserController{}, "Post:Delete")
+	beego.Router("/user/delete", &controllers.UserController{}, "*:Delete")
 
 
 	//后台用户中心

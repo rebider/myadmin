@@ -3,7 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
+	//"strconv"
 	"strings"
 
 	"github.com/chnzrb/myadmin/enums"
@@ -52,9 +52,9 @@ func (c *UserController) DataGrid() {
 	data, total := models.UserPageList(&params)
 	//定义返回的数据结构
 
-	for _, r := range data {
-		logs.Debug("rows:%v, %v", r.Id, r.RoleUserRel)
-	}
+	//for _, r := range data {
+	//	logs.Debug("rows:%v, %v", r.Id, r.RoleUserRel)
+	//}
 	//a := make([] int, 0)
 	//b:= make([] *models.RoleUserRel, 0)
 	//for _, r := range data {
@@ -72,7 +72,7 @@ func (c *UserController) DataGrid() {
 func (c *UserController) Edit() {
 	m := models.User{}
 	json.Unmarshal(c.Ctx.Input.RequestBody, &m)
-	fmt.Printf("解析数据:%v", m)
+	fmt.Printf("编辑用户:%v", m)
 	//c.Result(enums.Success, "编辑用户列表成功", 0)
 
 	o := orm.NewOrm()
@@ -87,7 +87,7 @@ func (c *UserController) Edit() {
 	}
 	if m.Id == 0 {
 		//对密码进行加密
-		m.Password = utils.String2md5(m.Password)
+		m.Password = utils.String2md5(m.ModifyPassword)
 		if _, err := o.Insert(&m); err != nil {
 			c.Result(enums.JRCodeFailed, "添加失败", m.Id)
 		}
@@ -95,7 +95,8 @@ func (c *UserController) Edit() {
 		if oM, err := models.UserOne(m.Id); err != nil {
 			c.Result(enums.JRCodeFailed, "未找到该用户，请刷新后重试", m.Id)
 		} else {
-			m.Password = strings.TrimSpace(m.Password)
+			m.Password = strings.TrimSpace(m.ModifyPassword)
+			logs.Info("修改密码:%v", m.Password)
 			if len(m.Password) == 0 {
 				//如果密码为空则不修改
 				m.Password = oM.Password
@@ -214,17 +215,13 @@ func (c *UserController) Save() {
 	}
 }
 func (c *UserController) Delete() {
-	strs := c.GetString("ids")
-	ids := make([]int, 0, len(strs))
-	for _, str := range strings.Split(strs, ",") {
-		if id, err := strconv.Atoi(str); err == nil {
-			ids = append(ids, id)
-		}
-	}
+	var m  []int
+	json.Unmarshal(c.Ctx.Input.RequestBody, &m)
+	logs.Info("删除用户:%v",  m)
 	query := orm.NewOrm().QueryTable(models.UserTBName())
-	if num, err := query.Filter("id__in", ids).Delete(); err == nil {
-		c.jsonResult(enums.JRCodeSucc, fmt.Sprintf("成功删除 %d 项", num), 0)
+	if num, err := query.Filter("id__in", m).Delete(); err == nil {
+		c.Result(enums.JRCodeSucc, fmt.Sprintf("成功删除 %d 项", num), m)
 	} else {
-		c.jsonResult(enums.JRCodeFailed, "删除失败", 0)
+		c.Result(enums.JRCodeFailed, "删除失败", m)
 	}
 }

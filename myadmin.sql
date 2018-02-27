@@ -145,8 +145,8 @@ INSERT INTO `myadmin_role_user_rel` VALUES ('69', '22', '1', '2018-01-16 06:43:5
 DROP TABLE IF EXISTS `myadmin_user`;
 CREATE TABLE `myadmin_user` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '帐号id',
-  `name` varchar(255) NOT NULL DEFAULT '' COMMENT '名称',
   `account` varchar(255) NOT NULL DEFAULT '' COMMENT '登录帐号',
+  `name` varchar(255) NOT NULL DEFAULT '' COMMENT '名称',
   `password` varchar(255) NOT NULL DEFAULT ''  COMMENT '登录密码',
 --   `is_super` tinyint(1) NOT NULL DEFAULT '0',
   `status` int(11) NOT NULL DEFAULT '0' COMMENT '状态',
@@ -157,7 +157,8 @@ CREATE TABLE `myadmin_user` (
 
 --   `email` varchar(256) NOT NULL DEFAULT '',
 --   `avatar` varchar(256) NOT NULL DEFAULT '',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE (`account`)
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
