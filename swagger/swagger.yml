@@ -1,0 +1,46 @@
+swagger: "2.0"
+info:
+  title: mobile API
+  description: mobile has every tool to get any job done, so codename for the new
+    mobile APIs.
+  version: 1.0.0
+  contact:
+    email: astaxie@gmail.com
+basePath: /v1
+paths:
+  /gameserver/staticblock/{key}:
+    get:
+      tags:
+      - gameserver
+      description: get all the staticblock by key
+      operationId: GameServerController.getStaticBlock
+      parameters:
+      - in: path
+        name: key
+        description: The email for login
+        required: true
+        type: string
+      responses:
+        "200":
+          schema:
+            $ref: '#/definitions/GameServer'
+        "400":
+          description: Invalid email supplied
+        "404":
+          description: User not found
+definitions:
+  GameServer:
+    title: GameServer
+    type: object
+    properties:
+      Desc:
+        type: string
+      Node:
+        type: string
+      PlatformId:
+        type: integer
+        format: int64
+      PlatformName:
+        type: string
+      Sid:
+        type: string

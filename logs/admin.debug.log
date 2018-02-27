@@ -1,0 +1,10 @@
+2018/01/20 12:14:24.894 [D] [router.go:926] 127.0.0.1 - - [20/Jan/2018 12:14:24] "GET /home/login?url=/server_node/list HTTP/1.1 200 0" 0.008000 http://127.0.0.1:8080/home/index Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36
+
+2018/01/20 12:14:27.201 [D] [router.go:926] 127.0.0.1 - - [20/Jan/2018 12:14:27] "GET /home/index HTTP/1.1 200 0" 0.020001 http://127.0.0.1:8080/home/login?url=/server_node/list Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36
+
+2018/01/20 12:14:28.780 [D] [ServerNodeController.go:39] ddddddddddddd
+2018/01/20 12:14:28.780 [D] [ServerNodeController.go:40] go:nihao
+2018/01/20 12:14:28.802 [D] [router.go:926] 127.0.0.1 - - [20/Jan/2018 12:14:28] "GET /server_node/list HTTP/1.1 200 0" 0.026002 http://127.0.0.1:8080/home/index Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36
+
+2018/01/20 12:14:28.954 [D] [router.go:926] 127.0.0.1 - - [20/Jan/2018 12:14:28] "POST /server_node/datagrid HTTP/1.1 200 0" 0.003000 http://127.0.0.1:8080/server_node/list Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36
+
