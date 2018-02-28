@@ -52,7 +52,7 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	case "Sid":
 		sortorder = "Sid"
 	}
-	if params.Order == "desc" {
+	if params.Order == "descending" {
 		sortorder = "-" + sortorder
 	}
 	if params.PlatformId != "" && params.PlatformId != "-1"{

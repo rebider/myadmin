@@ -12,7 +12,7 @@ func (a *User) TableName() string {
 
 type UserQueryParam struct {
 	BaseQueryParam
-	AccountLike string //模糊查询
+	Account string //模糊查询
 	NameLike string //模糊查询
 	Mobile       string //精确查询
 	SearchStatus string //为空不查询，有值精确查询
@@ -46,10 +46,10 @@ func UserPageList(params *UserQueryParam) ([]*User, int64) {
 	case "Id":
 		sortorder = "Id"
 	}
-	if params.Order == "desc" {
+	if params.Order == "descending" {
 		sortorder = "-" + sortorder
 	}
-	query = query.Filter("account__istartswith", params.AccountLike)
+	query = query.Filter("account__istartswith", params.Account)
 	query = query.Filter("name__istartswith", params.NameLike)
 	if len(params.Mobile) > 0 {
 		query = query.Filter("mobile", params.Mobile)

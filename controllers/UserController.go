@@ -46,7 +46,7 @@ func (c *UserController) DataGrid() {
 	//直接反序化获取json格式的requestbody里的值（要求配置文件里 copyrequestbody=true）
 	var params models.UserQueryParam
 	json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	fmt.Println(params)
+	logs.Info("查询用户列表:%v", params)
 	//fmt.Println(params)
 	//获取数据列表和总数
 	data, total := models.UserPageList(&params)
