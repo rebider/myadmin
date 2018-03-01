@@ -29,8 +29,6 @@ type User struct {
 	LastLoginTime      int
 	LastLoginIp        string
 	Mobile             string                `orm:"size(16)"`
-	//Email              string                `orm:"size(256)"`
-	//Avatar             string                `orm:"size(256)"`
 	RoleIds            []int                 `orm:"-"`
 	RoleUserRel []*RoleUserRel `json:"-" orm:"reverse(many)"` // 设置一对多的反向关系
 	ResourceUrlForList []string              `orm:"-"`
