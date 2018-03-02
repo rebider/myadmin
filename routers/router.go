@@ -1,7 +1,4 @@
-// @APIVersion 1.0.0
-// @Title mobile API
-// @Description mobile has every tool to get any job done, so codename for the new mobile APIs.
-// @Contact astaxie@gmail.com
+
 package routers
 
 import (
@@ -9,17 +6,28 @@ import (
 
 	"github.com/astaxie/beego"
 )
-
+// @APIVersion 1.0.0
+// @Title 后台管理系统
+// @Description documents of server API powered by swagger, you can also generate client code by swagger. refer : https://github.com/swagger-api/swagger-codegen
+// @Contact ming.zhao@hobot.cc
+// @TermsOfServiceUrl http://www.horizon.ai/
+// @License Apache 2.0
+// @LicenseUrl http://www.apache.org/licenses/LICENSE-2.0.html
 func init() {
 	//beego.SetStaticPath("/public", "public")
 	//beego.SetStaticPath("/", "static")
 	beego.SetStaticPath("/static", "views/static")
 	beego.SetStaticPath("/swagger", "swagger")
 
-	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/gameserver",
+	ns := beego.NewNamespace("/v2",
+		//beego.NSNamespace("/gameserver",
+		//	beego.NSInclude(
+		//		&controllers.GameServerController{},
+		//	),
+		//),
+		beego.NSNamespace("/resource",
 			beego.NSInclude(
-				&controllers.GameServerController{},
+				&controllers.ResourceController{},
 			),
 		),
 	)
@@ -35,10 +43,11 @@ func init() {
 
 	//资源路由
 	beego.Router("/resource/index", &controllers.ResourceController{}, "*:Index")
-	beego.Router("/resource/treegrid", &controllers.ResourceController{}, "POST:TreeGrid")
+	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
 	beego.Router("/resource/edit/?:id", &controllers.ResourceController{}, "Get,Post:Edit")
 	beego.Router("/resource/parent", &controllers.ResourceController{}, "Post:ParentTreeGrid")
 	beego.Router("/resource/delete", &controllers.ResourceController{}, "Post:Delete")
+	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
 	//快速修改顺序
 	beego.Router("/resource/updateseq", &controllers.ResourceController{}, "Post:UpdateSeq")
 

@@ -6,6 +6,8 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 
 	"github.com/astaxie/beego/orm"
+	//"github.com/astaxie/beego/logs"
+	//"sort"
 )
 
 func (a *Resource) TableName() string {
@@ -15,15 +17,17 @@ func (a *Resource) TableName() string {
 //Resource 权限控制资源表
 type Resource struct {
 	Id              int
-	Name            string    `orm:"size(64)"`
-	Parent          *Resource `orm:"null;rel(fk)"` // RelForeignKey relation
+	Title 			string		 `orm:"size(64)" json:"title"`//标题
+	Name            string    `orm:"size(64)" json:"name"`
+	Component            string    `orm:"size(64)" json:"componentName"`
+	Parent          *Resource `orm:"null;rel(fk)" json:"-"` // RelForeignKey relation
 	Rtype           int
 	Seq             int
-	Sons            []*Resource        `orm:"reverse(many)"` // fk 的反向关系
+	Children            []*Resource        `orm:"reverse(many)" json:"children"` // fk 的反向关系
 	SonNum          int                `orm:"-"`
-	Icon            string             `orm:"size(32)"`
+	Icon            string             `orm:"size(32)" json:"icon"`
 	LinkUrl         string             `orm:"-"`
-	UrlFor          string             `orm:"size(256)" Json:"-"`
+	UrlFor          string             `orm:"size(256)" json:"path"`
 	HtmlDisabled    int                `orm:"-"`             //在html里应用时是否可用
 	Level           int                `orm:"-"`             //第几级，从0开始
 	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)"` // 设置一对多的反向关系
@@ -42,10 +46,32 @@ func ResourceOne(id int) (*Resource, error) {
 //Resource 获取treegrid顺序的列表
 func ResourceTreeGrid() []*Resource {
 	o := orm.NewOrm()
-	query := o.QueryTable(ResourceTBName()).OrderBy("seq", "id")
+	query := o.QueryTable(ResourceTBName())
 	list := make([]*Resource, 0)
+
 	query.All(&list)
-	return resourceList2TreeGrid(list)
+	sonList := make([]*Resource, 0)
+	realList := make([]*Resource, 0)
+
+	for _, v := range list {
+		if v.Parent ==  nil {
+			//realList[v.Id] = v
+			realList = append(realList, v)
+		} else {
+			sonList = append(sonList, v)
+		}
+	}
+
+	for _, v := range sonList{
+		for _, p := range realList{
+			if p.Id == v.Parent.Id {
+				p.Children = append(p.Children, v)
+			}
+		}
+	}
+	//logs.Info("%v", list)
+	//return resourceList2TreeGrid(list)
+	return realList
 }
 
 //ResourceTreeGrid4Parent 获取可以成为某个节点父节点的列表

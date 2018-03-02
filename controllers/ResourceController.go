@@ -9,6 +9,9 @@ import (
 	"github.com/chnzrb/myadmin/models"
 
 	"github.com/astaxie/beego/orm"
+	"github.com/astaxie/beego/logs"
+	//"encoding/json"
+	//"github.com/chnzrb/myadmin/utils"
 )
 
 type ResourceController struct {
@@ -22,7 +25,7 @@ func (c *ResourceController) Prepare() {
 	//c.checkAuthor("TreeGrid", "UserMenuTree", "ParentTreeGrid", "Select")
 	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
 	//这里注释了权限控制，因此这里需要登录验证
-	c.checkLogin()
+	//c.checkLogin()
 }
 func (c *ResourceController) Index() {
 	//需要权限控制
@@ -38,12 +41,19 @@ func (c *ResourceController) Index() {
 	c.Data["canDelete"] = c.checkActionAuthor("ResourceController", "Delete")
 }
 
+// @Title 获取资源列表1
+// @Description 获取资源列表
+// @Success 200 {object} models.GameServer
+// @Failure 400 Invalid email supplied
+// @Failure 404 User not found
+// @router /resource/List [get]
 //TreeGrid 获取所有资源的列表
-func (c *ResourceController) TreeGrid() {
+func (c *ResourceController) List() {
 	tree := models.ResourceTreeGrid()
 	//转换UrlFor 2 LinkUrl
-	c.UrlFor2Link(tree)
-	c.jsonResult(enums.JRCodeSucc, "", tree)
+	//c.UrlFor2Link(tree)
+	logs.Debug("tree:%v", tree)
+	c.Result(enums.JRCodeSucc, "", tree)
 }
 
 //UserMenuTree 获取用户有权管理的菜单、区域列表
@@ -240,3 +250,24 @@ func (c *ResourceController) UpdateSeq() {
 		c.jsonResult(enums.JRCodeFailed, "修改失败", oM.Id)
 	}
 }
+
+// @Title 获取资源列表1
+// @Description 获取资源列表
+// @Success 200 {object} models.GameServer
+// @Failure 400 Invalid email supplied
+// @Failure 404 User not found
+// @router /resource/list [get]
+//func (c *ResourceController) List() {
+//
+//	logs.Debug("获取资源信息")
+//	m := map[string][]string{
+//		"level":   {"debug"},
+//		"message": {"File not found", "Stack overflow"},
+//	}
+//	//data, err := json.Marshal(m)
+//	//utils.CheckError(err)
+//	//logs.Debug("获取资源信息:%v", data)
+//	c.Result(enums.Success, "获取资源信息成功", m)
+//}
+
+

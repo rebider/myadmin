@@ -22,13 +22,7 @@ func (c *GameServerController) Prepare() {
 	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
 	c.checkLogin()
 }
-// @Title getStaticBlock
-// @Description get all the staticblock by key
-// @Param   key     path    string  true        "The email for login"
-// @Success 200 {object} models.GameServer
-// @Failure 400 Invalid email supplied
-// @Failure 404 User not found
-// @router /staticblock/:key [get]
+
 func (c *GameServerController) List() {
 	c.Data["pageTitle"] = "游戏服列表"
 	models.ShowPlatformList(c.Data)

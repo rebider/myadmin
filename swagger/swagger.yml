@@ -1,35 +1,34 @@
 swagger: "2.0"
 info:
-  title: mobile API
-  description: mobile has every tool to get any job done, so codename for the new
-    mobile APIs.
+  title: 后台管理系统
+  description: 'documents of server API powered by swagger, you can also generate
+    client code by swagger. refer : https://github.com/swagger-api/swagger-codegen'
   version: 1.0.0
+  termsOfService: http://www.horizon.ai/
   contact:
-    email: astaxie@gmail.com
-basePath: /v1
+    email: ming.zhao@hobot.cc
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+basePath: /v2
 paths:
-  /gameserver/staticblock/{key}:
+  /resource/resource/List:
     get:
       tags:
-      - gameserver
-      description: get all the staticblock by key
-      operationId: GameServerController.getStaticBlock
-      parameters:
-      - in: path
-        name: key
-        description: The email for login
-        required: true
-        type: string
+      - resource
+      description: 获取资源列表
+      operationId: ResourceController.获取资源列表1
       responses:
         "200":
+          description: ""
           schema:
-            $ref: '#/definitions/GameServer'
+            $ref: '#/definitions/models.GameServer'
         "400":
           description: Invalid email supplied
         "404":
           description: User not found
 definitions:
-  GameServer:
+  models.GameServer:
     title: GameServer
     type: object
     properties:
