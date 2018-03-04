@@ -6,7 +6,7 @@ import (
 	"strings"
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/models"
-
+	"github.com/chnzrb/myadmin/utils"
 	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego/logs"
 	"encoding/json"
@@ -25,19 +25,19 @@ func (c *ResourceController) Prepare() {
 	//这里注释了权限控制，因此这里需要登录验证
 	c.checkLogin()
 }
-func (c *ResourceController) Index() {
-	//需要权限控制
-	c.checkAuthor()
-	//将页面左边菜单的某项激活
-	//c.Data["activeSidebarUrl"] = c.URLFor(c.controllerName + "." + c.actionName)
-	c.setTpl()
-	c.LayoutSections = make(map[string]string)
-	c.LayoutSections["headcssjs"] = "resource/index_headcssjs.html"
-	c.LayoutSections["footerjs"] = "resource/index_footerjs.html"
-	//页面里按钮权限控制
-	c.Data["canEdit"] = c.checkActionAuthor("ResourceController", "Edit")
-	c.Data["canDelete"] = c.checkActionAuthor("ResourceController", "Delete")
-}
+//func (c *ResourceController) Index() {
+//	//需要权限控制
+//	c.checkAuthor()
+//	//将页面左边菜单的某项激活
+//	//c.Data["activeSidebarUrl"] = c.URLFor(c.controllerName + "." + c.actionName)
+//	c.setTpl()
+//	c.LayoutSections = make(map[string]string)
+//	c.LayoutSections["headcssjs"] = "resource/index_headcssjs.html"
+//	c.LayoutSections["footerjs"] = "resource/index_footerjs.html"
+//	//页面里按钮权限控制
+//	c.Data["canEdit"] = c.checkActionAuthor("ResourceController", "Edit")
+//	c.Data["canDelete"] = c.checkActionAuthor("ResourceController", "Delete")
+//}
 
 // @Title 获取资源列表1
 // @Description 获取资源列表
@@ -121,94 +121,130 @@ func (c *ResourceController) UrlFor2Link(src []*models.Resource) {
 
 //Edit 资源编辑页面
 func (c *ResourceController) Edit() {
-	//需要权限控制
-	c.checkAuthor()
-	//如果是POST请求，则由Save处理
-	if c.Ctx.Request.Method == "POST" {
-		c.Save()
-	}
-	Id, _ := c.GetInt(":id", 0)
-	m := &models.Resource{}
-	var err error
-	if Id == 0 {
-		m.Seq = 100
-	} else {
-		m, err = models.ResourceOne(Id)
-		if err != nil {
-			c.pageError("数据无效，请刷新后重试")
-		}
-	}
-	if m.Parent != nil {
-		c.Data["parent"] = m.Parent.Id
-	} else {
-		c.Data["parent"] = 0
-	}
-	//获取可以成为当前节点的父节点的列表
-	c.Data["parents"] = models.ResourceTreeGrid4Parent(Id)
-	//转换地址
-	m.LinkUrl = c.UrlFor2LinkOne(m.UrlFor)
-	c.Data["m"] = m
-	if m.Parent != nil {
-		c.Data["parent"] = m.Parent.Id
-	} else {
-		c.Data["parent"] = 0
-	}
-
-	c.setTpl("resource/edit.html", "shared/layout_pullbox.html")
-	c.LayoutSections = make(map[string]string)
-	c.LayoutSections["footerjs"] = "resource/edit_footerjs.html"
-}
-
-//Save 资源添加编辑 保存
-func (c *ResourceController) Save() {
-	var err error
+	m := models.Resource{}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
+	utils.CheckError(err, "编辑资源")
+	logs.Info("编辑资源:%+v", m)
+	logs.Info("编辑资源:%+v", m.Parent)
+	//var err error
 	o := orm.NewOrm()
 	parent := &models.Resource{}
-	m := models.Resource{}
-	parentId, _ := c.GetInt("Parent", 0)
+	//m := models.Resource{}
+	parentId := m.Parent.Id
+	//parentId, _ := c.GetInt("Parent", 0)
 	//获取form里的值
-	if err = c.ParseForm(&m); err != nil {
-		c.jsonResult(enums.JRCodeFailed, "获取数据失败", m.Id)
-	}
+	//if err = c.ParseForm(&m); err != nil {
+	//	c.Result(enums.JRCodeFailed, "获取数据失败", m.Id)
+	//}
 	//获取父节点
 	if parentId > 0 {
 		parent, err = models.ResourceOne(parentId)
 		if err == nil && parent != nil {
 			m.Parent = parent
 		} else {
-			c.jsonResult(enums.JRCodeFailed, "父节点无效", "")
+			c.Result(enums.JRCodeFailed, "父节点无效", "")
 		}
 	}
 	if m.Id == 0 {
 		if _, err = o.Insert(&m); err == nil {
-			c.jsonResult(enums.JRCodeSucc, "添加成功", m.Id)
+			c.Result(enums.JRCodeSucc, "添加成功", m.Id)
 		} else {
-			c.jsonResult(enums.JRCodeFailed, "添加失败", m.Id)
+			c.Result(enums.JRCodeFailed, "添加失败", m.Id)
 		}
 
 	} else {
 		if _, err = o.Update(&m); err == nil {
-			c.jsonResult(enums.JRCodeSucc, "编辑成功", m.Id)
+			c.Result(enums.JRCodeSucc, "编辑成功", m.Id)
 		} else {
-			c.jsonResult(enums.JRCodeFailed, "编辑失败", m.Id)
+			c.Result(enums.JRCodeFailed, "编辑失败", m.Id)
 		}
 
 	}
+	////需要权限控制
+	//c.checkAuthor()
+	////如果是POST请求，则由Save处理
+	//if c.Ctx.Request.Method == "POST" {
+	//	c.Save()
+	//}
+	//Id, _ := c.GetInt(":id", 0)
+	//m := &models.Resource{}
+	//var err error
+	//if Id == 0 {
+	//	m.Seq = 100
+	//} else {
+	//	m, err = models.ResourceOne(Id)
+	//	if err != nil {
+	//		c.pageError("数据无效，请刷新后重试")
+	//	}
+	//}
+	//if m.Parent != nil {
+	//	c.Data["parent"] = m.Parent.Id
+	//} else {
+	//	c.Data["parent"] = 0
+	//}
+	////获取可以成为当前节点的父节点的列表
+	//c.Data["parents"] = models.ResourceTreeGrid4Parent(Id)
+	////转换地址
+	//m.LinkUrl = c.UrlFor2LinkOne(m.UrlFor)
+	//c.Data["m"] = m
+	//if m.Parent != nil {
+	//	c.Data["parent"] = m.Parent.Id
+	//} else {
+	//	c.Data["parent"] = 0
+	//}
+	//
+	//c.setTpl("resource/edit.html", "shared/layout_pullbox.html")
+	//c.LayoutSections = make(map[string]string)
+	//c.LayoutSections["footerjs"] = "resource/edit_footerjs.html"
 }
+
+//Save 资源添加编辑 保存
+//func (c *ResourceController) Save() {
+//	var err error
+//	o := orm.NewOrm()
+//	parent := &models.Resource{}
+//	m := models.Resource{}
+//	parentId, _ := c.GetInt("Parent", 0)
+//	//获取form里的值
+//	if err = c.ParseForm(&m); err != nil {
+//		c.jsonResult(enums.JRCodeFailed, "获取数据失败", m.Id)
+//	}
+//	//获取父节点
+//	if parentId > 0 {
+//		parent, err = models.ResourceOne(parentId)
+//		if err == nil && parent != nil {
+//			m.Parent = parent
+//		} else {
+//			c.jsonResult(enums.JRCodeFailed, "父节点无效", "")
+//		}
+//	}
+//	if m.Id == 0 {
+//		if _, err = o.Insert(&m); err == nil {
+//			c.jsonResult(enums.JRCodeSucc, "添加成功", m.Id)
+//		} else {
+//			c.jsonResult(enums.JRCodeFailed, "添加失败", m.Id)
+//		}
+//
+//	} else {
+//		if _, err = o.Update(&m); err == nil {
+//			c.jsonResult(enums.JRCodeSucc, "编辑成功", m.Id)
+//		} else {
+//			c.jsonResult(enums.JRCodeFailed, "编辑失败", m.Id)
+//		}
+//
+//	}
+//}
 
 // Delete 删除
 func (c *ResourceController) Delete() {
-	//需要权限控制
-	c.checkAuthor()
-	Id, _ := c.GetInt("Id", 0)
-	if Id == 0 {
-		c.jsonResult(enums.JRCodeFailed, "选择的数据无效", 0)
-	}
+	var m  []int
+	json.Unmarshal(c.Ctx.Input.RequestBody, &m)
+	logs.Info("删除资源:%+v",  m)
 	query := orm.NewOrm().QueryTable(models.ResourceTBName())
-	if _, err := query.Filter("id", Id).Delete(); err == nil {
-		c.jsonResult(enums.JRCodeSucc, fmt.Sprintf("删除成功"), 0)
+	if _, err := query.Filter("id", m[0]).Delete(); err == nil {
+		c.Result(enums.JRCodeSucc, fmt.Sprintf("删除成功"), 0)
 	} else {
-		c.jsonResult(enums.JRCodeFailed, "删除失败", 0)
+		c.Result(enums.JRCodeFailed, "删除失败", 0)
 	}
 }
 
@@ -251,21 +287,21 @@ func (c *ResourceController) CheckUrlFor() {
 		c.jsonResult(enums.JRCodeFailed, "解析失败", link)
 	}
 }
-func (c *ResourceController) UpdateSeq() {
-
-	Id, _ := c.GetInt("pk", 0)
-	oM, err := models.ResourceOne(Id)
-	if err != nil || oM == nil {
-		c.jsonResult(enums.JRCodeFailed, "选择的数据无效", 0)
-	}
-	value, _ := c.GetInt("value", 0)
-	oM.Seq = value
-	if _, err := orm.NewOrm().Update(oM); err == nil {
-		c.jsonResult(enums.JRCodeSucc, "修改成功", oM.Id)
-	} else {
-		c.jsonResult(enums.JRCodeFailed, "修改失败", oM.Id)
-	}
-}
+//func (c *ResourceController) UpdateSeq() {
+//
+//	Id, _ := c.GetInt("pk", 0)
+//	oM, err := models.ResourceOne(Id)
+//	if err != nil || oM == nil {
+//		c.jsonResult(enums.JRCodeFailed, "选择的数据无效", 0)
+//	}
+//	value, _ := c.GetInt("value", 0)
+//	oM.Seq = value
+//	if _, err := orm.NewOrm().Update(oM); err == nil {
+//		c.jsonResult(enums.JRCodeSucc, "修改成功", oM.Id)
+//	} else {
+//		c.jsonResult(enums.JRCodeFailed, "修改失败", oM.Id)
+//	}
+//}
 
 // @Title 获取资源列表1
 // @Description 获取资源列表

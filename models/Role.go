@@ -21,7 +21,6 @@ type RoleQueryParam struct {
 type Role struct {
 	Id                 int    `form:"id" json:"id"`
 	Name               string `form:"name" json:"name"`
-	Seq                int
 	ResourceIds         [] int `orm:"-" json:"resourceIds"`
 	RoleResourceRel    []*RoleResourceRel    `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
 	RoleUserRel []*RoleUserRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系

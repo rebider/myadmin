@@ -9,6 +9,7 @@ import (
 	//"github.com/astaxie/beego/logs"
 	//"sort"
 	//"sort"
+	//"github.com/astaxie/beego/logs"
 )
 
 func (a *Resource) TableName() string {
@@ -22,18 +23,18 @@ type Resource struct {
 	Id              int				`json:"id"`
 	Title 			string		 `orm:"size(64)" json:"title"`//标题
 	Name            string    `orm:"size(64)" json:"name"`
-	Component            string    `orm:"size(64)" json:"component"`
-	Parent          *Resource `orm:"null;rel(fk)"` // RelForeignKey relation
-	Rtype           int
-	Seq             int
+	//Component            string    `orm:"size(64)" json:"component"`
+	Parent          *Resource `orm:"null;rel(fk) " json:"parent"` // RelForeignKey relation
+	Type           int			`json:"type"`
+	Seq             int			`json:"seq"`
 	Children            []*Resource        `orm:"reverse(many)" json:"children"` // fk 的反向关系
-	SonNum          int                `orm:"-"`
+	SonNum          int                `orm:"-" json:"-"`
 	Icon            string             `orm:"size(32)" json:"icon"`
-	LinkUrl         string             `orm:"-"`
+	LinkUrl         string             `orm:"-" json:"-"`
 	UrlFor          string             `orm:"size(256)" json:"path"`
-	HtmlDisabled    int                `orm:"-"`             //在html里应用时是否可用
-	Level           int                `orm:"-"`             //第几级，从0开始
-	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)"` // 设置一对多的反向关系
+	HtmlDisabled    int                `orm:"-" json:"-"`             //在html里应用时是否可用
+	Level           int                `orm:"-" json:"-"`             //第几级，从0开始
+	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
 }
 
 func ResourceOne(id int) (*Resource, error) {
@@ -57,13 +58,16 @@ func ResourceTreeGrid() []*Resource {
 	realList := make([]*Resource, 0)
 
 	for _, v := range list {
-		if v.Parent ==  nil {
+		//logs.Info("ResourceTreeGrid:%+v", v.Parent)
+		if v.Parent ==  nil || v.Parent.Id == 0{
 			realList = append(realList, v)
 		} else {
 			sonList = append(sonList, v)
 		}
 	}
 
+	//logs.Info("realList:%+v", realList)
+	//logs.Info("sonList:%+v", sonList)
 	for _, v := range sonList{
 		for _, p := range realList{
 			if p.Id == v.Parent.Id {

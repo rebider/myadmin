@@ -42,7 +42,7 @@ func init() {
 	beego.Router("/resource/resourceTree", &controllers.ResourceController{}, "*:ResourceTree")
 	//beego.Router("/resource/resourceList", &controllers.ResourceController{}, "*:ResourceList")
 	//快速修改顺序
-	beego.Router("/resource/updateseq", &controllers.ResourceController{}, "Post:UpdateSeq")
+	//beego.Router("/resource/updateseq", &controllers.ResourceController{}, "Post:UpdateSeq")
 
 	//通用选择面板
 	beego.Router("/resource/select", &controllers.ResourceController{}, "Get:Select")
