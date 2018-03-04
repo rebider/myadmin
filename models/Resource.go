@@ -8,19 +8,22 @@ import (
 	"github.com/astaxie/beego/orm"
 	//"github.com/astaxie/beego/logs"
 	//"sort"
+	//"sort"
 )
 
 func (a *Resource) TableName() string {
 	return ResourceTBName()
 }
-
+type ResourceQueryParam struct {
+	BaseQueryParam
+}
 //Resource 权限控制资源表
 type Resource struct {
-	Id              int
+	Id              int				`json:"id"`
 	Title 			string		 `orm:"size(64)" json:"title"`//标题
 	Name            string    `orm:"size(64)" json:"name"`
-	Component            string    `orm:"size(64)" json:"componentName"`
-	Parent          *Resource `orm:"null;rel(fk)" json:"-"` // RelForeignKey relation
+	Component            string    `orm:"size(64)" json:"component"`
+	Parent          *Resource `orm:"null;rel(fk)"` // RelForeignKey relation
 	Rtype           int
 	Seq             int
 	Children            []*Resource        `orm:"reverse(many)" json:"children"` // fk 的反向关系
@@ -55,7 +58,6 @@ func ResourceTreeGrid() []*Resource {
 
 	for _, v := range list {
 		if v.Parent ==  nil {
-			//realList[v.Id] = v
 			realList = append(realList, v)
 		} else {
 			sonList = append(sonList, v)
@@ -73,6 +75,16 @@ func ResourceTreeGrid() []*Resource {
 	//return resourceList2TreeGrid(list)
 	return realList
 }
+
+//获取分页数据
+func ResourcePageList(params *ResourceQueryParam) ([]*Resource, int64) {
+	query := orm.NewOrm().QueryTable(ResourceTBName())
+	data := make([]*Resource, 0)
+	query.RelatedSel().Limit(params.Limit, params.Offset).All(&data)
+	total, _ := query.Count()
+	return data, total
+}
+
 
 //ResourceTreeGrid4Parent 获取可以成为某个节点父节点的列表
 func ResourceTreeGrid4Parent(id int) []*Resource {

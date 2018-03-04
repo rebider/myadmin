@@ -14,17 +14,10 @@ import (
 // @License Apache 2.0
 // @LicenseUrl http://www.apache.org/licenses/LICENSE-2.0.html
 func init() {
-	//beego.SetStaticPath("/public", "public")
-	//beego.SetStaticPath("/", "static")
 	beego.SetStaticPath("/static", "views/static")
 	beego.SetStaticPath("/swagger", "swagger")
 
 	ns := beego.NewNamespace("/v2",
-		//beego.NSNamespace("/gameserver",
-		//	beego.NSInclude(
-		//		&controllers.GameServerController{},
-		//	),
-		//),
 		beego.NSNamespace("/resource",
 			beego.NSInclude(
 				&controllers.ResourceController{},
@@ -33,21 +26,21 @@ func init() {
 	)
 	beego.AddNamespace(ns)
 	//角色路由
-	//beego.Router("/role/index", &controllers.RoleController{}, "*:Index")
-	beego.Router("/role/roleList", &controllers.RoleController{}, "*:RoleList")
+	beego.Router("/role/list", &controllers.RoleController{}, "*:List")
 	beego.Router("/role/edit/?:id", &controllers.RoleController{}, "*:Edit")
 	beego.Router("/role/delete", &controllers.RoleController{}, "*:Delete")
-	beego.Router("/role/datalist", &controllers.RoleController{}, "Post:DataList")
-	beego.Router("/role/allocate", &controllers.RoleController{}, "Post:Allocate")
-	beego.Router("/role/updateseq", &controllers.RoleController{}, "Post:UpdateSeq")
+	//beego.Router("/role/datalist", &controllers.RoleController{}, "Post:DataList")
+	beego.Router("/role/allocate", &controllers.RoleController{}, "*:Allocate")
+	//beego.Router("/role/updateseq", &controllers.RoleController{}, "Post:UpdateSeq")
 
 	//资源路由
-	beego.Router("/resource/index", &controllers.ResourceController{}, "*:Index")
+	//beego.Router("/resource/index", &controllers.ResourceController{}, "*:Index")
 	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
-	beego.Router("/resource/edit/?:id", &controllers.ResourceController{}, "Get,Post:Edit")
+	beego.Router("/resource/edit/?:id", &controllers.ResourceController{}, "*:Edit")
 	beego.Router("/resource/parent", &controllers.ResourceController{}, "Post:ParentTreeGrid")
-	beego.Router("/resource/delete", &controllers.ResourceController{}, "Post:Delete")
-	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
+	beego.Router("/resource/delete", &controllers.ResourceController{}, "*:Delete")
+	beego.Router("/resource/resourceTree", &controllers.ResourceController{}, "*:ResourceTree")
+	//beego.Router("/resource/resourceList", &controllers.ResourceController{}, "*:ResourceList")
 	//快速修改顺序
 	beego.Router("/resource/updateseq", &controllers.ResourceController{}, "Post:UpdateSeq")
 
@@ -59,8 +52,8 @@ func init() {
 
 	//后台用户路由
 	//beego.Router("/user/index", &controllers.UserController{}, "*:Index")
-	beego.Router("/user/userList", &controllers.UserController{}, "*:DataGrid")
-	beego.Router("/user/edit/?:id", &controllers.UserController{}, "*,Post:Edit")
+	beego.Router("/user/list", &controllers.UserController{}, "*:List")
+	beego.Router("/user/edit/?:id", &controllers.UserController{}, "*:Edit")
 	beego.Router("/user/delete", &controllers.UserController{}, "*:Delete")
 
 
@@ -68,25 +61,9 @@ func init() {
 	beego.Router("/user/info", &controllers.UserCenterController{}, "*:Info")
 	beego.Router("/user/login", &controllers.HomeController{}, "*:DoLogin")
 	beego.Router("/user/logout", &controllers.HomeController{}, "*:Logout")
-
-	//beego.Router("/usercenter/profile", &controllers.UserCenterController{}, "Get:Profile")
-	//beego.Router("/usercenter/basicinfosave", &controllers.UserCenterController{}, "Post:BasicInfoSave")
-	//beego.Router("/usercenter/uploadimage", &controllers.UserCenterController{}, "Post:UploadImage")
-	beego.Router("/user/changePasswd", &controllers.UserCenterController{}, "Post:ChangePasswd")
-
-
-
-
-	//beego.Router("/home/index", &controllers.HomeController{}, "*:Index")
-	//beego.Router("/home/login", &controllers.HomeController{}, "*:Login")
+	beego.Router("/user/changePassword", &controllers.UserController{}, "*:ChangePassword")
 	beego.Router("/home/dologin", &controllers.HomeController{}, "*:DoLogin")
 	beego.Router("/home/logout", &controllers.HomeController{}, "*:Logout")
-
-	//beego.Router("/home/404", &controllers.HomeController{}, "*:Page404")
-	//beego.Router("/home/error/?:error", &controllers.HomeController{}, "*:Error")
-
-	beego.Router("/home/ChangePlatformId", &controllers.HomeController{}, "POST:ChangePlatformId")
-	beego.Router("/home/ChangeServerId", &controllers.HomeController{}, "POST:ChangeServerId")
 
 	//工具
 	beego.Router("/tool/build", &controllers.ToolController{}, "*:Build")

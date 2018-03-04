@@ -2,6 +2,10 @@ package models
 
 import (
 	"github.com/astaxie/beego/orm"
+	//"sort"
+	//"sort"
+	"github.com/chnzrb/myadmin/utils"
+	"sort"
 )
 
 func (a *Role) TableName() string {
@@ -15,9 +19,10 @@ type RoleQueryParam struct {
 
 //用户角色
 type Role struct {
-	Id                 int    `form:"Id"`
-	Name               string `form:"Name"`
+	Id                 int    `form:"id" json:"id"`
+	Name               string `form:"name" json:"name"`
 	Seq                int
+	ResourceIds         [] int `orm:"-" json:"resourceIds"`
 	RoleResourceRel    []*RoleResourceRel    `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
 	RoleUserRel []*RoleUserRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
 }
@@ -39,7 +44,17 @@ func RolePageList(params *RoleQueryParam) ([]*Role, int64) {
 	}
 	query = query.Filter("name__istartswith", params.NameLike)
 	total, _ := query.Count()
-	query.OrderBy(sortorder).Limit(params.Limit, params.Offset).All(&data)
+	query.RelatedSel().OrderBy(sortorder).Limit(params.Limit, params.Offset).All(&data)
+	for _, v := range data {
+		_, error := orm.NewOrm().LoadRelated(v, "RoleResourceRel")
+		utils.CheckError(error)
+		resourceIds := make([] int, 0)
+		for _, e := range v.RoleResourceRel {
+			resourceIds = append(resourceIds, e.Resource.Id)
+		}
+		sort.Ints(resourceIds)
+		v.ResourceIds = resourceIds
+	}
 	return data, total
 }
 

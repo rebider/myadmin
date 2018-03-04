@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/models"
 
 	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego/logs"
-	//"encoding/json"
-	//"github.com/chnzrb/myadmin/utils"
+	"encoding/json"
 )
 
 type ResourceController struct {
@@ -25,7 +23,7 @@ func (c *ResourceController) Prepare() {
 	//c.checkAuthor("TreeGrid", "UserMenuTree", "ParentTreeGrid", "Select")
 	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
 	//这里注释了权限控制，因此这里需要登录验证
-	//c.checkLogin()
+	c.checkLogin()
 }
 func (c *ResourceController) Index() {
 	//需要权限控制
@@ -48,12 +46,30 @@ func (c *ResourceController) Index() {
 // @Failure 404 User not found
 // @router /resource/List [get]
 //TreeGrid 获取所有资源的列表
+//func (c *ResourceController) List() {
+//	tree := models.ResourceTreeGrid()
+//	//转换UrlFor 2 LinkUrl
+//	//c.UrlFor2Link(tree)
+//	logs.Debug("tree:%v", tree)
+//	c.Result(enums.JRCodeSucc, "", tree)
+//}
+
 func (c *ResourceController) List() {
-	tree := models.ResourceTreeGrid()
-	//转换UrlFor 2 LinkUrl
-	//c.UrlFor2Link(tree)
-	logs.Debug("tree:%v", tree)
-	c.Result(enums.JRCodeSucc, "", tree)
+	var params models.ResourceQueryParam
+	json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	logs.Info("查询资源列表:%v", params)
+	//fmt.Println(params)
+	//获取数据列表和总数
+	data, total := models.ResourcePageList(&params)
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	//c.Data["json"] = result
+	c.Result(enums.Success, "获取资源列表成功", result)
+}
+
+func (c *ResourceController) ResourceTree() {
+	c.Result(enums.Success, "获取资源树成功", models.ResourceTreeGrid())
 }
 
 //UserMenuTree 获取用户有权管理的菜单、区域列表

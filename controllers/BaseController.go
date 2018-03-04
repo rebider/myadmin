@@ -40,6 +40,14 @@ func (c *BaseController) Prepare() {
 	//	c.ShowSidebar(userId)
 	//}
 }
+
+func (c *BaseController) CheckError(err error, msg... string) {
+	if err != nil {
+		errMsg := fmt.Sprintf("%s %v", msg, err)
+		logs.GetBeeLogger().Error(errMsg)
+		c.Result(enums.JRCodeFailed, "[ERROR]" + errMsg, "")
+	}
+}
 //func (c *BaseController) ShowSidebar(userId int) {
 //	tree := models.ResourceTreeGridByUserId(userId, 1)
 //	for _, item := range tree {
@@ -78,20 +86,7 @@ func (c *BaseController) Prepare() {
 // 一定要在BaseController.Prepare()后执行
 func (c *BaseController) checkLogin() {
 	if c.curUser.Id == 0 {
-		logs.Debug("未登录")
 		c.Result(enums.NoLogin, "未登录", "")
-		////登录页面地址
-		//urlstr := c.URLFor("HomeController.Login") + "?url="
-		////登录成功后返回的址为当前
-		//returnURL := c.Ctx.Request.URL.Path
-		////如果ajax请求则返回相应的错码和跳转的地址
-		//if c.Ctx.Input.IsAjax() {
-		//	//由于是ajax请求，因此地址是header里的Referer
-		//	returnURL := c.Ctx.Input.Refer()
-		//	c.jsonResult(enums.JRCode302, "请登录", urlstr+returnURL)
-		//}
-		//c.Redirect(urlstr+returnURL, 302)
-		//c.StopRun()
 	}
 }
 
@@ -159,8 +154,9 @@ func (c *BaseController) checkAuthor(ignores ...string) {
 //从session里取用户信息
 func (c *BaseController) adapterUserInfo() {
 	a := c.GetSession("user")
-	logs.Debug("adapterUserInfo:%v", a)
+
 	if a != nil {
+		logs.Debug("adapterUserInfo:%v", a)
 		c.curUser = a.(models.User)
 		c.Data["user"] = a
 	}
@@ -178,7 +174,7 @@ func (c *BaseController) setUser2Session(userId int) error {
 		m.ResourceUrlForList = append(m.ResourceUrlForList, strings.TrimSpace(item.UrlFor))
 	}
 	c.SetSession("user", *m)
-	logs.Info("CruSession0000000:%v",   c.CruSession)
+	logs.Info("setUser2Session:%+v",   *m)
 	return nil
 }
 

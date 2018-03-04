@@ -17,40 +17,6 @@ type HomeController struct {
 	BaseController
 }
 
-//func (c *HomeController) Index() {
-//	//判断是否登录
-//	c.checkLogin()
-//	c.setTpl()
-//}
-//func (c *HomeController) Page404() {
-//	c.setTpl()
-//}
-//func (c *HomeController) Error() {
-//	c.Data["error"] = c.GetString(":error")
-//	c.setTpl("home/error.html", "shared/layout_pullbox.html")
-//}
-//func (c *HomeController) Login() {
-//
-//	c.LayoutSections = make(map[string]string)
-//	c.LayoutSections["headcssjs"] = "home/login_headcssjs.html"
-//	c.LayoutSections["footerjs"] = "home/login_footerjs.html"
-//	c.setTpl("home/login.html", "shared/layout_base.html")
-//}
-func (c *HomeController) ChangePlatformId() {
-	platformId := c.GetString(enums.ChosePlatformId)
-	logs.Debug("chose_platform_id:%v", platformId)
-	c.Ctx.SetCookie(enums.ChosePlatformId, platformId)
-	c.Ctx.SetCookie(enums.ChoseServerId, "0")
-	c.ServeJSON()
-	//c.StopRun()
-}
-func (c *HomeController) ChangeServerId() {
-	serverId := c.GetString(enums.ChoseServerId)
-	c.Ctx.SetCookie(enums.ChoseServerId, serverId)
-	c.ServeJSON()
-	//c.StopRun()
-}
-
 func (c *HomeController) DoLogin() {
 	var params struct {
 		Account string
