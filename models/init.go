@@ -15,6 +15,7 @@ func init() {
 		new(RoleUserRel),
 		new(GameServer),
 		new(ServerNode),
+		new(Menu),
 		)
 }
 
@@ -32,6 +33,11 @@ func UserTBName() string {
 //获取 Resource 对应的表名称
 func ResourceTBName() string {
 	return TableName("resource")
+}
+
+//获取 Menu 对应的表名称
+func MenuTBName() string {
+	return TableName("menu")
 }
 
 //获取 Role 对应的表名称

@@ -40,6 +40,6 @@ func (c *UserCenterController) Info() {
 		struct {
 			Roles []string `json:"roles"`
 			Name string `json:"name"`
-			Resources []*models.Resource
-		}{Roles: roleIds, Name:m.Name, Resources: models.MenuTree()})
+			MenuTree []*models.Menu `json:"menuTree"`
+		}{Roles: roleIds, Name:m.Name, MenuTree: models.GetMenuTree()})
 }

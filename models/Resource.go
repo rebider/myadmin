@@ -180,10 +180,13 @@ func ResourceTreeGridByUserId(userId, maxrtype int) []*Resource {
 		o.Raw(sql, userId).QueryRows(&list)
 	//}
 	for _, e := range list{
-		logs.Debug("ResourceTreeGridByUserId:%+v", e)
+		logs.Debug("6666666666666666666666666:%+v", e)
 	}
-
-	result := resourceList2TreeGrid(list)
+	result := list
+	//result := resourceList2TreeGrid(list)
+	for _, e := range list{
+		logs.Debug("777777777:%+v", e)
+	}
 	utils.SetCache(cachekey, result, 30)
 	return result
 }
@@ -212,4 +215,36 @@ func resourceAddSons(cur *Resource, list, result []*Resource) []*Resource {
 		}
 	}
 	return result
+}
+
+
+//将资源列表转成treegrid格式
+func A() []*Resource {
+	o := orm.NewOrm()
+	query := o.QueryTable(ResourceTBName())
+	list := make([]*Resource, 0)
+
+	query.All(&list)
+	result := make([]*Resource, 0)
+	for _, item := range list {
+		if item.Parent == nil || item.Parent.Id == 0 {
+			item = b(item, list)
+			result = append(result, item)
+
+		}
+	}
+
+	logs.Debug("A:%+v", result)
+	return result
+}
+
+//resourceAddSons 添加子菜单
+func b(cur *Resource, list []*Resource) *Resource {
+	for _, item := range list {
+		if item.Parent != nil && item.Parent.Id == cur.Id {
+			item = b(item, list)
+			cur.Children = append(cur.Children, item)
+		}
+	}
+	return cur
 }

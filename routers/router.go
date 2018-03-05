@@ -33,6 +33,12 @@ func init() {
 	beego.Router("/role/allocate", &controllers.RoleController{}, "*:Allocate")
 	//beego.Router("/role/updateseq", &controllers.RoleController{}, "Post:UpdateSeq")
 
+	//菜单
+	beego.Router("/menu/list", &controllers.MenuController{}, "*:List")
+	beego.Router("/menu/edit/?:id", &controllers.MenuController{}, "*:Edit")
+	beego.Router("/menu/delete", &controllers.MenuController{}, "*:Delete")
+	beego.Router("/menu/menuTree", &controllers.MenuController{}, "*:MenuTree")
+
 	//资源路由
 	//beego.Router("/resource/index", &controllers.ResourceController{}, "*:Index")
 	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")

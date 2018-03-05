@@ -106,16 +106,20 @@ func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
 		//}
 		logs.Debug("checkActionAuthor: %+v%+v%+v", ctrlName, ActName, v.ResourceUrlForList)
 		//遍历用户所负责的资源列表
-		for i, _ := range v.ResourceUrlForList {
-			urlfor := strings.TrimSpace(v.ResourceUrlForList[i])
-			if len(urlfor) == 0 {
-				continue
-			}
-			// TestController.Get,:last,xie,:first,asta
-			strs := strings.Split(urlfor, ",")
-			if len(strs) > 0 && strs[0] == (ctrlName+"."+ActName) {
+		for _, v := range v.ResourceUrlForList {
+			logs.Debug("v: %+v", ctrlName+"."+ActName)
+			if v == ctrlName+"."+ActName {
 				return true
 			}
+			//urlfor := strings.TrimSpace(v.ResourceUrlForList[i])
+			//if len(urlfor) == 0 {
+			//	continue
+			//}
+			//// TestController.Get,:last,xie,:first,asta
+			//strs := strings.Split(urlfor, ",")
+			//if len(strs) > 0 && strs[0] == (ctrlName+"."+ActName) {
+			//	return true
+			//}
 		}
 	}
 	return false
@@ -137,8 +141,8 @@ func (c *BaseController) checkAuthor(ignores ...string) {
 		}
 	}
 
-	//hasAuthor := true
-	hasAuthor := c.checkActionAuthor(controllerName, actionName)
+	hasAuthor := true
+	//hasAuthor := c.checkActionAuthor(controllerName, actionName)
 	if !hasAuthor {
 		logs.Error(fmt.Sprintf("无权访问!!!!! 路径 %s.%s 用户id=%v", controllerName, actionName, c.curUser.Id))
 		//如果没有权限
@@ -172,7 +176,9 @@ func (c *BaseController) setUser2Session(userId int) error {
 	}
 	//获取这个用户能获取到的所有资源列表
 	resourceList := models.ResourceTreeGridByUserId(userId, 1000)
+	logs.Info("8888888:%+v",   resourceList)
 	for _, item := range resourceList {
+		logs.Info("99999:%+v",   strings.TrimSpace(item.UrlFor))
 		m.ResourceUrlForList = append(m.ResourceUrlForList, strings.TrimSpace(item.UrlFor))
 	}
 	c.SetSession("user", *m)

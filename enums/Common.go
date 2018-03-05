@@ -9,6 +9,7 @@ const (
 	JRCodeSucc JsonResultCode = iota
 	JRCodeFailed
 	CodeSuccess = 0
+	CodeFail = 1
 	CodeUnauthorized = 401 //未授权访问
 	CodeNoLogin = 50014 //未登录
 )
