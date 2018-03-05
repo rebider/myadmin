@@ -56,7 +56,7 @@ func (c *HomeController) DoLogin() {
 		_, err := o.Update(user)
 		utils.CheckError(err)
 
-		c.Result(enums.Success, "登录成功",
+		c.Result(enums.CodeSuccess, "登录成功",
 			struct {
 				Token string `json:"token"`
 			}{Token: c.CruSession.SessionID()})
@@ -67,6 +67,6 @@ func (c *HomeController) DoLogin() {
 func (c *HomeController) Logout() {
 	user := models.User{}
 	c.SetSession("user", user)
-	c.Result(enums.Success, "退出登录成功","")
+	c.Result(enums.CodeSuccess, "退出登录成功","")
 	//c.pageLogin()
 }

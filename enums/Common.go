@@ -8,10 +8,9 @@ const (
 const (
 	JRCodeSucc JsonResultCode = iota
 	JRCodeFailed
-	Success = 0
-	JRCode302 = 302 //跳转至地址
-	JRCode401 = 401 //未授权访问
-	NoLogin = 50014 //未登录
+	CodeSuccess = 0
+	CodeUnauthorized = 401 //未授权访问
+	CodeNoLogin = 50014 //未登录
 )
 const (
 	MSG_OK  = 0

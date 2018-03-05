@@ -65,11 +65,11 @@ func (c *ResourceController) List() {
 	result["total"] = total
 	result["rows"] = data
 	//c.Data["json"] = result
-	c.Result(enums.Success, "获取资源列表成功", result)
+	c.Result(enums.CodeSuccess, "获取资源列表成功", result)
 }
 
 func (c *ResourceController) ResourceTree() {
-	c.Result(enums.Success, "获取资源树成功", models.ResourceTreeGrid())
+	c.Result(enums.CodeSuccess, "获取资源树成功", models.ResourceTreeGrid())
 }
 
 //UserMenuTree 获取用户有权管理的菜单、区域列表

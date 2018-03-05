@@ -11,35 +11,4 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 basePath: /v2
-paths:
-  /resource/resource/List:
-    get:
-      tags:
-      - resource
-      description: 获取资源列表
-      operationId: ResourceController.获取资源列表1
-      responses:
-        "200":
-          description: ""
-          schema:
-            $ref: '#/definitions/models.GameServer'
-        "400":
-          description: Invalid email supplied
-        "404":
-          description: User not found
-definitions:
-  models.GameServer:
-    title: GameServer
-    type: object
-    properties:
-      Desc:
-        type: string
-      Node:
-        type: string
-      PlatformId:
-        type: integer
-        format: int64
-      PlatformName:
-        type: string
-      Sid:
-        type: string
+paths: {}

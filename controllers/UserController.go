@@ -34,7 +34,7 @@ func (c *UserController) List() {
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
-	c.Result(enums.Success, "获取用户列表成功", result)
+	c.Result(enums.CodeSuccess, "获取用户列表成功", result)
 }
 
 // Edit 添加 编辑 页面
@@ -83,12 +83,12 @@ func (c *UserController) Edit() {
 	if len(relations) > 0 {
 		//批量添加
 		if _, err := o.InsertMulti(len(relations), relations); err == nil {
-			c.Result(enums.JRCodeSucc, "保存用户角色关系成功", m.Id)
+			c.Result(enums.CodeSuccess, "保存用户角色关系成功", m.Id)
 		} else {
 			c.Result(enums.JRCodeFailed, "保存用户角色关系失败", m.Id)
 		}
 	} else {
-		c.Result(enums.JRCodeSucc, "保存成功", m.Id)
+		c.Result(enums.CodeSuccess, "保存成功", m.Id)
 	}
 }
 
@@ -99,7 +99,7 @@ func (c *UserController) Delete() {
 	logs.Info("删除用户:%+v",  m)
 	query := orm.NewOrm().QueryTable(models.UserTBName())
 	if num, err := query.Filter("id__in", m).Delete(); err == nil {
-		c.Result(enums.JRCodeSucc, fmt.Sprintf("成功删除 %d 项", num), m)
+		c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", num), m)
 	} else {
 		c.Result(enums.JRCodeFailed, "删除失败", m)
 	}
@@ -134,6 +134,6 @@ func (c *UserController) ChangePassword() {
 		c.Result(enums.JRCodeFailed, "保存失败", oM.Id)
 	} else {
 		c.setUser2Session(Id)
-		c.Result(enums.Success, "保存成功", oM.Id)
+		c.Result(enums.CodeSuccess, "保存成功", oM.Id)
 	}
 }

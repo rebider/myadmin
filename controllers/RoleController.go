@@ -55,7 +55,7 @@ func (c *RoleController) List() {
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
-	c.Result(enums.Success, "获取角色列表成功", result)
+	c.Result(enums.CodeSuccess, "获取角色列表成功", result)
 }
 
 ////DataList 角色列表

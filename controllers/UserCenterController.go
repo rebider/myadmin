@@ -36,10 +36,10 @@ func (c *UserCenterController) Info() {
 		//t, _:= strconv.Atoi(e)
 		roleIds[i] = strconv.Itoa(e)
 	}
-	c.Result(enums.Success, "获取用户信息成功",
+	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
 			Roles []string `json:"roles"`
 			Name string `json:"name"`
 			Resources []*models.Resource
-		}{Roles: roleIds, Name:m.Name, Resources: models.ResourceTreeGrid()})
+		}{Roles: roleIds, Name:m.Name, Resources: models.MenuTree()})
 }

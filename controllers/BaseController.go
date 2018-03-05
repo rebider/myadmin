@@ -86,7 +86,7 @@ func (c *BaseController) CheckError(err error, msg... string) {
 // 一定要在BaseController.Prepare()后执行
 func (c *BaseController) checkLogin() {
 	if c.curUser.Id == 0 {
-		c.Result(enums.NoLogin, "未登录", "")
+		c.Result(enums.CodeNoLogin, "未登录", "")
 	}
 }
 
@@ -104,6 +104,7 @@ func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
 		//if v.IsSuper == true {
 		//	return true
 		//}
+		logs.Debug("checkActionAuthor: %+v%+v%+v", ctrlName, ActName, v.ResourceUrlForList)
 		//遍历用户所负责的资源列表
 		for i, _ := range v.ResourceUrlForList {
 			urlfor := strings.TrimSpace(v.ResourceUrlForList[i])
@@ -125,6 +126,7 @@ func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
 // 会调用checkLogin
 // 传入的参数为忽略权限控制的Action
 func (c *BaseController) checkAuthor(ignores ...string) {
+	logs.Debug("权限验证")
 	//先判断是否登录
 	c.checkLogin()
 	//如果Action在忽略列表里，则直接通用
@@ -135,12 +137,12 @@ func (c *BaseController) checkAuthor(ignores ...string) {
 		}
 	}
 
-	hasAuthor := true
-	//hasAuthor := c.checkActionAuthor(controllerName, actionName)
+	//hasAuthor := true
+	hasAuthor := c.checkActionAuthor(controllerName, actionName)
 	if !hasAuthor {
-		logs.Debug(fmt.Sprintf("author control: path=%s.%s userid=%v  无权访问", controllerName, actionName, c.curUser.Id))
+		logs.Error(fmt.Sprintf("无权访问!!!!! 路径 %s.%s 用户id=%v", controllerName, actionName, c.curUser.Id))
 		//如果没有权限
-		c.jsonResult(enums.JRCode401, "无权访问", "")
+		c.Result(enums.CodeUnauthorized, "无权访问", "")
 		//if !hasAuthor {
 		//	if c.Ctx.Input.IsAjax() {
 		//		c.jsonResult(enums.JRCode401, "无权访问", "")
