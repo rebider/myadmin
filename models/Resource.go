@@ -16,19 +16,21 @@ import (
 func (a *Resource) TableName() string {
 	return ResourceTBName()
 }
+
 type ResourceQueryParam struct {
 	BaseQueryParam
 }
+
 //Resource 权限控制资源表
 type Resource struct {
-	Id              int				`json:"id"`
-	Title 			string		 `orm:"size(64)" json:"title"`//标题
-	Name            string    `orm:"size(64)" json:"name"`
+	Id    int    `json:"id"`
+	Title string `orm:"size(64)" json:"title"` //标题
+	Name  string `orm:"size(64)" json:"name"`
 	//Component            string    `orm:"size(64)" json:"component"`
-	Parent          *Resource `orm:"null;rel(fk) " json:"parent"` // RelForeignKey relation
-	Type           int			`json:"type"`
-	Seq             int			`json:"seq"`
-	Children            []*Resource        `orm:"reverse(many)" json:"children"` // fk 的反向关系
+	Parent          *Resource          `orm:"null;rel(fk) " json:"parent"` // RelForeignKey relation
+	Type            int                `json:"type"`
+	Seq             int                `json:"seq"`
+	Children        []*Resource        `orm:"reverse(many)" json:"children"` // fk 的反向关系
 	SonNum          int                `orm:"-" json:"-"`
 	Icon            string             `orm:"size(32)" json:"icon"`
 	LinkUrl         string             `orm:"-" json:"-"`
@@ -48,37 +50,13 @@ func ResourceOne(id int) (*Resource, error) {
 	return &m, nil
 }
 
-//Resource 获取treegrid顺序的列表
-func MenuTree() []*Resource {
-	o := orm.NewOrm()
-	query := o.QueryTable(ResourceTBName()).Filter("type", 0)
-	list := make([]*Resource, 0)
-
-	query.All(&list)
-	sonList := make([]*Resource, 0)
-	realList := make([]*Resource, 0)
-
-	for _, v := range list {
-		//logs.Info("ResourceTreeGrid:%+v", v.Parent)
-		if v.Parent ==  nil || v.Parent.Id == 0{
-			realList = append(realList, v)
-		} else {
-			sonList = append(sonList, v)
-		}
-	}
-
-	//logs.Info("realList:%+v", realList)
-	//logs.Info("sonList:%+v", sonList)
-	for _, v := range sonList{
-		for _, p := range realList{
-			if p.Id == v.Parent.Id {
-				p.Children = append(p.Children, v)
-			}
-		}
-	}
-	//logs.Info("%v", list)
-	//return resourceList2TreeGrid(list)
-	return realList
+//获取分页数据
+func ResourceList() []*Resource {
+	query := orm.NewOrm().QueryTable(ResourceTBName())
+	data := make([]*Resource, 0)
+	query.All(&data)
+	//total, _ := query.Count()
+	return data
 }
 
 //Resource 获取treegrid顺序的列表
@@ -93,7 +71,7 @@ func ResourceTreeGrid() []*Resource {
 
 	for _, v := range list {
 		//logs.Info("ResourceTreeGrid:%+v", v.Parent)
-		if v.Parent ==  nil || v.Parent.Id == 0{
+		if v.Parent == nil || v.Parent.Id == 0 {
 			realList = append(realList, v)
 		} else {
 			sonList = append(sonList, v)
@@ -102,8 +80,8 @@ func ResourceTreeGrid() []*Resource {
 
 	//logs.Info("realList:%+v", realList)
 	//logs.Info("sonList:%+v", sonList)
-	for _, v := range sonList{
-		for _, p := range realList{
+	for _, v := range sonList {
+		for _, p := range realList {
 			if p.Id == v.Parent.Id {
 				p.Children = append(p.Children, v)
 			}
@@ -113,16 +91,6 @@ func ResourceTreeGrid() []*Resource {
 	//return resourceList2TreeGrid(list)
 	return realList
 }
-
-//获取分页数据
-func ResourcePageList(params *ResourceQueryParam) ([]*Resource, int64) {
-	query := orm.NewOrm().QueryTable(ResourceTBName())
-	data := make([]*Resource, 0)
-	query.RelatedSel().Limit(params.Limit, params.Offset).All(&data)
-	total, _ := query.Count()
-	return data, total
-}
-
 
 //ResourceTreeGrid4Parent 获取可以成为某个节点父节点的列表
 func ResourceTreeGrid4Parent(id int) []*Resource {
@@ -172,79 +140,168 @@ func ResourceTreeGridByUserId(userId, maxrtype int) []*Resource {
 	//	o.Raw(sql, maxrtype).QueryRows(&list)
 	//} else {
 	//	//联查多张表，找出某用户有权管理的
-		sql = fmt.Sprintf(`SELECT DISTINCT T0.resource_id,T2.id,T2.name,T2.parent_id,T2.type,T2.icon,T2.seq,T2.url_for
+	sql = fmt.Sprintf(`SELECT DISTINCT T0.resource_id,T2.id,T2.name,T2.parent_id,T2.type,T2.icon,T2.seq,T2.url_for
 		FROM %s AS T0
 		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
 		INNER JOIN %s AS T2 ON T2.id = T0.resource_id
 		WHERE T1.user_id = ?   Order By T2.seq asc,T2.id asc`, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
-		o.Raw(sql, userId).QueryRows(&list)
+	o.Raw(sql, userId).QueryRows(&list)
 	//}
-	for _, e := range list{
+	for _, e := range list {
 		logs.Debug("6666666666666666666666666:%+v", e)
 	}
 	result := list
-	//result := resourceList2TreeGrid(list)
-	for _, e := range list{
-		logs.Debug("777777777:%+v", e)
-	}
 	utils.SetCache(cachekey, result, 30)
 	return result
 }
 
-//将资源列表转成treegrid格式
-func resourceList2TreeGrid(list []*Resource) []*Resource {
-	result := make([]*Resource, 0)
-	for _, item := range list {
-		if item.Parent == nil || item.Parent.Id == 0 {
-			item.Level = 0
-			result = append(result, item)
-			result = resourceAddSons(item, list, result)
-		}
-	}
-	return result
-}
-
-//resourceAddSons 添加子菜单
-func resourceAddSons(cur *Resource, list, result []*Resource) []*Resource {
-	for _, item := range list {
-		if item.Parent != nil && item.Parent.Id == cur.Id {
-			cur.SonNum++
-			item.Level = cur.Level + 1
-			result = append(result, item)
-			result = resourceAddSons(item, list, result)
-		}
-	}
-	return result
-}
-
-
-//将资源列表转成treegrid格式
-func A() []*Resource {
+//根据用户获取有权管理的资源列表
+func GetResourceListByUserId(userId, maxrtype int) []*Resource {
+	query := orm.NewOrm().QueryTable(ResourceTBName())
+	var data Resource
+	query = query.Filter("id", 11)
+	query.RelatedSel().One(&data)
+	logs.Debug("99999999999999999999999:%+v", data)
+	logs.Debug("10:%+v", data.Parent)
+	var list []*Resource
 	o := orm.NewOrm()
-	query := o.QueryTable(ResourceTBName())
-	list := make([]*Resource, 0)
-
-	query.All(&list)
-	result := make([]*Resource, 0)
-	for _, item := range list {
-		if item.Parent == nil || item.Parent.Id == 0 {
-			item = b(item, list)
-			result = append(result, item)
-
-		}
+	user, err := UserOne(userId)
+	if err != nil || user == nil {
+		return list
 	}
+	//query := orm.NewOrm().QueryTable(RoleUserRelTBName())
+	//data := make([]*RoleUserRel, 0)
+	//query = query.Filter("user_id", userId)
+	//query.RelatedSel().All(&data)
+	//for _, e:= range data{
+	//	logs.Debug("99999999999999999999999:%+v", e)
+	//}
 
-	logs.Debug("A:%+v", result)
+
+
+	var sql string
+	//if user.IsSuper == true {
+	//	//如果是管理员，则查出所有的
+	//	sql = fmt.Sprintf(`SELECT id,name,parent_id,rtype,icon,seq,url_for FROM %s Where rtype <= ? Order By seq asc,Id asc`, ResourceTBName())
+	//	o.Raw(sql, maxrtype).QueryRows(&list)
+	//} else {
+	//	//联查多张表，找出某用户有权管理的
+	sql = fmt.Sprintf(`SELECT DISTINCT T0.resource_id,T2.id,T2.name,T2.parent_id,T2.type,T2.icon,T2.seq,T2.url_for
+		FROM %s AS T0
+		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
+		INNER JOIN %s AS T2 ON T2.id = T0.resource_id
+		WHERE T1.user_id = ?   Order By T2.seq asc,T2.id asc`, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
+	o.Raw(sql, userId).QueryRows(&list)
+	result := list
 	return result
 }
 
-//resourceAddSons 添加子菜单
-func b(cur *Resource, list []*Resource) *Resource {
+//根据用户获取有权管理的资源列表
+func GetResourceListByUserId2(userId, maxrtype int) []*Resource {
+	var list []*Resource
+	o := orm.NewOrm()
+	user, err := UserOne(userId)
+	if err != nil || user == nil {
+		return list
+	}
+	var sql string
+	//if user.IsSuper == true {
+	//	//如果是管理员，则查出所有的
+	//	sql = fmt.Sprintf(`SELECT id,name,parent_id,rtype,icon,seq,url_for FROM %s Where rtype <= ? Order By seq asc,Id asc`, ResourceTBName())
+	//	o.Raw(sql, maxrtype).QueryRows(&list)
+	//} else {
+	//	//联查多张表，找出某用户有权管理的
+	sql = fmt.Sprintf(`SELECT DISTINCT T0.resource_id,T2.id,T2.name,T2.parent_id,T2.type,T2.icon,T2.seq,T2.url_for
+		FROM %s AS T0
+		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
+		INNER JOIN %s AS T2 ON T2.id = T0.resource_id
+		WHERE T1.user_id = ?   Order By T2.seq asc,T2.id asc`, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
+	o.Raw(sql, userId).QueryRows(&list)
+	result := list
+	return result
+}
+
+////将资源列表转成treegrid格式
+//func resourceList2TreeGrid(list []*Resource) []*Resource {
+//	result := make([]*Resource, 0)
+//	for _, item := range list {
+//		if item.Parent == nil || item.Parent.Id == 0 {
+//			item.Level = 0
+//			result = append(result, item)
+//			result = resourceAddSons(item, list, result)
+//		}
+//	}
+//	return result
+//}
+//
+////resourceAddSons 添加子菜单
+//func resourceAddSons(cur *Resource, list, result []*Resource) []*Resource {
+//	for _, item := range list {
+//		if item.Parent != nil && item.Parent.Id == cur.Id {
+//			cur.SonNum++
+//			item.Level = cur.Level + 1
+//			result = append(result, item)
+//			result = resourceAddSons(item, list, result)
+//		}
+//	}
+//	return result
+//}
+
+func TranResourceList2ResourceTree(resourceList []*Resource) []*Resource {
+	resourceTree := make([]*Resource, 0)
+	for _, item := range resourceList {
+		if item.Parent == nil || item.Parent.Id == 0 {
+			item = TranResourceList2ResourceTree_(item, resourceList)
+			resourceTree = append(resourceTree, item)
+		}
+	}
+	return resourceTree
+}
+func TranResourceList2ResourceTree_(cur *Resource, list []*Resource) *Resource {
 	for _, item := range list {
 		if item.Parent != nil && item.Parent.Id == cur.Id {
-			item = b(item, list)
+			item = TranResourceList2ResourceTree_(item, list)
 			cur.Children = append(cur.Children, item)
 		}
 	}
 	return cur
 }
+
+////将资源树
+//func GetResourceTree() []*Resource {
+//	o := orm.NewOrm()
+//	query := o.QueryTable(ResourceTBName())
+//	list := make([]*Resource, 0)
+//
+//	query.All(&list)
+//	result := make([]*Resource, 0)
+//	for _, item := range list {
+//		if item.Parent == nil || item.Parent.Id == 0 {
+//			item = GetResourceTree2(item, list)
+//			result = append(result, item)
+//
+//		}
+//	}
+//
+//	//logs.Debug("A:%+v", result)
+//	return result
+//}
+
+////获取菜单树
+//func GetMenuTree() []*Resource {
+//	o := orm.NewOrm()
+//	query := o.QueryTable(ResourceTBName())
+//	list := make([]*Resource, 0)
+//
+//	query.Filter("type", 0).All(&list)
+//	result := make([]*Resource, 0)
+//	for _, item := range list {
+//		if item.Parent == nil || item.Parent.Id == 0 {
+//			item = GetResourceTree2(item, list)
+//			result = append(result, item)
+//
+//		}
+//	}
+//	//logs.Debug("A:%+v", result)
+//	return result
+//}

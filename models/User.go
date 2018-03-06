@@ -22,6 +22,7 @@ type User struct {
 	Name           string `orm:"size(32)"`
 	Account        string `orm:"size(24);unique"`
 	Password       string `json:"-"`
+	IsSuper        string `json:"is_super"`
 	ModifyPassword string `json:"Password" orm:"-"`
 	Status             int
 	LoginTimes         int

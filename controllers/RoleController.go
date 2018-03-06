@@ -34,7 +34,7 @@ func (c *RoleController) Index() {
 	c.Data["showMoreQuery"] = true
 	//将页面左边菜单的某项激活
 	//c.Data["activeSidebarUrl"] = c.URLFor(c.controllerName + "." + c.actionName)
-	c.setTpl()
+	//c.setTpl()
 	c.LayoutSections = make(map[string]string)
 	c.LayoutSections["headcssjs"] = "role/index_headcssjs.html"
 	c.LayoutSections["footerjs"] = "role/index_footerjs.html"
@@ -75,16 +75,16 @@ func (c *RoleController) Edit() {
 	o := orm.NewOrm()
 	if m.Id == 0 {
 		if _, err = o.Insert(&m); err == nil {
-			c.Result(enums.JRCodeSucc, "添加角色成功", m.Id)
+			c.Result(enums.CodeSuccess, "添加角色成功", m.Id)
 		} else {
-			c.Result(enums.JRCodeFailed, "添加角色失败", m.Id)
+			c.Result(enums.CodeFail, "添加角色失败", m.Id)
 		}
 
 	} else {
 		if _, err = o.Update(&m); err == nil {
-			c.Result(enums.JRCodeSucc, "编辑角色成功", m.Id)
+			c.Result(enums.CodeSuccess, "编辑角色成功", m.Id)
 		} else {
-			c.Result(enums.JRCodeFailed, "编辑角色失败", m.Id)
+			c.Result(enums.CodeFail, "编辑角色失败", m.Id)
 		}
 	}
 }
@@ -129,9 +129,9 @@ func (c *RoleController) Delete() {
 	json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
 	logs.Info("删除角色:%+v", ids)
 	if num, err := models.RoleBatchDelete(ids); err == nil {
-		c.Result(enums.JRCodeSucc, fmt.Sprintf("成功删除 %d 项", num), 0)
+		c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", num), 0)
 	} else {
-		c.Result(enums.JRCodeFailed, "删除失败", 0)
+		c.Result(enums.CodeFail, "删除失败", 0)
 	}
 }
 
@@ -153,11 +153,11 @@ func (c *RoleController) Allocate() {
 	o := orm.NewOrm()
 	m := models.Role{Id: roleId}
 	if err := o.Read(&m); err != nil {
-		c.Result(enums.JRCodeFailed, "数据无效，请刷新后重试", "")
+		c.Result(enums.CodeFail, "数据无效，请刷新后重试", "")
 	}
 	//删除已关联的历史数据
 	if _, err := o.QueryTable(models.RoleResourceRelTBName()).Filter("role__id", m.Id).Delete(); err != nil {
-		c.Result(enums.JRCodeFailed, "删除历史关系失败", "")
+		c.Result(enums.CodeFail, "删除历史关系失败", "")
 	}
 	var relations []models.RoleResourceRel
 	for _, id := range resourceIds {
@@ -177,7 +177,7 @@ func (c *RoleController) Allocate() {
 	if len(relations) > 0 {
 		//批量添加
 		if _, err := o.InsertMulti(len(relations), relations); err == nil {
-			c.Result(enums.JRCodeSucc, "保存成功", "")
+			c.Result(enums.CodeSuccess, "保存成功", "")
 		}
 	}
 	c.Result(0, "保存失败", "")

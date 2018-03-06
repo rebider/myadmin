@@ -6,8 +6,8 @@ const (
 	ChoseServerId = "chose_server_id"
 )
 const (
-	JRCodeSucc JsonResultCode = iota
-	JRCodeFailed
+	//JRCodeSucc JsonResultCode = iota
+	//JRCodeFailed
 	CodeSuccess = 0
 	CodeFail = 1
 	CodeUnauthorized = 401 //未授权访问

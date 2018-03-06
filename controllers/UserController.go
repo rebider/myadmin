@@ -54,11 +54,11 @@ func (c *UserController) Edit() {
 		//对密码进行加密
 		m.Password = utils.String2md5(m.ModifyPassword)
 		if _, err := o.Insert(&m); err != nil {
-			c.Result(enums.JRCodeFailed, "添加用户失败", m.Id)
+			c.Result(enums.CodeFail, "添加用户失败", m.Id)
 		}
 	} else {
 		if oM, err := models.UserOne(m.Id); err != nil {
-			c.Result(enums.JRCodeFailed, "未找到该用户", m.Id)
+			c.Result(enums.CodeFail, "未找到该用户", m.Id)
 		} else {
 			m.Password = strings.TrimSpace(m.ModifyPassword)
 			if len(m.Password) == 0 {
@@ -70,7 +70,7 @@ func (c *UserController) Edit() {
 			}
 		}
 		if _, err := o.Update(&m); err != nil {
-			c.Result(enums.JRCodeFailed, "保存用户失败", m.Id)
+			c.Result(enums.CodeFail, "保存用户失败", m.Id)
 		}
 	}
 	//添加关系
@@ -85,7 +85,7 @@ func (c *UserController) Edit() {
 		if _, err := o.InsertMulti(len(relations), relations); err == nil {
 			c.Result(enums.CodeSuccess, "保存用户角色关系成功", m.Id)
 		} else {
-			c.Result(enums.JRCodeFailed, "保存用户角色关系失败", m.Id)
+			c.Result(enums.CodeFail, "保存用户角色关系失败", m.Id)
 		}
 	} else {
 		c.Result(enums.CodeSuccess, "保存成功", m.Id)
@@ -101,7 +101,7 @@ func (c *UserController) Delete() {
 	if num, err := query.Filter("id__in", m).Delete(); err == nil {
 		c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", num), m)
 	} else {
-		c.Result(enums.JRCodeFailed, "删除失败", m)
+		c.Result(enums.CodeFail, "删除失败", m)
 	}
 }
 
@@ -120,18 +120,18 @@ func (c *UserController) ChangePassword() {
 	utils.CheckError(err)
 	md5str := utils.String2md5(params.OldPwd)
 	if oM.Password != md5str {
-		c.Result(enums.JRCodeFailed, "原密码错误", "")
+		c.Result(enums.CodeFail, "原密码错误", "")
 	}
 	if len(params.NewPwd2) == 0 {
-		c.Result(enums.JRCodeFailed, "请输入新密码", "")
+		c.Result(enums.CodeFail, "请输入新密码", "")
 	}
 	if params.NewPwd != params.NewPwd2 {
-		c.Result(enums.JRCodeFailed, "两次输入的新密码不一致", "")
+		c.Result(enums.CodeFail, "两次输入的新密码不一致", "")
 	}
 	oM.Password = utils.String2md5(params.NewPwd)
 	o := orm.NewOrm()
 	if _, err := o.Update(oM); err != nil {
-		c.Result(enums.JRCodeFailed, "保存失败", oM.Id)
+		c.Result(enums.CodeFail, "保存失败", oM.Id)
 	} else {
 		c.setUser2Session(Id)
 		c.Result(enums.CodeSuccess, "保存成功", oM.Id)

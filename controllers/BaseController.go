@@ -3,21 +3,16 @@ package controllers
 import (
 	"fmt"
 	"strings"
-	//"encoding/json"
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/models"
 	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego"
-	//"github.com/chnzrb/myadmin/utils"
 )
 
 type BaseController struct {
 	beego.Controller
 	curUser        models.User //当前用户信息
 }
-//func (c *BaseController) Init() {
-//	logs.Debug("Init")
-//}
 
 func (c *BaseController) AllowCross() {
 	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:9528")       //允许访问源
@@ -45,24 +40,10 @@ func (c *BaseController) CheckError(err error, msg... string) {
 	if err != nil {
 		errMsg := fmt.Sprintf("%s %v", msg, err)
 		logs.GetBeeLogger().Error(errMsg)
-		c.Result(enums.JRCodeFailed, "[ERROR]" + errMsg, "")
+		c.Result(enums.CodeFail, "[ERROR]" + errMsg, "")
 	}
 }
-//func (c *BaseController) ShowSidebar(userId int) {
-//	tree := models.ResourceTreeGridByUserId(userId, 1)
-//	for _, item := range tree {
-//		item.LinkUrl = c.UrlFor2LinkOne(item.UrlFor)
-//	}
-//	out,err := json.Marshal(tree)
-//	utils.CheckError(err)
-//	c.Data["sidebarJson"] = string(out)
-//}
-//func (c *BaseController) UrlFor2Link(src []*models.Resource) {
-//	for _, item := range src {
-//		item.LinkUrl = c.UrlFor2LinkOne(item.UrlFor)
-//	}
-//}
-//
+
 //func (c *BaseController) UrlFor2LinkOne(urlfor string) string {
 //	if len(urlfor) == 0 {
 //		return ""
@@ -85,14 +66,18 @@ func (c *BaseController) CheckError(err error, msg... string) {
 // checkLogin判断用户是否登录，未登录则跳转至登录页面
 // 一定要在BaseController.Prepare()后执行
 func (c *BaseController) checkLogin() {
-	if c.curUser.Id == 0 {
+	if c.IsLogin() == false {
 		c.Result(enums.CodeNoLogin, "未登录", "")
 	}
+}
+//是否登录
+func (c *BaseController) IsLogin() bool{
+	return c.curUser.Id > 0
 }
 
 // 判断某 Controller.Action 当前用户是否有权访问
 func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
-	if c.curUser.Id == 0 {
+	if c.IsLogin() == false {
 		return false
 	}
 	//从session获取用户信息
@@ -111,15 +96,6 @@ func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
 			if v == ctrlName+"."+ActName {
 				return true
 			}
-			//urlfor := strings.TrimSpace(v.ResourceUrlForList[i])
-			//if len(urlfor) == 0 {
-			//	continue
-			//}
-			//// TestController.Get,:last,xie,:first,asta
-			//strs := strings.Split(urlfor, ",")
-			//if len(strs) > 0 && strs[0] == (ctrlName+"."+ActName) {
-			//	return true
-			//}
 		}
 	}
 	return false
@@ -144,27 +120,19 @@ func (c *BaseController) checkAuthor(ignores ...string) {
 	hasAuthor := true
 	//hasAuthor := c.checkActionAuthor(controllerName, actionName)
 	if !hasAuthor {
-		logs.Error(fmt.Sprintf("无权访问!!!!! 路径 %s.%s 用户id=%v", controllerName, actionName, c.curUser.Id))
+		logs.Error(fmt.Sprintf("无权访问!!! 路径: %s.%s, 用户: %v.", controllerName, actionName, c.curUser.Id))
 		//如果没有权限
 		c.Result(enums.CodeUnauthorized, "无权访问", "")
-		//if !hasAuthor {
-		//	if c.Ctx.Input.IsAjax() {
-		//		c.jsonResult(enums.JRCode401, "无权访问", "")
-		//	} else {
-		//		c.pageError("无权访问")
-		//	}
-		//}
 	}
 }
 
 //从session里取用户信息
 func (c *BaseController) adapterUserInfo() {
 	a := c.GetSession("user")
-
 	if a != nil {
-		logs.Debug("adapterUserInfo:%v", a)
+		logs.Debug("从session里取用户信息:%+v", a)
 		c.curUser = a.(models.User)
-		c.Data["user"] = a
+		//c.Data["user"] = a
 	}
 }
 
@@ -186,36 +154,6 @@ func (c *BaseController) setUser2Session(userId int) error {
 	return nil
 }
 
-// 设置模板
-// 第一个参数模板，第二个参数为layout
-func (c *BaseController) setTpl(template ...string) {
-	var tplName string
-	layout := "shared/layout_page.html"
-	switch {
-	case len(template) == 1:
-		tplName = template[0]
-	case len(template) == 2:
-		tplName = template[0]
-		layout = template[1]
-	default:
-		//不要Controller这个10个字母
-		controllerName, actionName := c.GetControllerAndAction()
-		ctrlName := strings.ToLower(controllerName[0 : len(controllerName)-10])
-		actionName = strings.ToLower(actionName)
-		tplName = ctrlName + "/" + actionName + ".html"
-	}
-	//fmt.Println("666666666666666:",layout, tplName)
-	c.Layout = layout
-	c.TplName = tplName
-}
-func (c *BaseController) jsonResult(code enums.JsonResultCode, msg string, obj interface{}) {
-	data   := [3]string {"Jerry", "Tom", "Jerry & Tom"}
-	r := &models.Result{Code:20000, Data:data}
-	c.Data["json"] = r
-	c.AllowCross()
-	c.ServeJSON()
-	c.StopRun()
-}
 func (c *BaseController) Result(code enums.JsonResultCode, msg string, data interface{}) {
 	//c.AllowCross()
 	r := &models.Result{Code:code, Data:data, Msg:msg}
@@ -223,28 +161,4 @@ func (c *BaseController) Result(code enums.JsonResultCode, msg string, data inte
 	//c.AllowCross()
 	c.ServeJSON()
 	c.StopRun()
-}
-//// 重定向
-//func (c *BaseController) redirect(url string) {
-//	c.Redirect(url, 302)
-//	c.StopRun()
-//}
-
-// 重定向 去错误页
-func (c *BaseController) pageError(msg string) {
-	errorurl := c.URLFor("HomeController.Error") + "/" + msg
-	c.Redirect(errorurl, 302)
-	c.StopRun()
-}
-//
-//// 重定向 去登录页
-//func (c *BaseController) pageLogin() {
-//	url := c.URLFor("HomeController.Login")
-//	c.Redirect(url, 302)
-//	c.StopRun()
-//}
-
-// 是否POST提交
-func (this *BaseController) isPost() bool {
-	return this.Ctx.Request.Method == "POST"
 }

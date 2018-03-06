@@ -26,7 +26,7 @@ func (c *ServerNodeController) List() {
 	models.ShowNodeTypeList(c.Data)
 	models.ShowPlatformList(c.Data)
 	//c.Data["activeSidebarUrl"] = c.URLFor(c.controllerName + "." + c.actionName)
-	c.setTpl()
+	//c.setTpl()
 	c.LayoutSections = make(map[string]string)
 	c.LayoutSections["headcssjs"] = "servernode/list_headcssjs.html"
 	c.LayoutSections["footerjs"] = "servernode/list_footerjs.html"
@@ -68,13 +68,13 @@ func (c *ServerNodeController) Edit() {
 		fmt.Printf("%#v", m)
 		if err != nil {
 			fmt.Println("err", err)
-			c.pageError("数据无效，请刷新后重试")
+			//c.pageError("数据无效，请刷新后重试")
 		}
 	}
 	c.Data["m"] = m
 	models.ShowPlatformJson(c.Data)
 	models.ShowNodeTypeJsone(c.Data)
-	c.setTpl("servernode/edit.html", "shared/layout_pullbox.html")
+	//c.setTpl("servernode/edit.html", "shared/layout_pullbox.html")
 	c.LayoutSections = make(map[string]string)
 	c.LayoutSections["footerjs"] = "servernode/edit_footerjs.html"
 }
@@ -85,7 +85,7 @@ func (c *ServerNodeController) Save() {
 	//获取form里的值
 	if err := c.ParseForm(&m); err != nil {
 		logs.Error("%s%v", err.Error(), m)
-		c.jsonResult(enums.JRCodeFailed, "获取数据失败666", m.Node + err.Error())
+		c.Result(enums.CodeFail, "获取数据失败666", m.Node + err.Error())
 	}
 	//fmt.Println("Save:", m, c.Input())
 	out, err := utils.Nodetool(
@@ -101,10 +101,10 @@ func (c *ServerNodeController) Save() {
 
 	if err != nil {
 		fmt.Println("保存失败:"+ out)
-		c.jsonResult(enums.JRCodeFailed, "保存失败:" + out, m.Node)
+		c.Result(enums.CodeFail, "保存失败:" + out, m.Node)
 	}
 
-	c.jsonResult(enums.JRCodeSucc, "保存成功", m.Node)
+	c.Result(enums.CodeSuccess, "保存成功", m.Node)
 }
 
 func (c *ServerNodeController) Delete() {
@@ -119,9 +119,9 @@ func (c *ServerNodeController) Delete() {
 		)
 		if err != nil {
 			fmt.Println("删除失败:", strs, out, err)
-			c.jsonResult(enums.JRCodeFailed, "删除失败:" + out, 0)
+			c.Result(enums.CodeFail, "删除失败:" + out, 0)
 		}
 	}
-	c.jsonResult(enums.JRCodeSucc, fmt.Sprintf("成功删除 %d 项", len(ids)), 0)
+	c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", len(ids)), 0)
 }
 

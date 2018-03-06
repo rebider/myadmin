@@ -26,7 +26,7 @@ func (c *GameServerController) Prepare() {
 func (c *GameServerController) List() {
 	c.Data["pageTitle"] = "游戏服列表"
 	models.ShowPlatformList(c.Data)
-	c.setTpl()
+	//c.setTpl()
 	c.LayoutSections = make(map[string]string)
 	c.LayoutSections["headcssjs"] = "gameserver/gameserver_headcssjs.html"
 	c.LayoutSections["footerjs"] = "gameserver/gameserver_footerjs.html"
@@ -65,13 +65,13 @@ func (c *GameServerController) Edit() {
 		if err != nil {
 			fmt.Println("err", err)
 			logs.Error(err)
-			c.pageError("数据无效，请刷新后重试")
+			//c.pageError("数据无效，请刷新后重试")
 		}
 	}
 	c.Data["m"] = m
 	models.ShowPlatformJson(c.Data)
 	models.ShowGameNodeJson(c.Data)
-	c.setTpl("gameserver/edit.html", "shared/layout_pullbox.html")
+	//c.setTpl("gameserver/edit.html", "shared/layout_pullbox.html")
 	c.LayoutSections = make(map[string]string)
 	c.LayoutSections["footerjs"] = "gameserver/edit_footerjs.html"
 }
@@ -80,7 +80,7 @@ func (c *GameServerController) Save() {
 	m := models.GameServer{}
 	//获取form里的值
 	if err := c.ParseForm(&m); err != nil {
-		c.jsonResult(enums.JRCodeFailed, "获取数据失败", m.Sid)
+		c.Result(enums.CodeFail, "获取数据失败", m.Sid)
 	}
 	//fmt.Println("Save:", m, c.Input())
 	out, err := utils.Nodetool(
@@ -93,11 +93,11 @@ func (c *GameServerController) Save() {
 
 	if err != nil {
 		fmt.Println("保存失败:"+ out)
-		c.jsonResult(enums.JRCodeFailed, "保存失败:" + out, m.Sid)
+		c.Result(enums.CodeFail, "保存失败:" + out, m.Sid)
 	}
 
 	logs.Info("修改游戏服:%s", m)
-	c.jsonResult(enums.JRCodeSucc, "保存成功", m.Sid)
+	c.Result(enums.CodeSuccess, "保存成功", m.Sid)
 }
 
 func (c *GameServerController) Delete() {
@@ -113,10 +113,10 @@ func (c *GameServerController) Delete() {
 		)
 		if err != nil {
 			fmt.Println("删除失败:", strs, out, err)
-			c.jsonResult(enums.JRCodeFailed, "删除失败:" + out, 0)
+			c.Result(enums.CodeFail, "删除失败:" + out, 0)
 		}
 		logs.Info("删除游戏服:%s", str)
 	}
 
-	c.jsonResult(enums.JRCodeSucc, fmt.Sprintf("成功删除 %d 项", len(ids)), 0)
+	c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", len(ids)), 0)
 }

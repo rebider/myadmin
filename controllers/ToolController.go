@@ -54,7 +54,7 @@ func (c *ToolController) Build() {
 	//logs.Debug(platformId)
 	c.Data[enums.ChoseServerId] = serverId
 	c.Data[enums.ChosePlatformId] = platformId
-	c.setTpl()
+	//c.setTpl()
 	c.LayoutSections = make(map[string]string)
 	c.LayoutSections["headcssjs"] = "tool/tool_headcssjs.html"
 	c.LayoutSections["footerjs"] = "tool/tool_footerjs.html"
@@ -87,9 +87,9 @@ func (this *ToolController) Action() {
 		out = strings.Replace(out, " ", "&nbsp", -1)
 		out = strings.Replace(out, "\n", "<br>", -1)
 		out = strings.Replace(out, "\\n", "<br>", -1)
-		this.jsonResult(enums.MSG_ERR, desc+"失败:<br>"+out+"<br>"+err.Error(), 0)
+		this.Result(enums.MSG_ERR, desc+"失败:<br>"+out+"<br>"+err.Error(), 0)
 	} else {
-		this.jsonResult(enums.MSG_OK, desc+"成功!", 0)
+		this.Result(enums.MSG_OK, desc+"成功!", 0)
 	}
 }
 

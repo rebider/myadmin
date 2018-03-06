@@ -10,6 +10,6 @@ type MainController struct {
 }
 
 func (c *MainController) Get() {
-	logs.Debug("ddddddddddddddddddddd")
+	logs.Debug("MainController")
 	c.TplName = "index.html"
 }

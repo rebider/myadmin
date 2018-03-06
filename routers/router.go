@@ -29,47 +29,33 @@ func init() {
 	beego.Router("/role/list", &controllers.RoleController{}, "*:List")
 	beego.Router("/role/edit/?:id", &controllers.RoleController{}, "*:Edit")
 	beego.Router("/role/delete", &controllers.RoleController{}, "*:Delete")
-	//beego.Router("/role/datalist", &controllers.RoleController{}, "Post:DataList")
 	beego.Router("/role/allocate", &controllers.RoleController{}, "*:Allocate")
-	//beego.Router("/role/updateseq", &controllers.RoleController{}, "Post:UpdateSeq")
 
-	//菜单
-	beego.Router("/menu/list", &controllers.MenuController{}, "*:List")
-	beego.Router("/menu/edit/?:id", &controllers.MenuController{}, "*:Edit")
-	beego.Router("/menu/delete", &controllers.MenuController{}, "*:Delete")
-	beego.Router("/menu/menuTree", &controllers.MenuController{}, "*:MenuTree")
 
 	//资源路由
-	//beego.Router("/resource/index", &controllers.ResourceController{}, "*:Index")
 	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
 	beego.Router("/resource/edit/?:id", &controllers.ResourceController{}, "*:Edit")
 	beego.Router("/resource/parent", &controllers.ResourceController{}, "Post:ParentTreeGrid")
 	beego.Router("/resource/delete", &controllers.ResourceController{}, "*:Delete")
 	beego.Router("/resource/resourceTree", &controllers.ResourceController{}, "*:ResourceTree")
-	//beego.Router("/resource/resourceList", &controllers.ResourceController{}, "*:ResourceList")
-	//快速修改顺序
-	//beego.Router("/resource/updateseq", &controllers.ResourceController{}, "Post:UpdateSeq")
 
 	//通用选择面板
 	beego.Router("/resource/select", &controllers.ResourceController{}, "Get:Select")
-	//用户有权管理的菜单列表（包括区域）
-	beego.Router("/resource/usermenutree", &controllers.ResourceController{}, "POST:UserMenuTree")
+	//beego.Router("/resource/usermenutree", &controllers.ResourceController{}, "POST:UserMenuTree")
 	beego.Router("/resource/checkurlfor", &controllers.ResourceController{}, "POST:CheckUrlFor")
 
 	//后台用户路由
-	//beego.Router("/user/index", &controllers.UserController{}, "*:Index")
 	beego.Router("/user/list", &controllers.UserController{}, "*:List")
 	beego.Router("/user/edit/?:id", &controllers.UserController{}, "*:Edit")
 	beego.Router("/user/delete", &controllers.UserController{}, "*:Delete")
 
+	//登录
+	beego.Router("/login", &controllers.LoginController{}, "*:Login")
+	beego.Router("/logout", &controllers.LoginController{}, "*:Logout")
 
 	//后台用户中心
 	beego.Router("/user/info", &controllers.UserCenterController{}, "*:Info")
-	beego.Router("/user/login", &controllers.HomeController{}, "*:DoLogin")
-	beego.Router("/user/logout", &controllers.HomeController{}, "*:Logout")
 	beego.Router("/user/changePassword", &controllers.UserController{}, "*:ChangePassword")
-	beego.Router("/home/dologin", &controllers.HomeController{}, "*:DoLogin")
-	beego.Router("/home/logout", &controllers.HomeController{}, "*:Logout")
 
 	//工具
 	beego.Router("/tool/build", &controllers.ToolController{}, "*:Build")
@@ -86,7 +72,7 @@ func init() {
 	beego.Router("/server_node/datagrid", &controllers.ServerNodeController{}, "POST:DataGrid")
 	beego.Router("/server_node/edit/?:node", &controllers.ServerNodeController{}, "*:Edit")
 	beego.Router("/server_node/delete", &controllers.ServerNodeController{}, "Post:Delete")
+
 	//主页
 	beego.Router("/", &controllers.MainController{})
-	//beego.Router("*", &controllers.MainController{})
 }
