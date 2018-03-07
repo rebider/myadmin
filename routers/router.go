@@ -35,7 +35,7 @@ func init() {
 	//资源路由
 	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
 	beego.Router("/resource/edit/?:id", &controllers.ResourceController{}, "*:Edit")
-	beego.Router("/resource/parent", &controllers.ResourceController{}, "Post:ParentTreeGrid")
+	beego.Router("/resource/getParentResourceList", &controllers.ResourceController{}, "*:GetParentResourceList")
 	beego.Router("/resource/delete", &controllers.ResourceController{}, "*:Delete")
 	beego.Router("/resource/resourceTree", &controllers.ResourceController{}, "*:ResourceTree")
 

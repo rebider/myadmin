@@ -30,7 +30,7 @@ func (c *ResourceController) List() {
 	logs.Info("查询资源列表")
 	//fmt.Println(params)
 	//获取数据列表和总数
-	data := models.ResourceList()
+	data := models.TranResourceList2ResourceTree(models.ResourceList())
 	result := make(map[string]interface{})
 	//result["total"] = total
 	result["rows"] = data
@@ -43,9 +43,16 @@ func (c *ResourceController) ResourceTree() {
 }
 
 //ParentTreeGrid 获取可以成为某节点的父节点列表
-func (c *ResourceController) ParentTreeGrid() {
-	Id, _ := c.GetInt("id", 0)
-	tree := models.ResourceTreeGrid4Parent(Id)
+func (c *ResourceController) GetParentResourceList() {
+	//Id, _ := c.GetInt("id", 0)
+	var params struct {
+		Id int `json:"id"`
+	}
+
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Debug("获取可以成为某节点的父节点列表:%+v", params)
+	tree := models.ResourceTreeGrid4Parent(params.Id)
 	////转换UrlFor 2 LinkUrl
 	//c.UrlFor2Link(tree)
 	c.Result(enums.CodeSuccess, "", tree)
@@ -83,12 +90,11 @@ func (c *ResourceController) Edit() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err, "编辑资源")
 	logs.Info("编辑资源:%+v", m)
-	logs.Info("编辑资源:%+v", m.Parent)
 	//var err error
 	o := orm.NewOrm()
 	parent := &models.Resource{}
 	//m := models.Resource{}
-	parentId := m.Parent.Id
+	parentId := m.ParentId
 	//parentId, _ := c.GetInt("Parent", 0)
 	//获取form里的值
 	//if err = c.ParseForm(&m); err != nil {
