@@ -143,7 +143,7 @@ func (c *BaseController) setUser2Session(userId int) error {
 		return err
 	}
 	//获取这个用户能获取到的所有资源列表
-	resourceList := models.ResourceTreeGridByUserId(userId, 1000)
+	resourceList := models.GetResourceListByUserId(userId, 1)
 	logs.Info("8888888:%+v",   resourceList)
 	for _, item := range resourceList {
 		logs.Info("99999:%+v",   strings.TrimSpace(item.UrlFor))

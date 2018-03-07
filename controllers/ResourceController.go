@@ -25,34 +25,6 @@ func (c *ResourceController) Prepare() {
 	//这里注释了权限控制，因此这里需要登录验证
 	c.checkLogin()
 }
-//func (c *ResourceController) Index() {
-//	//需要权限控制
-//	c.checkAuthor()
-//	//将页面左边菜单的某项激活
-//	//c.Data["activeSidebarUrl"] = c.URLFor(c.controllerName + "." + c.actionName)
-//	c.setTpl()
-//	c.LayoutSections = make(map[string]string)
-//	c.LayoutSections["headcssjs"] = "resource/index_headcssjs.html"
-//	c.LayoutSections["footerjs"] = "resource/index_footerjs.html"
-//	//页面里按钮权限控制
-//	c.Data["canEdit"] = c.checkActionAuthor("ResourceController", "Edit")
-//	c.Data["canDelete"] = c.checkActionAuthor("ResourceController", "Delete")
-//}
-
-// @Title 获取资源列表1
-// @Description 获取资源列表
-// @Success 200 {object} models.GameServer
-// @Failure 400 Invalid email supplied
-// @Failure 404 User not found
-// @router /resource/List [get]
-//TreeGrid 获取所有资源的列表
-//func (c *ResourceController) List() {
-//	tree := models.ResourceTreeGrid()
-//	//转换UrlFor 2 LinkUrl
-//	//c.UrlFor2Link(tree)
-//	logs.Debug("tree:%v", tree)
-//	c.Result(enums.JRCodeSucc, "", tree)
-//}
 
 func (c *ResourceController) List() {
 	logs.Info("查询资源列表")
@@ -70,24 +42,12 @@ func (c *ResourceController) ResourceTree() {
 	c.Result(enums.CodeSuccess, "获取资源树成功", models.TranResourceList2ResourceTree(models.ResourceList()))
 }
 
-////UserMenuTree 获取用户有权管理的菜单、区域列表
-//func (c *ResourceController) UserMenuTree() {
-//	userid := c.curUser.Id
-//	//获取用户有权管理的菜单列表（包括区域）
-//	tree := models.ResourceTreeGridByUserId(userid, 1)
-//	//转换UrlFor 2 LinkUrl
-//
-//	c.UrlFor2Link(tree)
-//	c.Result(enums.CodeSuccess, "", tree)
-//}
-
-
 //ParentTreeGrid 获取可以成为某节点的父节点列表
 func (c *ResourceController) ParentTreeGrid() {
 	Id, _ := c.GetInt("id", 0)
 	tree := models.ResourceTreeGrid4Parent(Id)
-	//转换UrlFor 2 LinkUrl
-	c.UrlFor2Link(tree)
+	////转换UrlFor 2 LinkUrl
+	//c.UrlFor2Link(tree)
 	c.Result(enums.CodeSuccess, "", tree)
 }
 
