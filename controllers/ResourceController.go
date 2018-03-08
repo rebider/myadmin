@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/models"
@@ -33,6 +32,7 @@ func (c *ResourceController) List() {
 	data := models.TranResourceList2ResourceTree(models.ResourceList())
 	result := make(map[string]interface{})
 	//result["total"] = total
+	c.UrlFor2Link(data)
 	result["rows"] = data
 	//c.Data["json"] = result
 	c.Result(enums.CodeSuccess, "获取资源列表成功", result)
@@ -80,7 +80,8 @@ func (c *ResourceController) UrlFor2LinkOne(urlfor string) string {
 //UrlFor2Link 使用URLFor方法，批量将资源表里的UrlFor值转成LinkUrl
 func (c *ResourceController) UrlFor2Link(src []*models.Resource) {
 	for _, item := range src {
-		item.LinkUrl = c.UrlFor2LinkOne(item.UrlFor)
+		item.Url = c.UrlFor2LinkOne(item.UrlFor)
+		c.UrlFor2Link(item.Children)
 	}
 }
 
@@ -109,6 +110,11 @@ func (c *ResourceController) Edit() {
 			c.Result(enums.CodeFail, "父节点无效", "")
 		}
 	}
+	if m.Type == 1 {
+		if c.UrlFor2LinkOne(m.UrlFor) == "" {
+			c.Result(enums.CodeFail, "控制器解析失败: " + m.UrlFor, "")
+		}
+	}
 	if m.Id == 0 {
 		if _, err = o.Insert(&m); err == nil {
 			c.Result(enums.CodeSuccess, "添加成功", m.Id)
@@ -117,6 +123,11 @@ func (c *ResourceController) Edit() {
 		}
 
 	} else {
+		if parentId > 0 {
+			if models.CanParent(m.Id, parentId) == false {
+				c.Result(enums.CodeFail, "请重新选择父节点", "")
+			}
+		}
 		if _, err = o.Update(&m); err == nil {
 			c.Result(enums.CodeSuccess, "编辑成功", m.Id)
 		} else {
@@ -125,47 +136,17 @@ func (c *ResourceController) Edit() {
 	}
 }
 
-
 // Delete 删除
 func (c *ResourceController) Delete() {
-	var m  []int
+	var m []int
 	json.Unmarshal(c.Ctx.Input.RequestBody, &m)
-	logs.Info("删除资源:%+v",  m)
+	logs.Info("删除资源:%+v", m)
 	query := orm.NewOrm().QueryTable(models.ResourceTBName())
 	if _, err := query.Filter("id", m[0]).Delete(); err == nil {
 		c.Result(enums.CodeSuccess, fmt.Sprintf("删除成功"), 0)
 	} else {
 		c.Result(enums.CodeFail, "删除失败", 0)
 	}
-}
-
-// Select 通用选择面板
-func (c *ResourceController) Select() {
-	//获取调用者的类别 1表示 角色
-	desttype, _ := c.GetInt("desttype", 0)
-	//获取调用者的值
-	destval, _ := c.GetInt("destval", 0)
-	//返回的资源列表
-	var selectedIds []string
-	o := orm.NewOrm()
-	if desttype > 0 && destval > 0 {
-		//如果都大于0,则获取已选择的值，例如：角色，就是获取某个角色已关联的资源列表
-		switch desttype {
-		case 1:
-			{
-				role := models.Role{Id: destval}
-				o.LoadRelated(&role, "RoleResourceRel")
-				for _, item := range role.RoleResourceRel {
-					selectedIds = append(selectedIds, strconv.Itoa(item.Resource.Id))
-				}
-			}
-		}
-	}
-	c.Data["selectedIds"] = strings.Join(selectedIds, ",")
-	//c.setTpl("resource/select.html", "shared/layout_pullbox.html")
-	c.LayoutSections = make(map[string]string)
-	c.LayoutSections["headcssjs"] = "resource/select_headcssjs.html"
-	c.LayoutSections["footerjs"] = "resource/select_footerjs.html"
 }
 
 //CheckUrlFor 填写UrlFor时进行验证

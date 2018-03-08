@@ -40,7 +40,6 @@ func init() {
 	beego.Router("/resource/resourceTree", &controllers.ResourceController{}, "*:ResourceTree")
 
 	//通用选择面板
-	beego.Router("/resource/select", &controllers.ResourceController{}, "Get:Select")
 	//beego.Router("/resource/usermenutree", &controllers.ResourceController{}, "POST:UserMenuTree")
 	beego.Router("/resource/checkurlfor", &controllers.ResourceController{}, "POST:CheckUrlFor")
 

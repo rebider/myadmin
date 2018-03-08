@@ -26,18 +26,14 @@ type Resource struct {
 	Id    int    `json:"id"`
 	Title string `orm:"size(64)" json:"title"` //标题
 	Name  string `orm:"size(64)" json:"name"`
-	//Component            string    `orm:"size(64)" json:"component"`
 	Parent          *Resource          `orm:"null;rel(fk) " json:"-"` // RelForeignKey relation
 	ParentId        int                `orm:"-" json:"parentId"`             // RelForeignKey relation
 	Type            int                `json:"type"`
 	Seq             int                `json:"seq"`
 	Children        []*Resource        `orm:"reverse(many)" json:"children"` // fk 的反向关系
-	SonNum          int                `orm:"-" json:"-"`
 	Icon            string             `orm:"size(32)" json:"icon"`
-	LinkUrl         string             `orm:"-" json:"-"`
-	UrlFor          string             `orm:"size(256)" json:"path"`
-	HtmlDisabled    int                `orm:"-" json:"-"`             //在html里应用时是否可用
-	Level           int                `orm:"-" json:"-"`             //第几级，从0开始
+	UrlFor          string             `orm:"size(256)" json:"urlFor"`
+	Url          string             	`orm:"-" json:"url"`
 	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
 }
 
@@ -48,7 +44,10 @@ func ResourceOne(id int) (*Resource, error) {
 	if err != nil {
 		return nil, err
 	}
-	m.ParentId = m.Parent.Id
+	if m.Parent != nil {
+		m.ParentId = m.Parent.Id
+	}
+
 	return &m, nil
 }
 
@@ -58,7 +57,10 @@ func ResourceList() []*Resource {
 	data := make([]*Resource, 0)
 	query.All(&data)
 	for _,e:= range data {
-		e.ParentId = e.Parent.Id
+		if e.Parent != nil {
+			e.ParentId = e.Parent.Id
+		}
+
 	}
 	//total, _ := query.Count()
 	return data
@@ -85,16 +87,16 @@ func ResourceTreeGrid4Parent(id int) []*Resource {
 	//return TranResourceList2ResourceTree(tmpList)
 }
 
-func CanParent(resourceId int, thisResourceId int) bool {
-	thisResource, _ := ResourceOne(thisResourceId)
-	if thisResource.Parent.Id == resourceId || resourceId == thisResourceId {
+func CanParent(resourceId int, parentResourceId int) bool {
+	parentResource, _ := ResourceOne(parentResourceId)
+	if (parentResource.Parent != nil && parentResource.Parent.Id == resourceId) || resourceId == parentResourceId {
 		//logs.Debug("CanParent:%+v %+v %+v", resourceId, thisResourceId, thisResource.Parent.Id)
 		return false
 	}
-	if thisResource.Parent.Id == 0 {
+	if parentResource.Parent == nil || parentResource.Parent.Id == 0 {
 		return true
 	}
-	return CanParent(resourceId, thisResource.Parent.Id)
+	return CanParent(resourceId, parentResource.Parent.Id)
 }
 
 //根据用户获取有权管理的资源列表
@@ -123,7 +125,9 @@ func GetResourceListByUserId(userId, maxrtype int) []*Resource {
 	o.Raw(sql, userId, maxrtype).QueryRows(&list)
 	result := list
 	for _,e:= range list {
-		e.ParentId = e.Parent.Id
+		if e.Parent != nil {
+			e.ParentId = e.Parent.Id
+		}
 	}
 	return result
 }
