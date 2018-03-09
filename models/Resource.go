@@ -111,18 +111,19 @@ func GetResourceListByUserId(userId, maxrtype int) []*Resource {
 	}
 
 	var sql string
-	//if user.IsSuper == true {
-	//	//如果是管理员，则查出所有的
-	//	sql = fmt.Sprintf(`SELECT id,name,parent_id,rtype,icon,seq,url_for FROM %s Where rtype <= ? Order By seq asc,Id asc`, ResourceTBName())
-	//	o.Raw(sql, maxrtype).QueryRows(&list)
-	//} else {
-	//	//联查多张表，找出某用户有权管理的
-	sql = fmt.Sprintf(`SELECT DISTINCT T2.*
+	if user.IsSuper == 1 {
+		//如果是管理员，则查出所有的
+		sql = fmt.Sprintf(`SELECT * FROM %s Where type <= ? Order By seq asc,Id asc`, ResourceTBName())
+		o.Raw(sql, maxrtype).QueryRows(&list)
+	} else {
+		//	//联查多张表，找出某用户有权管理的
+		sql = fmt.Sprintf(`SELECT DISTINCT T2.*
 		FROM %s AS T0
 		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
 		INNER JOIN %s AS T2 ON T2.id = T0.resource_id
 		WHERE T1.user_id = ? and T2.type <= ?  Order By T2.seq asc,T2.id asc`, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
-	o.Raw(sql, userId, maxrtype).QueryRows(&list)
+		o.Raw(sql, userId, maxrtype).QueryRows(&list)
+	}
 	result := list
 	for _,e:= range list {
 		if e.Parent != nil {

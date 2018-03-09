@@ -12,24 +12,21 @@ func (a *User) TableName() string {
 
 type UserQueryParam struct {
 	BaseQueryParam
-	Account      string //模糊查询
-	//NameLike     string //模糊查询
-	//Mobile       string //精确查询
-	//SearchStatus string //为空不查询，有值精确查询
+	Account string
 }
 type User struct {
-	Id             int
-	Name           string `orm:"size(32)"`
-	Account        string `orm:"size(24);unique"`
-	Password       string `json:"-"`
-	//IsSuper        string `json:"is_super"`
-	ModifyPassword string `json:"Password" orm:"-"`
-	Status             int
+	Id                 int            `json:"id"`
+	Name               string         `orm:"size(32)" json:"name"`
+	Account            string         `orm:"size(24);unique" json:"account"`
+	Password           string         `json:"-"`
+	IsSuper            int            `json:"is_super"`
+	ModifyPassword     string         `json:"Password" orm:"-"`
+	Status             int            `json:"status"`
 	LoginTimes         int
-	LastLoginTime      int
-	LastLoginIp        string
+	LastLoginTime      int            `json:"last_login_time"`
+	LastLoginIp        string         `json:"last_login_ip"`
 	Mobile             string         `orm:"size(16)"`
-	RoleIds            []int          `orm:"-"`
+	RoleIds            []int          `orm:"-" json:"roleIds"`
 	RoleUserRel        []*RoleUserRel `json:"-" orm:"reverse(many)"` // 设置一对多的反向关系
 	ResourceUrlForList []string       `orm:"-"`
 }
@@ -48,13 +45,6 @@ func UserPageList(params *UserQueryParam) ([]*User, int64) {
 		sortOrder = "-" + sortOrder
 	}
 	query = query.Filter("account__istartswith", params.Account)
-	//query = query.Filter("name__istartswith", params.NameLike)
-	//if len(params.Mobile) > 0 {
-	//	query = query.Filter("mobile", params.Mobile)
-	//}
-	//if len(params.SearchStatus) > 0 {
-	//	query = query.Filter("status", params.SearchStatus)
-	//}
 
 	query.RelatedSel().OrderBy(sortOrder).Limit(params.Limit, params.Offset).All(&data)
 	for _, v := range data {

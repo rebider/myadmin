@@ -62,13 +62,11 @@ func init() {
 
 	//游戏服
 	beego.Router("/game_server/list", &controllers.GameServerController{}, "*:List")
-	beego.Router("/game_server/datagrid", &controllers.GameServerController{}, "POST:DataGrid")
 	beego.Router("/game_server/edit/?:id", &controllers.GameServerController{}, "*:Edit")
-	beego.Router("/game_server/delete", &controllers.GameServerController{}, "Post:Delete")
+	beego.Router("/game_server/delete", &controllers.GameServerController{}, "*:Delete")
 
 	//节点
 	beego.Router("/server_node/list", &controllers.ServerNodeController{}, "*:List")
-	beego.Router("/server_node/datagrid", &controllers.ServerNodeController{}, "POST:DataGrid")
 	beego.Router("/server_node/edit/?:node", &controllers.ServerNodeController{}, "*:Edit")
 	beego.Router("/server_node/delete", &controllers.ServerNodeController{}, "Post:Delete")
 

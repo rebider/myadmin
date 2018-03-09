@@ -2,8 +2,6 @@ package models
 
 import (
 	"github.com/astaxie/beego/orm"
-	//"sort"
-	//"sort"
 	"github.com/chnzrb/myadmin/utils"
 	"sort"
 )
@@ -19,11 +17,11 @@ type RoleQueryParam struct {
 
 //用户角色
 type Role struct {
-	Id                 int    `form:"id" json:"id"`
-	Name               string `form:"name" json:"name"`
-	ResourceIds         [] int `orm:"-" json:"resourceIds"`
-	RoleResourceRel    []*RoleResourceRel    `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
-	RoleUserRel []*RoleUserRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
+	Id              int                `form:"id" json:"id"`
+	Name            string             `form:"name" json:"name"`
+	ResourceIds     [] int             `orm:"-" json:"resourceIds"`
+	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
+	RoleUserRel     []*RoleUserRel     `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
 }
 
 //获取分页数据

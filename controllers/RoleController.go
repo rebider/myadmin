@@ -6,8 +6,6 @@ import (
 	"github.com/chnzrb/myadmin/models"
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
-	//"strconv"
-	//"strings"
 	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego/logs"
 )
@@ -17,32 +15,16 @@ type RoleController struct {
 	BaseController
 }
 
-//Prepare 参考beego官方文档说明
 func (c *RoleController) Prepare() {
 	//先执行
 	c.BaseController.Prepare()
 	//如果一个Controller的多数Action都需要权限控制，则将验证放到Prepare
-	c.checkAuthor("DataGrid", "DataList", "UpdateSeq")
+	c.checkAuthor()
 	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
 	//权限控制里会进行登录验证，因此这里不用再作登录验证
 	//c.checkLogin()
 }
 
-//Index 角色管理首页
-func (c *RoleController) Index() {
-	//是否显示更多查询条件的按钮
-	c.Data["showMoreQuery"] = true
-	//将页面左边菜单的某项激活
-	//c.Data["activeSidebarUrl"] = c.URLFor(c.controllerName + "." + c.actionName)
-	//c.setTpl()
-	c.LayoutSections = make(map[string]string)
-	c.LayoutSections["headcssjs"] = "role/index_headcssjs.html"
-	c.LayoutSections["footerjs"] = "role/index_footerjs.html"
-	//页面里按钮权限控制
-	c.Data["canEdit"] = c.checkActionAuthor("RoleController", "Edit")
-	c.Data["canDelete"] = c.checkActionAuthor("RoleController", "Delete")
-	c.Data["canAllocate"] = c.checkActionAuthor("RoleController", "Allocate")
-}
 
 // DataGrid 角色管理首页 表格获取数据
 func (c *RoleController) List() {
@@ -89,42 +71,8 @@ func (c *RoleController) Edit() {
 	}
 }
 
-//
-////Save 添加、编辑页面 保存
-//func (c *RoleController) Save() {
-//	var err error
-//	m := models.Role{}
-//	//获取form里的值
-//	if err = c.ParseForm(&m); err != nil {
-//		c.jsonResult(enums.JRCodeFailed, "获取数据失败", m.Id)
-//	}
-//	o := orm.NewOrm()
-//	if m.Id == 0 {
-//		if _, err = o.Insert(&m); err == nil {
-//			c.jsonResult(enums.JRCodeSucc, "添加成功", m.Id)
-//		} else {
-//			c.jsonResult(enums.JRCodeFailed, "添加失败", m.Id)
-//		}
-//
-//	} else {
-//		if _, err = o.Update(&m); err == nil {
-//			c.jsonResult(enums.JRCodeSucc, "编辑成功", m.Id)
-//		} else {
-//			c.jsonResult(enums.JRCodeFailed, "编辑失败", m.Id)
-//		}
-//	}
-//
-//}
-
 //Delete 批量删除
 func (c *RoleController) Delete() {
-	//strs := c.GetString("ids")
-	//ids := make([]int, 0, len(strs))
-	//for _, str := range strings.Split(strs, ",") {
-	//	if id, err := strconv.Atoi(str); err == nil {
-	//		ids = append(ids, id)
-	//	}
-	//}
 	var ids []int
 	json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
 	logs.Info("删除角色:%+v", ids)
@@ -148,7 +96,6 @@ func (c *RoleController) Allocate() {
 
 	roleId := params.Id
 	resourceIds := params.ResourceIds
-	//strs := c.GetString("ids")
 
 	o := orm.NewOrm()
 	m := models.Role{Id: roleId}
@@ -161,19 +108,11 @@ func (c *RoleController) Allocate() {
 	}
 	var relations []models.RoleResourceRel
 	for _, id := range resourceIds {
-		//if id, err := strconv.Atoi(str); err == nil {
 		r := models.Resource{Id: id}
 		relation := models.RoleResourceRel{Role: &m, Resource: &r}
 		relations = append(relations, relation)
 		//}
 	}
-	//for _, str := range strings.Split(strs, ",") {
-	//	if id, err := strconv.Atoi(str); err == nil {
-	//		r := models.Resource{Id: id}
-	//		relation := models.RoleResourceRel{Role: &m, Resource: &r}
-	//		relations = append(relations, relation)
-	//	}
-	//}
 	if len(relations) > 0 {
 		//批量添加
 		if _, err := o.InsertMulti(len(relations), relations); err == nil {
@@ -182,19 +121,3 @@ func (c *RoleController) Allocate() {
 	}
 	c.Result(0, "保存失败", "")
 }
-
-//func (c *RoleController) UpdateSeq() {
-//	Id, _ := c.GetInt("pk", 0)
-//	oM, err := models.RoleOne(Id)
-//	if err != nil || oM == nil {
-//		c.jsonResult(enums.JRCodeFailed, "选择的数据无效", 0)
-//	}
-//	value, _ := c.GetInt("value", 0)
-//	oM.Seq = value
-//	o := orm.NewOrm()
-//	if _, err := o.Update(oM); err == nil {
-//		c.jsonResult(enums.JRCodeSucc, "修改成功", oM.Id)
-//	} else {
-//		c.jsonResult(enums.JRCodeFailed, "修改失败", oM.Id)
-//	}
-//}

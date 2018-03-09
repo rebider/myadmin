@@ -12,33 +12,36 @@ type GameServerQueryParam struct {
 }
 
 type GameServer struct {
-	PlatformId int
-	Sid        string `orm:"pk"`
-	Desc       string
-	Node       string
-	PlatformName string `orm:"-"`
+	PlatformId   int    `json:"platform_id"`
+	Sid          string `orm:"pk" json:"server_id"`
+	Desc         string `json:"desc"`
+	Node         string `json:"node"`
+	PlatformName string `orm:"-" json:"platform_name"`
 }
 
 func (t *GameServer) TableName() string {
 	return "c_game_server"
 }
 func (t *GameServer) fill() *GameServer {
+	//logs.Debug("fill:%+v", t)
 	t.PlatformName = GetPlatformName(t.PlatformId)
 	return t
 }
-func fillGameServerList(gameServerList []*GameServer) []*GameServer{
-	for _,g := range gameServerList{
+func fillGameServerList(gameServerList []*GameServer) []*GameServer {
+	for _, g := range gameServerList {
 		g.fill()
 	}
 	return gameServerList
 }
+
 //获取所有数据
-func GetAllGameServer() ([]*GameServer, int64){
+func GetAllGameServer() ([]*GameServer, int64) {
 	var params GameServerQueryParam
 	//获取数据列表和总数
 	data, total := GetGameServerList(&params)
 	return data, total
 }
+
 //获取数据列表
 func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	o := orm.NewOrm()
@@ -55,20 +58,22 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	if params.Order == "descending" {
 		sortorder = "-" + sortorder
 	}
-	if params.PlatformId != "" && params.PlatformId != "-1"{
+	if params.PlatformId != "" && params.PlatformId != "-1" {
 		query = query.Filter("platform_id", params.PlatformId)
 	}
-	if params.Node != ""{
+	if params.Node != "" {
 		query = query.Filter("node__contains", params.Node)
 	}
 	total, _ := query.Count()
+	//logs.Debug("total:%+v       %+v ", total, params)
 	data := make([]*GameServer, total)
 	query.OrderBy(sortorder).Limit(params.Limit, params.Offset).All(&data)
+	//logs.Debug("data:%+v", data)
 	return fillGameServerList(data), total
 }
 func GetGameServer(platformId int, id string) (*GameServer, error) {
 	gameServer := &GameServer{
-		Sid:         id,
+		Sid:        id,
 		PlatformId: platformId,
 	}
 
@@ -80,4 +85,3 @@ func GetGameServer(platformId int, id string) (*GameServer, error) {
 	}
 	return gameServer.fill(), nil
 }
-

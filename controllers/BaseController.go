@@ -25,43 +25,17 @@ func (c *BaseController) AllowCross() {
 
 func (c *BaseController) Prepare() {
 	c.AllowCross()
-	//controllerName, actionName := c.GetControllerAndAction()
 	//从Session里获取数据 设置用户信息
 	c.adapterUserInfo()
-	//userId := c.curUser.Id
-	//logs.Debug("BaseController Prepare()")
-	//if userId > 0 {
-	//	c.Data["activeSidebarUrl"] = c.URLFor(controllerName + "." + actionName)
-	//	c.ShowSidebar(userId)
-	//}
 }
 
 func (c *BaseController) CheckError(err error, msg... string) {
 	if err != nil {
 		errMsg := fmt.Sprintf("%s %v", msg, err)
 		logs.GetBeeLogger().Error(errMsg)
-		c.Result(enums.CodeFail, "[ERROR]" + errMsg, "")
+		c.Result(enums.CodeFail, "[ERROR] " + errMsg, "")
 	}
 }
-
-//func (c *BaseController) UrlFor2LinkOne(urlfor string) string {
-//	if len(urlfor) == 0 {
-//		return ""
-//	}
-//	// ResourceController.Edit,:id,1
-//	strs := strings.Split(urlfor, ",")
-//	if len(strs) == 1 {
-//		return c.URLFor(strs[0])
-//	} else if len(strs) > 1 {
-//		var values []interface{}
-//		for _, val := range strs[1:] {
-//			values = append(values, val)
-//		}
-//		return c.URLFor(strs[0], values...)
-//	}
-//	return ""
-//}
-
 
 // checkLogin判断用户是否登录，未登录则跳转至登录页面
 // 一定要在BaseController.Prepare()后执行
@@ -70,6 +44,7 @@ func (c *BaseController) checkLogin() {
 		c.Result(enums.CodeNoLogin, "未登录", "")
 	}
 }
+
 //是否登录
 func (c *BaseController) IsLogin() bool{
 	return c.curUser.Id > 0
@@ -86,13 +61,12 @@ func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
 	v, ok := user.(models.User)
 	if ok {
 		//如果是超级管理员，则直接通过
-		//if v.IsSuper == true {
-		//	return true
-		//}
-		logs.Debug("checkActionAuthor: %+v%+v%+v", ctrlName, ActName, v.ResourceUrlForList)
+		if v.IsSuper == 1 {
+			return true
+		}
+		//logs.Debug("checkActionAuthor: %+v%+v%+v", ctrlName, ActName, v.ResourceUrlForList)
 		//遍历用户所负责的资源列表
 		for _, v := range v.ResourceUrlForList {
-			logs.Debug("v: %+v", ctrlName+"."+ActName)
 			if v == ctrlName+"."+ActName {
 				return true
 			}
@@ -117,8 +91,7 @@ func (c *BaseController) checkAuthor(ignores ...string) {
 		}
 	}
 
-	hasAuthor := true
-	//hasAuthor := c.checkActionAuthor(controllerName, actionName)
+	hasAuthor := c.checkActionAuthor(controllerName, actionName)
 	if !hasAuthor {
 		logs.Error(fmt.Sprintf("无权访问!!! 路径: %s.%s, 用户: %v.", controllerName, actionName, c.curUser.Id))
 		//如果没有权限
@@ -130,9 +103,7 @@ func (c *BaseController) checkAuthor(ignores ...string) {
 func (c *BaseController) adapterUserInfo() {
 	a := c.GetSession("user")
 	if a != nil {
-		logs.Debug("从session里取用户信息:%+v", a)
 		c.curUser = a.(models.User)
-		//c.Data["user"] = a
 	}
 }
 
@@ -144,21 +115,16 @@ func (c *BaseController) setUser2Session(userId int) error {
 	}
 	//获取这个用户能获取到的所有资源列表
 	resourceList := models.GetResourceListByUserId(userId, 1)
-	logs.Info("8888888:%+v",   resourceList)
 	for _, item := range resourceList {
-		logs.Info("99999:%+v",   strings.TrimSpace(item.UrlFor))
 		m.ResourceUrlForList = append(m.ResourceUrlForList, strings.TrimSpace(item.UrlFor))
 	}
 	c.SetSession("user", *m)
-	logs.Info("setUser2Session:%+v",   *m)
 	return nil
 }
 
 func (c *BaseController) Result(code enums.JsonResultCode, msg string, data interface{}) {
-	//c.AllowCross()
 	r := &models.Result{Code:code, Data:data, Msg:msg}
 	c.Data["json"] = r
-	//c.AllowCross()
 	c.ServeJSON()
 	c.StopRun()
 }

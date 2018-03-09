@@ -1,13 +1,8 @@
 package controllers
 
 import (
-	//"strings"
-
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/models"
-	//"github.com/astaxie/beego/logs"
-	"strconv"
-	//"github.com/chnzrb/myadmin/utils"
 )
 
 type UserCenterController struct {
@@ -24,22 +19,10 @@ func (c *UserCenterController) Info() {
 	Id := c.curUser.Id
 	m, err := models.UserOne(Id)
 	c.CheckError(err, "用户不存在")
-	//if m == nil || err != nil {
-	//	logs.Error(err)
-	//	c.pageError("数据无效，请刷新后重试")
-	//}
 
-
-	roleIds := make([] string, len(m.RoleIds))
-	//logs.Debug("roleIds:%v", m.RoleIds)
-	for i, e := range m.RoleIds{
-		//t, _:= strconv.Atoi(e)
-		roleIds[i] = strconv.Itoa(e)
-	}
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
-			Roles []string `json:"roles"`
-			Name string `json:"name"`
+			Name         string             `json:"name"`
 			ResourceTree []*models.Resource `json:"menuTree"`
-		}{Roles: roleIds, Name:m.Name, ResourceTree: models.TranResourceList2ResourceTree(models.GetResourceListByUserId(Id, 0))})
+		}{Name: m.Name, ResourceTree: models.TranResourceList2ResourceTree(models.GetResourceListByUserId(Id, 0))})
 }
