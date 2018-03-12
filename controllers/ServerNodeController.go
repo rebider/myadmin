@@ -14,13 +14,13 @@ import (
 type ServerNodeController struct {
 	BaseController
 }
-
-func (c *ServerNodeController) Prepare() {
-	//先执行
-	c.BaseController.Prepare()
-	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
-	c.checkLogin()
-}
+//
+//func (c *ServerNodeController) Prepare() {
+//	//先执行
+//	c.BaseController.Prepare()
+//	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
+//	c.checkLogin()
+//}
 // DataGrid 角色管理首页 表格获取数据
 func (c *ServerNodeController) List() {
 	//直接反序化获取json格式的requestbody里的值

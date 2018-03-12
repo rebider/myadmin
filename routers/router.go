@@ -3,7 +3,6 @@ package routers
 
 import (
 	"github.com/chnzrb/myadmin/controllers"
-
 	"github.com/astaxie/beego"
 )
 // @APIVersion 1.0.0
@@ -25,36 +24,36 @@ func init() {
 		),
 	)
 	beego.AddNamespace(ns)
-	//角色路由
+
+
+	//角色
 	beego.Router("/role/list", &controllers.RoleController{}, "*:List")
 	beego.Router("/role/edit/?:id", &controllers.RoleController{}, "*:Edit")
 	beego.Router("/role/delete", &controllers.RoleController{}, "*:Delete")
 	beego.Router("/role/allocate", &controllers.RoleController{}, "*:Allocate")
 
 
-	//资源路由
+	//资源
 	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
 	beego.Router("/resource/edit/?:id", &controllers.ResourceController{}, "*:Edit")
 	beego.Router("/resource/getParentResourceList", &controllers.ResourceController{}, "*:GetParentResourceList")
 	beego.Router("/resource/delete", &controllers.ResourceController{}, "*:Delete")
 	beego.Router("/resource/resourceTree", &controllers.ResourceController{}, "*:ResourceTree")
-
-	//通用选择面板
-	//beego.Router("/resource/usermenutree", &controllers.ResourceController{}, "POST:UserMenuTree")
 	beego.Router("/resource/checkurlfor", &controllers.ResourceController{}, "POST:CheckUrlFor")
 
-	//后台用户路由
+	//用户
 	beego.Router("/user/list", &controllers.UserController{}, "*:List")
 	beego.Router("/user/edit/?:id", &controllers.UserController{}, "*:Edit")
 	beego.Router("/user/delete", &controllers.UserController{}, "*:Delete")
+	beego.Router("/user/info", &controllers.UserController{}, "*:Info")
+	beego.Router("/user/changePassword", &controllers.UserController{}, "*:ChangePassword")
 
 	//登录
 	beego.Router("/login", &controllers.LoginController{}, "*:Login")
 	beego.Router("/logout", &controllers.LoginController{}, "*:Logout")
 
-	//后台用户中心
-	beego.Router("/user/info", &controllers.UserCenterController{}, "*:Info")
-	beego.Router("/user/changePassword", &controllers.UserController{}, "*:ChangePassword")
+
+
 
 	//工具
 	beego.Router("/tool/build", &controllers.ToolController{}, "*:Build")

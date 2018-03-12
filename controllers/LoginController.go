@@ -24,7 +24,7 @@ func (c *LoginController) Login() {
 	account := params.Account
 	password := params.Password
 	if len(account) == 0 || len(password) == 0 {
-		c.Result(enums.CodeFail, "用户名和密码不正确", "")
+		c.Result(enums.CodeFail, "请输入用户名和密码", "")
 	}
 	password = utils.String2md5(password)
 	user, err := models.UserOneByAccount(account, password)

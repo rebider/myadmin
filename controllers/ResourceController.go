@@ -15,26 +15,12 @@ type ResourceController struct {
 	BaseController
 }
 
-func (c *ResourceController) Prepare() {
-	//先执行
-	c.BaseController.Prepare()
-	//如果一个Controller的少数Action需要权限控制，则将验证放到需要控制的Action里
-	//c.checkAuthor("TreeGrid", "UserMenuTree", "ParentTreeGrid", "Select")
-	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
-	//这里注释了权限控制，因此这里需要登录验证
-	c.checkLogin()
-}
-
 func (c *ResourceController) List() {
-	logs.Info("查询资源列表")
-	//fmt.Println(params)
 	//获取数据列表和总数
 	data := models.TranResourceList2ResourceTree(models.ResourceList())
 	result := make(map[string]interface{})
-	//result["total"] = total
 	c.UrlFor2Link(data)
 	result["rows"] = data
-	//c.Data["json"] = result
 	c.Result(enums.CodeSuccess, "获取资源列表成功", result)
 }
 
@@ -111,7 +97,8 @@ func (c *ResourceController) Edit() {
 		}
 	}
 	if m.Type == 1 {
-		if c.UrlFor2LinkOne(m.UrlFor) == "" {
+		if c.UrlFor2LinkOne(m.UrlFor) != "" || strings.Contains(m.UrlFor, ".*"){
+		} else {
 			c.Result(enums.CodeFail, "控制器解析失败: " + m.UrlFor, "")
 		}
 	}

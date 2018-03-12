@@ -15,15 +15,18 @@ type UserController struct {
 	BaseController
 }
 
-func (c *UserController) Prepare() {
-	//先执行
-	c.BaseController.Prepare()
-	//如果一个Controller的多数Action都需要权限控制，则将验证放到Prepare
-	c.checkAuthor("ChangePassword")
-	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
-	//权限控制里会进行登录验证，因此这里不用再作登录验证
-	//c.checkLogin()
+func (c *UserController) Info() {
+	//Id := c.curUser.Id
+	//m, err := models.UserOne(Id)
+	//c.CheckError(err, "用户不存在")
+	m := c.curUser
+	c.Result(enums.CodeSuccess, "获取用户信息成功",
+		struct {
+			Name         string             `json:"name"`
+			ResourceTree []*models.Resource `json:"menuTree"`
+		}{Name: m.Name, ResourceTree: models.TranResourceList2ResourceTree(models.GetResourceListByUserId(m.Id, 0))})
 }
+
 
 func (c *UserController) List() {
 	var params models.UserQueryParam

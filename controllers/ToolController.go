@@ -18,13 +18,13 @@ type ToolController struct {
 	BaseController
 }
 
-func (c *ToolController) Prepare() {
-	//先执行
-	c.BaseController.Prepare()
-	logs.Debug("ToolController Prepare()")
-	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
-	c.checkLogin()
-}
+//func (c *ToolController) Prepare() {
+//	//先执行
+//	c.BaseController.Prepare()
+//	logs.Debug("ToolController Prepare()")
+//	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
+//	c.checkLogin()
+//}
 func (c *ToolController) Build() {
 	//获取数据列表和总数
 	//gameServerList, _ := models.GetAllGameServer()

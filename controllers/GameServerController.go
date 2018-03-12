@@ -14,13 +14,13 @@ import (
 type GameServerController struct {
 	BaseController
 }
-
-func (c *GameServerController) Prepare() {
-	//先执行
-	c.BaseController.Prepare()
-	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
-	c.checkLogin()
-}
+//
+//func (c *GameServerController) Prepare() {
+//	//先执行
+//	c.BaseController.Prepare()
+//	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
+//	c.checkLogin()
+//}
 
 
 func (c *GameServerController) List() {
