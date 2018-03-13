@@ -121,7 +121,7 @@ func (c *BaseController) setUser2Session(userId int) error {
 	if err != nil {
 		return err
 	}
-	resourceList := models.GetResourceListByUserId(userId, 1)
+	resourceList := models.GetResourceListByUserId(userId)
 	for _, item := range resourceList {
 		m.ResourceUrlForList = append(m.ResourceUrlForList, strings.TrimSpace(item.UrlFor))
 	}

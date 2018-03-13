@@ -23,8 +23,8 @@ func (c *UserController) Info() {
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
 			Name         string             `json:"name"`
-			ResourceTree []*models.Resource `json:"menuTree"`
-		}{Name: m.Name, ResourceTree: models.TranResourceList2ResourceTree(models.GetResourceListByUserId(m.Id, 0))})
+			ResourceTree []*models.Menu `json:"menuTree"`
+		}{Name: m.Name, ResourceTree: models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id))})
 }
 
 

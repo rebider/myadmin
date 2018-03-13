@@ -41,6 +41,13 @@ func init() {
 	beego.Router("/resource/resourceTree", &controllers.ResourceController{}, "*:ResourceTree")
 	beego.Router("/resource/checkurlfor", &controllers.ResourceController{}, "POST:CheckUrlFor")
 
+	//菜单
+	beego.Router("/menu/list", &controllers.MenuController{}, "*:List")
+	beego.Router("/menu/edit/?:id", &controllers.MenuController{}, "*:Edit")
+	beego.Router("/menu/getParentMenuList", &controllers.MenuController{}, "*:GetParentMenuList")
+	beego.Router("/menu/delete", &controllers.MenuController{}, "*:Delete")
+	beego.Router("/menu/menuTree", &controllers.MenuController{}, "*:MenuTree")
+
 	//用户
 	beego.Router("/user/list", &controllers.UserController{}, "*:List")
 	beego.Router("/user/edit/?:id", &controllers.UserController{}, "*:Edit")

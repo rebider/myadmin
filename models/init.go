@@ -15,7 +15,8 @@ func init() {
 		new(RoleUserRel),
 		new(GameServer),
 		new(ServerNode),
-		//new(Menu),
+		new(Menu),
+		new(RoleMenuRel),
 		)
 }
 
@@ -35,10 +36,10 @@ func ResourceTBName() string {
 	return TableName("resource")
 }
 
-////获取 Menu 对应的表名称
-//func MenuTBName() string {
-//	return TableName("menu")
-//}
+//获取 Menu 对应的表名称
+func MenuTBName() string {
+	return TableName("menu")
+}
 
 //获取 Role 对应的表名称
 func RoleTBName() string {
@@ -48,6 +49,11 @@ func RoleTBName() string {
 //角色与资源多对多关系表
 func RoleResourceRelTBName() string {
 	return TableName("role_resource_rel")
+}
+
+//角色与菜单多对多关系表
+func RoleMenuRelTBName() string {
+	return TableName("role_menu_rel")
 }
 
 //角色与用户多对多关系表

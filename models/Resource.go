@@ -2,14 +2,8 @@ package models
 
 import (
 	"fmt"
-
 	"github.com/chnzrb/myadmin/utils"
-
 	"github.com/astaxie/beego/orm"
-	//"github.com/astaxie/beego/logs"
-	//"sort"
-	//"sort"
-	//"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego/logs"
 )
 
@@ -24,14 +18,10 @@ type ResourceQueryParam struct {
 //Resource 权限控制资源表
 type Resource struct {
 	Id    int    `json:"id"`
-	Title string `orm:"size(64)" json:"title"` //标题
 	Name  string `orm:"size(64)" json:"name"`
 	Parent          *Resource          `orm:"null;rel(fk) " json:"-"` // RelForeignKey relation
 	ParentId        int                `orm:"-" json:"parentId"`             // RelForeignKey relation
-	Type            int                `json:"type"`
-	Seq             int                `json:"seq"`
 	Children        []*Resource        `orm:"reverse(many)" json:"children"` // fk 的反向关系
-	Icon            string             `orm:"size(32)" json:"icon"`
 	UrlFor          string             `orm:"size(256)" json:"urlFor"`
 	Url          string             	`orm:"-" json:"url"`
 	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
@@ -62,7 +52,7 @@ func ResourceList() []*Resource {
 		}
 
 	}
-	//total, _ := query.Count()
+	logs.Debug("ResourceList:%+v", data)
 	return data
 }
 
@@ -79,12 +69,7 @@ func ResourceTreeGrid4Parent(id int) []*Resource {
 	} else {
 		tmpList = list
 	}
-
-	//return tmpList
-	//logs.Debug("before:%+v ", tmpList)
-	//logs.Debug("after:%+v ", TranResourceList2ResourceTree(tmpList))
 	return tmpList
-	//return TranResourceList2ResourceTree(tmpList)
 }
 
 func CanParent(resourceId int, parentResourceId int) bool {
@@ -100,7 +85,7 @@ func CanParent(resourceId int, parentResourceId int) bool {
 }
 
 //根据用户获取有权管理的资源列表
-func GetResourceListByUserId(userId, maxrtype int) []*Resource {
+func GetResourceListByUserId(userId int) []*Resource {
 	var list []*Resource
 	o := orm.NewOrm()
 	user, err := UserOne(userId)
@@ -113,16 +98,16 @@ func GetResourceListByUserId(userId, maxrtype int) []*Resource {
 	var sql string
 	if user.IsSuper == 1 {
 		//如果是管理员，则查出所有的
-		sql = fmt.Sprintf(`SELECT * FROM %s Where type <= ? Order By seq asc,Id asc`, ResourceTBName())
-		o.Raw(sql, maxrtype).QueryRows(&list)
+		sql = fmt.Sprintf(`SELECT * FROM %s  Order By seq asc,Id asc`, ResourceTBName())
+		o.Raw(sql).QueryRows(&list)
 	} else {
 		//	//联查多张表，找出某用户有权管理的
 		sql = fmt.Sprintf(`SELECT DISTINCT T2.*
 		FROM %s AS T0
 		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
 		INNER JOIN %s AS T2 ON T2.id = T0.resource_id
-		WHERE T1.user_id = ? and T2.type <= ?  Order By T2.seq asc,T2.id asc`, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
-		o.Raw(sql, userId, maxrtype).QueryRows(&list)
+		WHERE T1.user_id = ?  Order By T2.seq asc,T2.id asc`, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
+		o.Raw(sql, userId).QueryRows(&list)
 	}
 	result := list
 	for _,e:= range list {

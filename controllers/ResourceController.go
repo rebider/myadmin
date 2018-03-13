@@ -96,12 +96,12 @@ func (c *ResourceController) Edit() {
 			c.Result(enums.CodeFail, "父节点无效", "")
 		}
 	}
-	if m.Type == 1 {
-		if c.UrlFor2LinkOne(m.UrlFor) != "" || strings.Contains(m.UrlFor, ".*"){
-		} else {
-			c.Result(enums.CodeFail, "控制器解析失败: " + m.UrlFor, "")
-		}
+	//if m.Type == 1 {
+	if c.UrlFor2LinkOne(m.UrlFor) != "" || strings.Contains(m.UrlFor, ".*") {
+	} else {
+		c.Result(enums.CodeFail, "控制器解析失败: "+m.UrlFor, "")
 	}
+	//}
 	if m.Id == 0 {
 		if _, err = o.Insert(&m); err == nil {
 			c.Result(enums.CodeSuccess, "添加成功", m.Id)
