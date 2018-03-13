@@ -30,7 +30,8 @@ func init() {
 	beego.Router("/role/list", &controllers.RoleController{}, "*:List")
 	beego.Router("/role/edit/?:id", &controllers.RoleController{}, "*:Edit")
 	beego.Router("/role/delete", &controllers.RoleController{}, "*:Delete")
-	beego.Router("/role/allocate", &controllers.RoleController{}, "*:Allocate")
+	beego.Router("/role/allocateResource", &controllers.RoleController{}, "*:AllocateResource")
+	beego.Router("/role/allocateMenu", &controllers.RoleController{}, "*:AllocateMenu")
 
 
 	//资源

@@ -79,19 +79,20 @@ func (c *RoleController) Delete() {
 	if num, err := models.RoleBatchDelete(ids); err == nil {
 		c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", num), 0)
 	} else {
+		logs.Error("删除角色失败:%+v", err)
 		c.Result(enums.CodeFail, "删除失败", 0)
 	}
 }
 
-//Allocate 给角色分配资源界面
-func (c *RoleController) Allocate() {
+//角色分配资源
+func (c *RoleController) AllocateResource() {
 
 	var params struct {
 		Id          int    `json:"id"`
 		ResourceIds [] int `json:"resourceIds"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	logs.Info("给角色分配资源界面:%+v", params)
+	logs.Info("角色分配资源:%+v", params)
 	utils.CheckError(err)
 
 	roleId := params.Id
@@ -110,6 +111,46 @@ func (c *RoleController) Allocate() {
 	for _, id := range resourceIds {
 		r := models.Resource{Id: id}
 		relation := models.RoleResourceRel{Role: &m, Resource: &r}
+		relations = append(relations, relation)
+		//}
+	}
+	if len(relations) > 0 {
+		//批量添加
+		if _, err := o.InsertMulti(len(relations), relations); err == nil {
+			c.Result(enums.CodeSuccess, "保存成功", "")
+		}
+	}
+	c.Result(0, "保存失败", "")
+}
+
+
+//角色分配菜单
+func (c *RoleController) AllocateMenu() {
+
+	var params struct {
+		Id          int    `json:"id"`
+		MenuIds [] int `json:"menuIds"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	logs.Info("角色分配菜单:%+v", params)
+	utils.CheckError(err)
+
+	roleId := params.Id
+	menuIds := params.MenuIds
+
+	o := orm.NewOrm()
+	m := models.Role{Id: roleId}
+	if err := o.Read(&m); err != nil {
+		c.Result(enums.CodeFail, "数据无效，请刷新后重试", "")
+	}
+	//删除已关联的历史数据
+	if _, err := o.QueryTable(models.RoleMenuRelTBName()).Filter("role__id", m.Id).Delete(); err != nil {
+		c.Result(enums.CodeFail, "删除历史关系失败", "")
+	}
+	var relations []models.RoleMenuRel
+	for _, id := range menuIds {
+		r := models.Menu{Id: id}
+		relation := models.RoleMenuRel{Role: &m, Menu: &r}
 		relations = append(relations, relation)
 		//}
 	}

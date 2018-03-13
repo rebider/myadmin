@@ -5,6 +5,7 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego/logs"
+	"sort"
 )
 
 func (a *Menu) TableName() string {
@@ -26,6 +27,23 @@ type Menu struct {
 	Children []*Menu `orm:"reverse(many)" json:"children"` // fk 的反向关系
 	Icon     string  `orm:"size(32)" json:"icon"`
 	RoleMenuRel []*RoleMenuRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
+}
+
+type menuSlice [] *Menu
+
+func (s menuSlice) Len() int { return len(s) }
+func (s menuSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s menuSlice) Less(i, j int) bool { return s[i].Seq < s[j].Seq }
+
+
+func sortMenuTree(list []*Menu) []*Menu {
+	sort.Sort(menuSlice(list))
+	for _, item := range list {
+		if item.Children != nil  {
+			sortMenuTree(item.Children)
+		}
+	}
+	return list
 }
 
 func MenuOne(id int) (*Menu, error) {
@@ -123,8 +141,10 @@ func TranMenuList2MenuTree(menuList []*Menu) []*Menu {
 			menuTree = append(menuTree, item)
 		}
 	}
+	sortMenuTree(menuTree)
 	return menuTree
 }
+
 func TranMenuList2MenuTree_(cur *Menu, list []*Menu) *Menu {
 	for _, item := range list {
 		if item.Parent != nil && item.Parent.Id == cur.Id {

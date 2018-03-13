@@ -106,7 +106,7 @@ func GetResourceListByUserId(userId int) []*Resource {
 		FROM %s AS T0
 		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
 		INNER JOIN %s AS T2 ON T2.id = T0.resource_id
-		WHERE T1.user_id = ?  Order By T2.seq asc,T2.id asc`, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
+		WHERE T1.user_id = ? `, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
 		o.Raw(sql, userId).QueryRows(&list)
 	}
 	result := list

@@ -20,7 +20,9 @@ type Role struct {
 	Id              int                `form:"id" json:"id"`
 	Name            string             `form:"name" json:"name"`
 	ResourceIds     [] int             `orm:"-" json:"resourceIds"`
+	MenuIds         [] int             `orm:"-" json:"menuIds"`
 	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
+	RoleMenuRel     []*RoleMenuRel     `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
 	RoleUserRel     []*RoleUserRel     `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
 }
 
@@ -45,12 +47,22 @@ func RolePageList(params *RoleQueryParam) ([]*Role, int64) {
 	for _, v := range data {
 		_, error := orm.NewOrm().LoadRelated(v, "RoleResourceRel")
 		utils.CheckError(error)
+		_, error = orm.NewOrm().LoadRelated(v, "RoleMenuRel")
+		utils.CheckError(error)
+
 		resourceIds := make([] int, 0)
 		for _, e := range v.RoleResourceRel {
 			resourceIds = append(resourceIds, e.Resource.Id)
 		}
 		sort.Ints(resourceIds)
 		v.ResourceIds = resourceIds
+
+		menuIds := make([] int, 0)
+		for _, e := range v.RoleMenuRel {
+			menuIds = append(menuIds, e.Menu.Id)
+		}
+		sort.Ints(menuIds)
+		v.MenuIds = menuIds
 	}
 	return data, total
 }
