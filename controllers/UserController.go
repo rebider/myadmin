@@ -16,9 +16,6 @@ type UserController struct {
 }
 
 func (c *UserController) Info() {
-	//Id := c.curUser.Id
-	//m, err := models.UserOne(Id)
-	//c.CheckError(err, "用户不存在")
 	m := c.curUser
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {

@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	//"github.com/chnzrb/admin/models"
+	"github.com/astaxie/beego/logs"
 )
 
 type ServerNodeQueryParam struct {
 	BaseQueryParam
-	Type       string
+	Type       int
 	Ip         string
-	PlatformId string
+	PlatformId int
 }
 type ServerNode struct {
 	Node          string `orm:"pk" json:"node"`
@@ -70,6 +71,7 @@ func GetServerNodeList(filters ...interface{}) ([]*ServerNode, int64) {
 
 //获取分页数据
 func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
+	logs.Debug("params:%+v", params)
 	o := orm.NewOrm()
 	err := o.Using("center")
 	if err != nil {
@@ -86,13 +88,13 @@ func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 	if params.Order == "desc" {
 		sortorder = "-" + sortorder
 	}
-	if params.Type != "" && params.Type != "-1" {
+	if params.Type > 0 {
 		query = query.Filter("type", params.Type)
 	}
 	if params.Ip != "" {
 		query = query.Filter("ip", params.Ip)
 	}
-	if params.PlatformId != "" && params.PlatformId != "-1" {
+	if params.PlatformId > 0 {
 		query = query.Filter("platform_id", params.PlatformId)
 	}
 	total, _ := query.Count()
