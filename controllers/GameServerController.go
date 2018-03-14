@@ -110,7 +110,7 @@ func (c *GameServerController) Edit() {
 //}
 
 func (c *GameServerController) Delete() {
-	var ids []int
+	var ids []string
 	json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
 	logs.Info("删除游戏服:%+v", ids)
 
@@ -120,7 +120,7 @@ func (c *GameServerController) Delete() {
 			"mod_server_mgr",
 			"delete_game_server",
 			"1",
-			strconv.Itoa(id),
+			id,
 		)
 		if err != nil {
 			fmt.Println("删除失败:", ids, out, err)

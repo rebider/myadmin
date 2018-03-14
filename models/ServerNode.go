@@ -10,24 +10,24 @@ import (
 
 type ServerNodeQueryParam struct {
 	BaseQueryParam
-	Type string
-	Ip   string
+	Type       string
+	Ip         string
 	PlatformId string
 }
 type ServerNode struct {
-	Node          string `orm:"pk"`
-	Ip            string
-	Port          int
-	Type          int
-	TypeName 	  string `orm:"-"`
-	ZoneNode      string
-	ServerVersion string
-	ClientVersion string
-	OpenTime      int
+	Node          string `orm:"pk" json:"node"`
+	Ip            string `json:"ip"`
+	Port          int    `json:"port"`
+	Type          int    `json:"type"`
+	TypeName      string `orm:"-"`
+	ZoneNode      string `json:"zone_node"`
+	ServerVersion string `json:"server_version"`
+	ClientVersion string`json:"client_version"`
+	OpenTime      int `json:"open_time"`
 	IsTest        int
-	PlatformId    int
-	PlatformName 	  string `orm:"-"`
-	State         int
+	PlatformId    int `json:"platform_id"`
+	PlatformName  string `orm:"-"`
+	State         int `json:"state"`
 }
 
 func (t *ServerNode) TableName() string {
@@ -86,13 +86,13 @@ func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 	if params.Order == "desc" {
 		sortorder = "-" + sortorder
 	}
-	if params.Type != "" && params.Type != "-1"{
+	if params.Type != "" && params.Type != "-1" {
 		query = query.Filter("type", params.Type)
 	}
 	if params.Ip != "" {
 		query = query.Filter("ip", params.Ip)
 	}
-	if params.PlatformId != "" && params.PlatformId != "-1"{
+	if params.PlatformId != "" && params.PlatformId != "-1" {
 		query = query.Filter("platform_id", params.PlatformId)
 	}
 	total, _ := query.Count()
@@ -112,8 +112,8 @@ func ShowGameNodeList(Data map[interface{}]interface{}) map[interface{}]interfac
 	return Data
 }
 func GetTypeName(t int) string {
-	platformMap :=GetNodeTypeMap()
-	platformName, ok:= platformMap[t]
+	platformMap := GetNodeTypeMap()
+	platformName, ok := platformMap[t]
 	if ok == true {
 		return platformName
 	}
@@ -125,8 +125,8 @@ func (t *ServerNode) fill() *ServerNode {
 	t.PlatformName = GetPlatformName(t.PlatformId)
 	return t
 }
-func fillServerNodeList(ServerNodeList []*ServerNode) []*ServerNode{
-	for _,g := range ServerNodeList{
+func fillServerNodeList(ServerNodeList []*ServerNode) []*ServerNode {
+	for _, g := range ServerNodeList {
 		g.fill()
 	}
 	return ServerNodeList
