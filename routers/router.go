@@ -75,7 +75,7 @@ func init() {
 	//节点
 	beego.Router("/server_node/list", &controllers.ServerNodeController{}, "*:List")
 	beego.Router("/server_node/edit/?:node", &controllers.ServerNodeController{}, "*:Edit")
-	beego.Router("/server_node/delete", &controllers.ServerNodeController{}, "Post:Delete")
+	beego.Router("/server_node/delete", &controllers.ServerNodeController{}, "*:Delete")
 
 	//主页
 	beego.Router("/", &controllers.MainController{})

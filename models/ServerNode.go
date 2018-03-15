@@ -12,8 +12,8 @@ import (
 type ServerNodeQueryParam struct {
 	BaseQueryParam
 	Type       int
-	Ip         string
-	PlatformId int
+	Node       string
+	PlatformId int `json:"platform_id"`
 }
 type ServerNode struct {
 	Node          string `orm:"pk" json:"node"`
@@ -23,12 +23,12 @@ type ServerNode struct {
 	TypeName      string `orm:"-"`
 	ZoneNode      string `json:"zone_node"`
 	ServerVersion string `json:"server_version"`
-	ClientVersion string`json:"client_version"`
-	OpenTime      int `json:"open_time"`
+	ClientVersion string `json:"client_version"`
+	OpenTime      int    `json:"open_time"`
 	IsTest        int
-	PlatformId    int `json:"platform_id"`
+	PlatformId    int    `json:"platform_id"`
 	PlatformName  string `orm:"-"`
-	State         int `json:"state"`
+	State         int    `json:"state"`
 }
 
 func (t *ServerNode) TableName() string {
@@ -91,8 +91,8 @@ func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 	if params.Type > 0 {
 		query = query.Filter("type", params.Type)
 	}
-	if params.Ip != "" {
-		query = query.Filter("ip", params.Ip)
+	if params.Node != "" {
+		query = query.Filter("node__contains", params.Node)
 	}
 	if params.PlatformId > 0 {
 		query = query.Filter("platform_id", params.PlatformId)

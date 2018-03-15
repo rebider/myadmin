@@ -27,6 +27,7 @@ func (c *GameServerController) List() {
 	//直接反序化获取json格式的requestbody里的值
 	var params models.GameServerQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	logs.Debug("查询游戏服列表:%+v", params)
 	utils.CheckError(err)
 	//获取数据列表和总数
 	data, total := models.GetGameServerList(&params)
@@ -60,54 +61,7 @@ func (c *GameServerController) Edit() {
 
 	logs.Info("修改游戏服:%s", m)
 	c.Result(enums.CodeSuccess, "保存成功", m.Sid)
-	////如果是Post请求，则由Save处理
-	//if c.Ctx.Request.Method == "POST" {
-	//	c.Save()
-	//}
-	//Id := c.GetString(":id", "")
-	////fmt.Println("Edit", c.Ctx.Request.Method, Id)
-	//m := &models.GameServer{}
-	//var err error
-	//if Id != "0" {
-	//	m, err = models.GetGameServer(1, Id)
-	//	fmt.Printf("%#v", m)
-	//	if err != nil {
-	//		fmt.Println("err", err)
-	//		logs.Error(err)
-	//		//c.pageError("数据无效，请刷新后重试")
-	//	}
-	//}
-	//c.Data["m"] = m
-	//models.ShowPlatformJson(c.Data)
-	//models.ShowGameNodeJson(c.Data)
-	////c.setTpl("gameserver/edit.html", "shared/layout_pullbox.html")
-	//c.LayoutSections = make(map[string]string)
-	//c.LayoutSections["footerjs"] = "gameserver/edit_footerjs.html"
 }
-//func (c *GameServerController) Save() {
-//
-//	m := models.GameServer{}
-//	//获取form里的值
-//	if err := c.ParseForm(&m); err != nil {
-//		c.Result(enums.CodeFail, "获取数据失败", m.Sid)
-//	}
-//	//fmt.Println("Save:", m, c.Input())
-//	out, err := utils.Nodetool(
-//		"mod_server_mgr",
-//		"add_game_server",
-//		strconv.Itoa(m.PlatformId),
-//		m.Sid,
-//		m.Desc,
-//		m.Node)
-//
-//	if err != nil {
-//		fmt.Println("保存失败:"+ out)
-//		c.Result(enums.CodeFail, "保存失败:" + out, m.Sid)
-//	}
-//
-//	logs.Info("修改游戏服:%s", m)
-//	c.Result(enums.CodeSuccess, "保存成功", m.Sid)
-//}
 
 func (c *GameServerController) Delete() {
 	var ids []string

@@ -7,8 +7,9 @@ import (
 
 type GameServerQueryParam struct {
 	BaseQueryParam
-	PlatformId string
-	Node       string
+	PlatformId int    `json:"platform_id"`
+	ServerId   string `json:"server_id"`
+	Node       string `json:"node"`
 }
 
 type GameServer struct {
@@ -58,8 +59,11 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	if params.Order == "descending" {
 		sortorder = "-" + sortorder
 	}
-	if params.PlatformId != "" && params.PlatformId != "-1" {
+	if params.PlatformId != 0 {
 		query = query.Filter("platform_id", params.PlatformId)
+	}
+	if params.ServerId != "" {
+		query = query.Filter("sid__contains", params.ServerId)
 	}
 	if params.Node != "" {
 		query = query.Filter("node__contains", params.Node)

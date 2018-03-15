@@ -12,6 +12,7 @@ import (
 	//"os/exec"
 	//"bytes"
 	//"os"
+	"strconv"
 )
 
 type ToolController struct {
@@ -34,7 +35,9 @@ func (c *ToolController) Build() {
 	}
 	serverId :=  c.Ctx.GetCookie(enums.ChoseServerId)
 	var params models.GameServerQueryParam
-	params.PlatformId = platformId
+	intPlatformId, err:= strconv.Atoi(platformId)
+	utils.CheckError(err)
+	params.PlatformId = intPlatformId
 	//获取数据列表和总数
 	gameServerList, _ := models.GetGameServerList(&params)
 
