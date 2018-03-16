@@ -18,11 +18,11 @@ type MenuQueryParam struct {
 
 //Menu 权限控制表
 type Menu struct {
-	Id       int     `json:"id"`
+	Id       int     `json:"id,string"`
 	Title    string  `orm:"size(64)" json:"title"` //标题
 	Name     string  `orm:"size(64)" json:"name"`
 	Parent   *Menu   `orm:"null;rel(fk) " json:"-"` // RelForeignKey relation
-	ParentId int     `orm:"-" json:"parentId"`      // RelForeignKey relation
+	ParentId int     `orm:"-" json:"parentId,string"`      // RelForeignKey relation
 	Seq      int     `json:"seq"`
 	Children []*Menu `orm:"reverse(many)" json:"children"` // fk 的反向关系
 	Icon     string  `orm:"size(32)" json:"icon"`
