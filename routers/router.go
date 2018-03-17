@@ -78,5 +78,8 @@ func init() {
 	beego.Router("/server_node/delete", &controllers.ServerNodeController{}, "*:Delete")
 
 	//主页
+	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
+
+	//主页
 	beego.Router("/", &controllers.MainController{})
 }
