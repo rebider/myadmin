@@ -19,13 +19,13 @@ type User struct {
 	Name               string         `orm:"size(32)" json:"name"`
 	Account            string         `orm:"size(24);" json:"account"`
 	Password           string         `json:"-"`
-	IsSuper            int            `json:"is_super"`
+	IsSuper            int            `json:"isSuper"`
 	ModifyPassword     string         `json:"Password" orm:"-"`
 	Status             int            `json:"status"`
-	LoginTimes         int
-	LastLoginTime      int            `json:"last_login_time"`
-	LastLoginIp        string         `json:"last_login_ip"`
-	Mobile             string         `orm:"size(16)"`
+	LoginTimes         int            `json:"loginTimes"`
+	LastLoginTime      int            `json:"lastLoginTime"`
+	LastLoginIp        string         `json:"lastLoginIp"`
+	Mobile             string         `orm:"size(16)" json:"mobile"`
 	RoleIds            []int          `orm:"-" json:"roleIds"`
 	RoleUserRel        []*RoleUserRel `json:"-" orm:"reverse(many)"` // 设置一对多的反向关系
 	ResourceUrlForList []string       `orm:"-"`

@@ -126,7 +126,8 @@ func (c *ResourceController) Edit() {
 // Delete 删除
 func (c *ResourceController) Delete() {
 	var m []int
-	json.Unmarshal(c.Ctx.Input.RequestBody, &m)
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
+	utils.CheckError(err)
 	logs.Info("删除资源:%+v", m)
 	query := orm.NewOrm().QueryTable(models.ResourceTBName())
 	if _, err := query.Filter("id", m[0]).Delete(); err == nil {

@@ -65,7 +65,8 @@ func (c *GameServerController) Edit() {
 
 func (c *GameServerController) Delete() {
 	var ids []string
-	json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
+	utils.CheckError(err)
 	logs.Info("删除游戏服:%+v", ids)
 
 	for _, id := range ids {

@@ -5,6 +5,7 @@ import (
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/models"
 	"github.com/astaxie/beego/logs"
+	"github.com/chnzrb/myadmin/utils"
 )
 
 type PlayerController struct {
@@ -14,7 +15,8 @@ type PlayerController struct {
 
 func (c *PlayerController) List() {
 	var params models.PlayerQueryParam
-	json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
 	logs.Info("查询用户列表:%+v", params)
 	//获取数据列表和总数
 	data, total := models.PlayerPageList(&params)

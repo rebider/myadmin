@@ -34,6 +34,7 @@ func (c *ServerNodeController) List() {
 func (c *ServerNodeController) Edit() {
 	m := models.ServerNode{}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
+	logs.Debug("Edit:%v",m )
 	utils.CheckError(err, "编辑节点")
 	out, err := utils.Nodetool(
 		"mod_server_mgr",
@@ -56,7 +57,8 @@ func (c *ServerNodeController) Edit() {
 
 func (c *ServerNodeController) Delete() {
 	var ids []string
-	json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
+	utils.CheckError(err)
 	logs.Info("删除节点:%+v", ids)
 	for _, str := range ids {
 		out, err := utils.Nodetool(

@@ -90,7 +90,8 @@ func (c *MenuController) Edit() {
 // Delete 删除
 func (c *MenuController) Delete() {
 	var m []string
-	json.Unmarshal(c.Ctx.Input.RequestBody, &m)
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
+	utils.CheckError(err)
 	logs.Info("删除菜单:%+v", m)
 	query := orm.NewOrm().QueryTable(models.MenuTBName())
 	if _, err := query.Filter("id", m[0]).Delete(); err == nil {

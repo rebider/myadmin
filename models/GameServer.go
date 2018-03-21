@@ -7,33 +7,33 @@ import (
 
 type GameServerQueryParam struct {
 	BaseQueryParam
-	PlatformId int    `json:"platform_id"`
-	ServerId   string `json:"server_id"`
+	PlatformId int    `json:"platformId"`
+	ServerId   string `json:"serverId"`
 	Node       string `json:"node"`
 }
 
 type GameServer struct {
-	PlatformId   int    `json:"platform_id"`
-	Sid          string `orm:"pk" json:"server_id"`
+	PlatformId   int    `json:"platformId"`
+	Sid          string `orm:"pk" json:"serverId"`
 	Desc         string `json:"desc"`
 	Node         string `json:"node"`
-	PlatformName string `orm:"-" json:"platform_name"`
+	//PlatformName string `orm:"-" json:"platform_name"`
 }
 
 func (t *GameServer) TableName() string {
 	return "c_game_server"
 }
-func (t *GameServer) fill() *GameServer {
-	//logs.Debug("fill:%+v", t)
-	t.PlatformName = GetPlatformName(t.PlatformId)
-	return t
-}
-func fillGameServerList(gameServerList []*GameServer) []*GameServer {
-	for _, g := range gameServerList {
-		g.fill()
-	}
-	return gameServerList
-}
+//func (t *GameServer) fill() *GameServer {
+//	//logs.Debug("fill:%+v", t)
+//	t.PlatformName = GetPlatformName(t.PlatformId)
+//	return t
+//}
+//func fillGameServerList(gameServerList []*GameServer) []*GameServer {
+//	for _, g := range gameServerList {
+//		g.fill()
+//	}
+//	return gameServerList
+//}
 
 //获取所有数据
 func GetAllGameServer() ([]*GameServer, int64) {
@@ -73,7 +73,7 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	data := make([]*GameServer, total)
 	query.OrderBy(sortorder).Limit(params.Limit, params.Offset).All(&data)
 	//logs.Debug("data:%+v", data)
-	return fillGameServerList(data), total
+	return data, total
 }
 func GetGameServer(platformId int, id string) (*GameServer, error) {
 	gameServer := &GameServer{
@@ -87,5 +87,5 @@ func GetGameServer(platformId int, id string) (*GameServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return gameServer.fill(), nil
+	return gameServer, nil
 }

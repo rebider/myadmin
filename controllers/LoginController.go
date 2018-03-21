@@ -20,7 +20,7 @@ func (c *LoginController) Login() {
 		Password string
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-
+	utils.CheckError(err)
 	account := params.Account
 	password := params.Password
 	if len(account) == 0 || len(password) == 0 {

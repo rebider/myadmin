@@ -7,6 +7,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	//_ "github.com/mattn/go-sqlite3"
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"fmt"
 )
 
@@ -36,14 +37,14 @@ func InitDatabase() {
 			dbPort+")/"+dbName+"?charset="+dbCharset, 30)
 	}
 	//如果是开发模式，则显示命令信息
-	isDev := (beego.AppConfig.String("runmode") == "dev")
+	//isDev := (beego.AppConfig.String("runmode") == "dev")
 	//自动建表
 	//orm.RunSyncdb("default", false, isDev)
 	initNode()
-	initGame()
-	if isDev {
-		orm.Debug = isDev
-	}
+	//initGame()
+	//if isDev {
+	//	orm.Debug = isDev
+	//}
 }
 func initNode(){
 	dbhost := beego.AppConfig.String("center_db::db_host")

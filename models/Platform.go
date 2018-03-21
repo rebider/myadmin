@@ -3,7 +3,15 @@ package models
 import (
 	"encoding/json"
 	"strconv"
+	"io/ioutil"
+	"fmt"
+	"github.com/astaxie/beego/logs"
 )
+
+type Platform struct {
+	Id   int `json:"id"`
+	Name string `json:"name"`
+}
 
 func GetPlatformMap() map[int]string {
 	platformMap := map[int]string{
@@ -13,14 +21,13 @@ func GetPlatformMap() map[int]string {
 	return platformMap
 }
 func GetPlatformName(platformId int) string {
-	platformMap :=GetPlatformMap()
-	platformName, ok:= platformMap[platformId]
+	platformMap := GetPlatformMap()
+	platformName, ok := platformMap[platformId]
 	if ok == true {
 		return platformName
 	}
 	return "未定义"
 }
-
 
 func ShowPlatformJson(Data map[interface{}]interface{}) map[interface{}]interface{} {
 	platformMap := GetPlatformMap()
@@ -48,4 +55,20 @@ func ShowPlatformList(Data map[interface{}]interface{}) map[interface{}]interfac
 	}
 	Data["platform_list"] = platformList
 	return Data
+}
+
+func GetPlatformList(filename string)([] *Platform, error) {
+	bytes, err := ioutil.ReadFile(filename)
+	list := make([] *Platform, 0)
+	if err != nil {
+		fmt.Println("ReadFile: ", err.Error())
+		logs.Error("GetPlatformList:%v, %v", filename, err)
+		return nil, err
+	}
+
+	if err := json.Unmarshal(bytes, &list); err != nil {
+		logs.Error("Unmarshal json:%v, %v", filename, err)
+		return nil, err
+	}
+	return list, nil
 }

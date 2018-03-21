@@ -15,22 +15,12 @@ type RoleController struct {
 	BaseController
 }
 
-//func (c *RoleController) Prepare() {
-//	//先执行
-//	c.BaseController.Prepare()
-//	//如果一个Controller的多数Action都需要权限控制，则将验证放到Prepare
-//	c.checkAuthor()
-//	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
-//	//权限控制里会进行登录验证，因此这里不用再作登录验证
-//	//c.checkLogin()
-//}
-
-
 // DataGrid 角色管理首页 表格获取数据
 func (c *RoleController) List() {
 	//直接反序化获取json格式的requestbody里的值
 	var params models.RoleQueryParam
-	json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
 	//获取数据列表和总数
 	data, total := models.RolePageList(&params)
 	//定义返回的数据结构
@@ -74,7 +64,8 @@ func (c *RoleController) Edit() {
 //Delete 批量删除
 func (c *RoleController) Delete() {
 	var ids []int
-	json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
+	utils.CheckError(err)
 	logs.Info("删除角色:%+v", ids)
 	if num, err := models.RoleBatchDelete(ids); err == nil {
 		c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", num), 0)
