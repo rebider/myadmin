@@ -28,7 +28,7 @@ func (c *BaseController) AllowCross() {
 func (c *BaseController) Prepare() {
 	controllerName, actionName := c.GetControllerAndAction()
 
-	c.AllowCross()
+	//c.AllowCross()
 	user := c.GetSession("user")
 	if user != nil {
 		c.curUser = user.(models.User)

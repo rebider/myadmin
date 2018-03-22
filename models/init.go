@@ -3,10 +3,18 @@ package models
 import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/chnzrb/myadmin/utils"
+)
+var (
+	//Db *gorm.DB
+	DbCenter *gorm.DB
 )
 
 //初始化
 func init() {
+	initCenter()
 	orm.RegisterModel(
 		new(User),
 		new(Resource),
@@ -21,6 +29,13 @@ func init() {
 		)
 }
 
+func initCenter() {
+	dsn := "root:game1234@tcp(192.168.31.100:3306)/center?charset=utf8&parseTime=True&loc=Local"
+	var err error
+	DbCenter, err = gorm.Open("mysql", dsn)
+	utils.CheckError(err, "连接中心服失败")
+}
+
 //下面是统一的表名管理
 func TableName(name string) string {
 	prefix := beego.AppConfig.String("db_dt_prefix")
@@ -31,10 +46,7 @@ func TableName(name string) string {
 func UserTBName() string {
 	return TableName("user")
 }
-//获取 User 对应的表名称
-func PlayerTBName() string {
-	return "player"
-}
+
 //获取 Resource 对应的表名称
 func ResourceTBName() string {
 	return TableName("resource")

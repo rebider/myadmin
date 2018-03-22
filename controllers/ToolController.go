@@ -6,18 +6,28 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/astaxie/beego/logs"
 	//"github.com/astaxie/beego/orm"
-	"fmt"
-	"strings"
+	//"fmt"
+	//"strings"
 	"github.com/astaxie/beego/orm"
 	//"os/exec"
 	//"bytes"
 	//"os"
 	"strconv"
+	"encoding/json"
+	"strings"
 )
 
 type ToolController struct {
 	BaseController
 }
+
+func (c *ToolController) GetJson() {
+	list, err := models.GetPlatformList("data/json/Platform.json")
+	utils.CheckError(err)
+	logs.Info("platformList:%v", list)
+	c.Result(enums.CodeSuccess, "获取平台列表成功", list)
+}
+
 
 //func (c *ToolController) Prepare() {
 //	//先执行
@@ -64,15 +74,22 @@ func (c *ToolController) Build() {
 }
 
 func (this *ToolController) Action() {
-	//if this.isPost() {
+	var params struct {
+		Action string `json:"action"`
+		PlatformId int `json:"platformId"`
+		ServerId string `json:"serverId"`
+	}
+	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("Action:%+v", params)
 
-	action := this.GetString("action")
-	desc := this.GetString("desc")
-	serverId := this.GetString("serverId")
-	fmt.Println("Action:", action, desc)
-	this.Data["redirect"] = "/tool/build"
+	//action := this.GetString("action")
+	//desc := this.GetString("desc")
+	//serverId := this.GetString("serverId")
+	//fmt.Println("Action:", action, desc)
+	//this.Data["redirect"] = "/tool/build"
 	//fmt.Println("serverId:", serverId)
-	node := getNode(serverId)
+	node := getNode(params.ServerId)
 	commandArgs := []string{
 		"nodetool",
 		"-name",
@@ -82,7 +99,7 @@ func (this *ToolController) Action() {
 		"rpc",
 		"tool",
 		"project_helper",
-		action,
+		params.Action,
 	}
 	out, err := utils.Cmd("escript", commandArgs)
 
@@ -90,9 +107,9 @@ func (this *ToolController) Action() {
 		out = strings.Replace(out, " ", "&nbsp", -1)
 		out = strings.Replace(out, "\n", "<br>", -1)
 		out = strings.Replace(out, "\\n", "<br>", -1)
-		this.Result(enums.MSG_ERR, desc+"失败:<br>"+out+"<br>"+err.Error(), 0)
+		this.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
 	} else {
-		this.Result(enums.MSG_OK, desc+"成功!", 0)
+		this.Result(enums.CodeSuccess, "成功!", 0)
 	}
 }
 

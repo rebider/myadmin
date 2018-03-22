@@ -1,7 +1,11 @@
 package models
 
 import (
-	"github.com/astaxie/beego/orm"
+	//"github.com/astaxie/beego/orm"
+	//"github.com/chnzrb/myadmin/utils"
+	//"github.com/zaaksam/dproxy/go/db"
+	//"github.com/chnzrb/myadmin/utils"
+	//"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
 )
 
@@ -13,8 +17,8 @@ type GameServerQueryParam struct {
 }
 
 type GameServer struct {
-	PlatformId   int    `json:"platformId"`
-	Sid          string `orm:"pk" json:"serverId"`
+	PlatformId   int    `gorm:"primary_key" json:"platformId"`
+	Sid          string `gorm:"primary_key" orm:"pk" json:"serverId"`
 	Desc         string `json:"desc"`
 	Node         string `json:"node"`
 	//PlatformName string `orm:"-" json:"platform_name"`
@@ -23,21 +27,10 @@ type GameServer struct {
 func (t *GameServer) TableName() string {
 	return "c_game_server"
 }
-//func (t *GameServer) fill() *GameServer {
-//	//logs.Debug("fill:%+v", t)
-//	t.PlatformName = GetPlatformName(t.PlatformId)
-//	return t
-//}
-//func fillGameServerList(gameServerList []*GameServer) []*GameServer {
-//	for _, g := range gameServerList {
-//		g.fill()
-//	}
-//	return gameServerList
-//}
-
 //获取所有数据
 func GetAllGameServer() ([]*GameServer, int64) {
 	var params GameServerQueryParam
+	params.Limit = -1
 	//获取数据列表和总数
 	data, total := GetGameServerList(&params)
 	return data, total
@@ -45,47 +38,39 @@ func GetAllGameServer() ([]*GameServer, int64) {
 
 //获取数据列表
 func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
-	o := orm.NewOrm()
-	err := o.Using("center")
+	db, err:= GetCenterDb()
 	utils.CheckError(err)
-	query := o.QueryTable("c_game_server")
-
 	//默认排序
-	sortorder := "Sid"
+	sortOrder := "Sid"
 	switch params.Sort {
 	case "Sid":
-		sortorder = "Sid"
+		sortOrder = "Sid"
 	}
 	if params.Order == "descending" {
-		sortorder = "-" + sortorder
+		sortOrder = sortOrder + " desc"
 	}
 	if params.PlatformId != 0 {
-		query = query.Filter("platform_id", params.PlatformId)
+		db = db.Where("platform_id = ?", params.PlatformId)
 	}
 	if params.ServerId != "" {
-		query = query.Filter("sid__contains", params.ServerId)
+		db = db.Where("sid = ?", params.ServerId)
 	}
 	if params.Node != "" {
-		query = query.Filter("node__contains", params.Node)
+		db = DbCenter.Where("node LIKE ?", "%" +params.Node + "%")
 	}
-	total, _ := query.Count()
-	//logs.Debug("total:%+v       %+v ", total, params)
-	data := make([]*GameServer, total)
-	query.OrderBy(sortorder).Limit(params.Limit, params.Offset).All(&data)
-	//logs.Debug("data:%+v", data)
-	return data, total
+	//total, _ := query.Count()
+	data := make([]*GameServer, 0)
+	var count int64
+	err = db.Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Count(&count).Error
+	utils.CheckError(err)
+	return data, count
 }
+
 func GetGameServer(platformId int, id string) (*GameServer, error) {
 	gameServer := &GameServer{
 		Sid:        id,
 		PlatformId: platformId,
 	}
-
-	o := orm.NewOrm()
-	o.Using("center")
-	err := o.Read(gameServer)
-	if err != nil {
-		return nil, err
-	}
+	DbCenter.First(&gameServer)
 	return gameServer, nil
 }
