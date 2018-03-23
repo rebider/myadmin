@@ -15,6 +15,9 @@ type UserController struct {
 	BaseController
 }
 
+//func (c *UserController) ChosePlatformIdAndServerId() {
+//	m := c.curUser
+//}
 func (c *UserController) Info() {
 	m := c.curUser
 	platformList, err := models.GetPlatformList("data/json/Platform.json")

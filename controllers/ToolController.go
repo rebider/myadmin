@@ -28,14 +28,6 @@ func (c *ToolController) GetJson() {
 	c.Result(enums.CodeSuccess, "获取平台列表成功", list)
 }
 
-
-//func (c *ToolController) Prepare() {
-//	//先执行
-//	c.BaseController.Prepare()
-//	logs.Debug("ToolController Prepare()")
-//	//如果一个Controller的所有Action都需要登录验证，则将验证放到Prepare
-//	c.checkLogin()
-//}
 func (c *ToolController) Build() {
 	//获取数据列表和总数
 	//gameServerList, _ := models.GetAllGameServer()
@@ -82,13 +74,6 @@ func (this *ToolController) Action() {
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
-
-	//action := this.GetString("action")
-	//desc := this.GetString("desc")
-	//serverId := this.GetString("serverId")
-	//fmt.Println("Action:", action, desc)
-	//this.Data["redirect"] = "/tool/build"
-	//fmt.Println("serverId:", serverId)
 	node := getNode(params.ServerId)
 	commandArgs := []string{
 		"nodetool",
@@ -100,6 +85,119 @@ func (this *ToolController) Action() {
 		"tool",
 		"project_helper",
 		params.Action,
+	}
+	out, err := utils.Cmd("escript", commandArgs)
+
+	if err != nil {
+		out = strings.Replace(out, " ", "&nbsp", -1)
+		out = strings.Replace(out, "\n", "<br>", -1)
+		out = strings.Replace(out, "\\n", "<br>", -1)
+		this.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
+	} else {
+		this.Result(enums.CodeSuccess, "成功!", 0)
+	}
+}
+
+func (this *ToolController) SendProp() {
+	var params struct {
+		PlayerId int `json:"playerId"`
+		PropType int `json:"propType"`
+		PropId int `json:"propId"`
+		PropNum int `json:"propNum"`
+		PlatformId int `json:"platformId"`
+		ServerId string `json:"serverId"`
+	}
+	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("Action:%+v", params)
+	node := getNode(params.ServerId)
+	commandArgs := []string{
+		"nodetool",
+		"-name",
+		node.(string),
+		"-setcookie",
+		"game",
+		"rpc",
+		"tool",
+		"give_prop",
+		strconv.Itoa(params.PlayerId),
+		strconv.Itoa(params.PropType),
+		strconv.Itoa(params.PropId),
+		strconv.Itoa(params.PropNum),
+	}
+	out, err := utils.Cmd("escript", commandArgs)
+
+	if err != nil {
+		out = strings.Replace(out, " ", "&nbsp", -1)
+		out = strings.Replace(out, "\n", "<br>", -1)
+		out = strings.Replace(out, "\\n", "<br>", -1)
+		this.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
+	} else {
+		this.Result(enums.CodeSuccess, "成功!", 0)
+	}
+}
+
+func (this *ToolController)SetTask() {
+	var params struct {
+		PlayerId int `json:"playerId"`
+		TaskId int `json:"taskId"`
+		PlatformId int `json:"platformId"`
+		ServerId string `json:"serverId"`
+	}
+	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("Action:%+v", params)
+	node := getNode(params.ServerId)
+	commandArgs := []string{
+		"nodetool",
+		"-name",
+		node.(string),
+		"-setcookie",
+		"game",
+		"rpc",
+		"tool",
+		"debug_set_task",
+		strconv.Itoa(params.PlayerId),
+		strconv.Itoa(params.TaskId),
+	}
+	out, err := utils.Cmd("escript", commandArgs)
+
+	if err != nil {
+		out = strings.Replace(out, " ", "&nbsp", -1)
+		out = strings.Replace(out, "\n", "<br>", -1)
+		out = strings.Replace(out, "\\n", "<br>", -1)
+		this.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
+	} else {
+		this.Result(enums.CodeSuccess, "成功!", 0)
+	}
+}
+
+func (this *ToolController)ActiveFunction() {
+	var params struct {
+		PlayerId int `json:"playerId"`
+		FunctionId int `json:"functionId"`
+		FunctionParam int `json:"functionParam"`
+		FunctionValue int `json:"functionValue"`
+		PlatformId int `json:"platformId"`
+		ServerId string `json:"serverId"`
+	}
+	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("Action:%+v", params)
+	node := getNode(params.ServerId)
+	commandArgs := []string{
+		"nodetool",
+		"-name",
+		node.(string),
+		"-setcookie",
+		"game",
+		"rpc",
+		"tool",
+		"active_function",
+		strconv.Itoa(params.PlayerId),
+		strconv.Itoa(params.FunctionId),
+		strconv.Itoa(params.FunctionParam),
+		strconv.Itoa(params.FunctionValue),
 	}
 	out, err := utils.Cmd("escript", commandArgs)
 

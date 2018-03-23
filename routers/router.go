@@ -81,9 +81,11 @@ func init() {
 
 
 	//工具
-	beego.Router("/tool/build", &controllers.ToolController{}, "*:Build")
+	//beego.Router("/tool/build", &controllers.ToolController{}, "*:Build")
 	beego.Router("/tool/action", &controllers.ToolController{}, "*:Action")
-
+	beego.Router("/tool/send_prop", &controllers.ToolController{}, "*:SendProp")
+	beego.Router("/tool/set_task", &controllers.ToolController{}, "*:SetTask")
+	beego.Router("/tool/active_function", &controllers.ToolController{}, "*:ActiveFunction")
 	//游戏服
 	beego.Router("/game_server/list", &controllers.GameServerController{}, "*:List")
 	beego.Router("/game_server/edit/?:id", &controllers.GameServerController{}, "*:Edit")
@@ -94,8 +96,9 @@ func init() {
 	beego.Router("/server_node/edit/?:node", &controllers.ServerNodeController{}, "*:Edit")
 	beego.Router("/server_node/delete", &controllers.ServerNodeController{}, "*:Delete")
 
-	//主页
+	//玩家
 	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
+	beego.Router("/player/detail", &controllers.PlayerController{}, "*:Detail")
 
 	//主页
 	beego.Router("/", &controllers.MainController{})

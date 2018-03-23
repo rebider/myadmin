@@ -70,7 +70,7 @@ func PlayerPageList(params *PlayerQueryParam) ([]*Player, int64) {
 		db = db.Where("id = ?", params.PlayerId)
 	}
 	//logs.Debug("Player:%+v", params)
-	db.Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Count(&count)
+	db.Model(&Player{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	return data, count
 }
 

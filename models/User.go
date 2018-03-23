@@ -29,6 +29,8 @@ type User struct {
 	RoleIds            []int          `orm:"-" json:"roleIds"`
 	RoleUserRel        []*RoleUserRel `json:"-" orm:"reverse(many)"` // 设置一对多的反向关系
 	ResourceUrlForList []string       `orm:"-"`
+	//SelectPlatformId   []int          `orm:"-"`
+	//SelectServerId     []string       `orm:"-"`
 }
 
 //获取分页数据
