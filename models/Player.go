@@ -1,13 +1,8 @@
 package models
 
 import (
-	"github.com/astaxie/beego/orm"
 	"github.com/chnzrb/myadmin/utils"
 )
-
-func (a *Player) TableName() string {
-	return "player"
-}
 
 type PlayerQueryParam struct {
 	BaseQueryParam
@@ -34,9 +29,13 @@ type Player struct {
 	DisableChatTime int    `json:"disableChatTime"`
 }
 
+func (a *Player) TableName() string {
+	return "player"
+}
+
 
 //获取分页数据
-func PlayerPageList(params *PlayerQueryParam) ([]*Player, int64) {
+func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	//initGame()
 	db, err := GetDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
 	utils.CheckError(err)
@@ -69,20 +68,21 @@ func PlayerPageList(params *PlayerQueryParam) ([]*Player, int64) {
 	if params.PlayerId != "" {
 		db = db.Where("id = ?", params.PlayerId)
 	}
+	db.Scopes()
 	//logs.Debug("Player:%+v", params)
 	db.Model(&Player{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	return data, count
 }
 
-// 根据id获取单条
-func PlayerOne(id int) (*Player, error) {
-	o := orm.NewOrm()
-	err := o.Using("center")
-	utils.CheckError(err)
-	m := Player{Id: id}
-	err = o.Read(&m)
-	if err != nil {
-		return nil, err
-	}
-	return &m, nil
-}
+//// 根据id获取单条
+//func PlayerOne(id int) (*Player, error) {
+//	o := orm.NewOrm()
+//	err := o.Using("center")
+//	utils.CheckError(err)
+//	m := Player{Id: id}
+//	err = o.Read(&m)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return &m, nil
+//}

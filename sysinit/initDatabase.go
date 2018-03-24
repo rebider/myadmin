@@ -8,7 +8,7 @@ import (
 	//_ "github.com/mattn/go-sqlite3"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"fmt"
+	//"fmt"
 )
 
 //初始化数据连接
@@ -40,22 +40,22 @@ func InitDatabase() {
 	//isDev := (beego.AppConfig.String("runmode") == "dev")
 	//自动建表
 	//orm.RunSyncdb("default", false, isDev)
-	initNode()
+	//initNode()
 	//initGame()
 	//if isDev {
 	//	orm.Debug = isDev
 	//}
 }
-func initNode(){
-	dbhost := beego.AppConfig.String("center_db::db_host")
-	dbport := beego.AppConfig.String("center_db::db_port")
-	dbuser := beego.AppConfig.String("center_db::db_user")
-	dbpassword := beego.AppConfig.String("center_db::db_password")
-	dbname := beego.AppConfig.String("center_db::db_name")
-	//dsn = "root:gamehome1234@tcp(192.168.31.100:3306)/h5_center?charset=utf8"
-	dsn := dbuser + ":" + dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname + "?charset=utf8"
-	err := orm.RegisterDataBase("center", "mysql", dsn)
-	if err != nil {
-		fmt.Println(dsn, err)
-	}
-}
+//func initNode(){
+//	dbhost := beego.AppConfig.String("center_db::db_host")
+//	dbport := beego.AppConfig.String("center_db::db_port")
+//	dbuser := beego.AppConfig.String("center_db::db_user")
+//	dbpassword := beego.AppConfig.String("center_db::db_password")
+//	dbname := beego.AppConfig.String("center_db::db_name")
+//	//dsn = "root:gamehome1234@tcp(192.168.31.100:3306)/h5_center?charset=utf8"
+//	dsn := dbuser + ":" + dbpassword + "@tcp(" + dbhost + ":" + dbport + ")/" + dbname + "?charset=utf8"
+//	err := orm.RegisterDataBase("center", "mysql", dsn)
+//	if err != nil {
+//		fmt.Println(dsn, err)
+//	}
+//}

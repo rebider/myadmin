@@ -19,7 +19,7 @@ func (c *PlayerController) List() {
 	utils.CheckError(err)
 	logs.Info("查询用户列表:%+v", params)
 	//获取数据列表和总数
-	data, total := models.PlayerPageList(&params)
+	data, total := models.GetPlayerList(&params)
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
@@ -32,7 +32,7 @@ func (c *PlayerController) Detail() {
 	utils.CheckError(err)
 	logs.Info("查询用户列表:%+v", params)
 	//获取数据列表和总数
-	data, total := models.PlayerPageList(&params)
+	data, total := models.GetPlayerList(&params)
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data

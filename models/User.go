@@ -29,8 +29,6 @@ type User struct {
 	RoleIds            []int          `orm:"-" json:"roleIds"`
 	RoleUserRel        []*RoleUserRel `json:"-" orm:"reverse(many)"` // 设置一对多的反向关系
 	ResourceUrlForList []string       `orm:"-"`
-	//SelectPlatformId   []int          `orm:"-"`
-	//SelectServerId     []string       `orm:"-"`
 }
 
 //获取分页数据
@@ -64,22 +62,24 @@ func UserPageList(params *UserQueryParam) ([]*User, int64) {
 }
 
 // 根据id获取单条
-func UserOne(id int) (*User, error) {
-	o := orm.NewOrm()
-	m := User{Id: id}
-	err := o.Read(&m)
-	if err != nil {
-		return nil, err
+func UserOne(id int) (user *User, err error) {
+	user = &User{
+		Id: id,
 	}
-	return &m, nil
+	err = Db.First(&user).Error
+	utils.CheckError(err)
+	return user, err
 }
 
 // 根据用户名密码获取单条
-func UserOneByAccount(account, password string) (*User, error) {
-	m := User{}
-	err := orm.NewOrm().QueryTable(UserTBName()).Filter("account", account).Filter("password", password).One(&m)
-	if err != nil {
-		return nil, err
-	}
-	return &m, nil
+func UserOneByAccount(account, password string) (user *User, err error) {
+	//m := User{}
+	//err := orm.NewOrm().QueryTable(UserTBName()).Filter("account", account).Filter("password", password).One(&m)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//return &m, nil
+	err = Db.Where(User{Account:account, Password:password}).First(&user).Error
+	utils.CheckError(err)
+	return user, err
 }
