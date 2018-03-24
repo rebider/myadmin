@@ -1,8 +1,6 @@
 package models
 
 import (
-	//"github.com/astaxie/beego/orm"
-	//"fmt"
 	"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
 )
@@ -34,8 +32,8 @@ func (t *ServerNode) TableName() string {
 //获取分页数据
 func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 	logs.Debug("params:%+v", params)
-	db, err := GetCenterDb()
-	utils.CheckError(err)
+	//db, err := GetCenterDb()
+	//utils.CheckError(err)
 	data := make([]*ServerNode, 0)
 	//默认排序
 	sortOrder := "node"
@@ -46,20 +44,24 @@ func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
 	}
-	if params.Type > 0 {
-		logs.Debug("666")
-		db = db.Where("type = ?", params.Type)
-	}
-	if params.Node != "" {
-		logs.Debug("666")
-		db = db.Where("node = ?", params.Node)
-	}
-	if params.PlatformId > 0 {
-		logs.Debug("666")
-		db = db.Where("platform_id = ?", params.PlatformId)
-	}
+	//if params.Type > 0 {
+	//	logs.Debug("666")
+	//	db = db.Where("type = ?", params.Type)
+	//}
+	//if params.Node != "" {
+	//	logs.Debug("666")
+	//	db = db.Where("node = ?", params.Node)
+	//}
+	//if params.PlatformId > 0 {
+	//	logs.Debug("666")
+	//	db = db.Where("platform_id = ?", params.PlatformId)
+	//}
 	var count int64
-	err = db.Model(&ServerNode{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+	err := DbCenter.Model(&ServerNode{}).Count(&count).Where(&ServerNode{
+		Type:params.Type,
+		Node:params.Node,
+		PlatformId:params.PlatformId,
+	}).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
 	utils.CheckError(err)
 	return data, count
 }

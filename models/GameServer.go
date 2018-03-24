@@ -7,6 +7,7 @@ import (
 	//"github.com/chnzrb/myadmin/utils"
 	//"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
+	//"github.com/zaaksam/dproxy/go/db"
 )
 
 type GameServerQueryParam struct {
@@ -38,8 +39,8 @@ func GetAllGameServer() ([]*GameServer, int64) {
 
 //获取数据列表
 func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
-	db, err:= GetCenterDb()
-	utils.CheckError(err)
+	//db, err:= GetCenterDb()
+	//utils.CheckError(err)
 	//默认排序
 	sortOrder := "Sid"
 	switch params.Sort {
@@ -49,19 +50,23 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
 	}
-	if params.PlatformId != 0 {
-		db = db.Where("platform_id = ?", params.PlatformId)
-	}
-	if params.ServerId != "" {
-		db = db.Where("sid = ?", params.ServerId)
-	}
-	if params.Node != "" {
-		db = DbCenter.Where("node LIKE ?", "%" +params.Node + "%")
-	}
+	//if params.PlatformId != 0 {
+	//	db = db.Where("platform_id = ?", params.PlatformId)
+	//}
+	//if params.ServerId != "" {
+	//	db = db.Where("sid = ?", params.ServerId)
+	//}
+	//if params.Node != "" {
+	//	db = DbCenter.Where("node LIKE ?", "%" +params.Node + "%")
+	//}
 	//total, _ := query.Count()
 	data := make([]*GameServer, 0)
 	var count int64
-	err = db.Model(&GameServer{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+	err := DbCenter.Model(&GameServer{}).Count(&count).Where(&GameServer{
+		PlatformId:params.PlatformId,
+		Sid:params.ServerId,
+		Node:params.Node,
+	}).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
 	utils.CheckError(err)
 	return data, count
 }
@@ -71,6 +76,6 @@ func GetGameServer(platformId int, id string) (*GameServer, error) {
 		Sid:        id,
 		PlatformId: platformId,
 	}
-	DbCenter.First(&gameServer)
-	return gameServer, nil
+	err := DbCenter.First(&gameServer).Error
+	return gameServer, err
 }

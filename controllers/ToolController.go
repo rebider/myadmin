@@ -5,13 +5,6 @@ import (
 	"github.com/chnzrb/myadmin/models"
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/astaxie/beego/logs"
-	//"github.com/astaxie/beego/orm"
-	//"fmt"
-	//"strings"
-	"github.com/astaxie/beego/orm"
-	//"os/exec"
-	//"bytes"
-	//"os"
 	"strconv"
 	"encoding/json"
 	"strings"
@@ -74,11 +67,14 @@ func (this *ToolController) Action() {
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
-	node := getNode(params.ServerId)
+	//node := getNode(params.ServerId)
+	gameServer, err := models.GetGameServer(params.PlatformId, params.ServerId)
+	utils.CheckError(err)
+	node := gameServer.Node
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		node.(string),
+		node,
 		"-setcookie",
 		"game",
 		"rpc",
@@ -110,11 +106,14 @@ func (this *ToolController) SendProp() {
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
-	node := getNode(params.ServerId)
+	//node := getNode(params.ServerId)
+	gameServer, err := models.GetGameServer(params.PlatformId, params.ServerId)
+	utils.CheckError(err)
+	node := gameServer.Node
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		node.(string),
+		node,
 		"-setcookie",
 		"game",
 		"rpc",
@@ -147,11 +146,14 @@ func (this *ToolController)SetTask() {
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
-	node := getNode(params.ServerId)
+	//node := getNode(params.ServerId)
+	gameServer, err := models.GetGameServer(params.PlatformId, params.ServerId)
+	utils.CheckError(err)
+	node := gameServer.Node
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		node.(string),
+		node,
 		"-setcookie",
 		"game",
 		"rpc",
@@ -184,11 +186,14 @@ func (this *ToolController)ActiveFunction() {
 	err := json.Unmarshal(this.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
-	node := getNode(params.ServerId)
+	//node := getNode(params.ServerId)
+	gameServer, err := models.GetGameServer(params.PlatformId, params.ServerId)
+	utils.CheckError(err)
+	node := gameServer.Node
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		node.(string),
+		node,
 		"-setcookie",
 		"game",
 		"rpc",
@@ -211,11 +216,11 @@ func (this *ToolController)ActiveFunction() {
 	}
 }
 
-func getNode(serverId string) interface{} {
-	var o = orm.NewOrm()
-	var lists []orm.ParamsList
-	o.Using("center")
-	o.Raw("select `node` from c_game_server where `sid` = ?", serverId).ValuesList(&lists)
-	node := lists[0][0]
-	return node
-}
+//func getNode(serverId string) interface{} {
+//	var o = orm.NewOrm()
+//	var lists []orm.ParamsList
+//	o.Using("center")
+//	o.Raw("select `node` from c_game_server where `sid` = ?", serverId).ValuesList(&lists)
+//	node := lists[0][0]
+//	return node
+//}

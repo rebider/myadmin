@@ -18,16 +18,16 @@ func init() {
 	initDb()
 	initCenter()
 	orm.RegisterModel(
-		new(User),
+		//new(User),
 		new(Resource),
 		new(Role),
 		new(RoleResourceRel),
 		new(RoleUserRel),
-		new(GameServer),
-		new(ServerNode),
+		//new(GameServer),
+		//new(ServerNode),
 		new(Menu),
 		new(RoleMenuRel),
-		new(Player),
+		//new(Player),
 		)
 }
 func initDb() {

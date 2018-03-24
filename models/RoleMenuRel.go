@@ -6,6 +6,8 @@ import "time"
 type RoleMenuRel struct {
 	Id       int
 	Role     *Role     `orm:"rel(fk)"`  //外键
+	RoleId     int     `orm:"-"`  //外键
+	MenuId     int     `orm:"-"`  //外键
 	Menu *Menu `orm:"rel(fk)" ` // 外键
 	Created  time.Time `orm:"auto_now_add;type(datetime)"`
 }
