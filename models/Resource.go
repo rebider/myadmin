@@ -3,62 +3,102 @@ package models
 import (
 	"fmt"
 	"github.com/chnzrb/myadmin/utils"
-	"github.com/astaxie/beego/orm"
-	"github.com/astaxie/beego/logs"
 )
 
 func (a *Resource) TableName() string {
 	return ResourceTBName()
 }
 
+func ResourceTBName() string {
+	return TableName("resource")
+}
+
 type ResourceQueryParam struct {
 	BaseQueryParam
 }
 
-//Resource 权限控制资源表
+//资源
 type Resource struct {
-	Id    int    `json:"id"`
-	Name  string `orm:"size(64)" json:"name"`
-	Parent          *Resource          `orm:"null;rel(fk) " json:"-"` // RelForeignKey relation
-	ParentId        int                `orm:"-" json:"parentId"`             // RelForeignKey relation
-	Children        []*Resource        `orm:"reverse(many)" json:"children"` // fk 的反向关系
-	UrlFor          string             `orm:"size(256)" json:"urlFor"`
-	Url          string             	`orm:"-" json:"url"`
-	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
+	Id              int                `json:"id"`
+	Name            string             `json:"name"`
+	Parent          *Resource          `json:"-"`
+	ParentId        int                `json:"parentId"`
+	Children        []*Resource        `json:"children"`
+	UrlFor          string             `json:"urlFor"`
+	Url             string             `json:"url"`
+	RoleResourceRel []*RoleResourceRel `json:"-"`
 }
 
-func ResourceOne(id int) (*Resource, error) {
-	o := orm.NewOrm()
-	m := Resource{Id: id}
-	err := o.Read(&m)
-	if err != nil {
+func relateResourceListParent(resourceList []*Resource){
+	for _, resource :=  range resourceList{
+		relateResourceParent(resource)
+	}
+}
+
+func relateResourceParent(resource *Resource) (*Resource, error){
+	if resource.ParentId > 0 {
+		p := &Resource{}
+		if err := Db.Model(&resource).Related(&p, "ParentId").Error; err != nil {
+			return resource, err
+		}
+		resource.Parent = p
+	}
+	return resource, nil
+}
+
+
+//获取单个资源
+func GetResourceOne(id int) (*Resource, error) {
+	resource := &Resource{
+		Id: id,
+	}
+	if err := Db.First(&resource).Error; err != nil {
 		return nil, err
 	}
-	if m.Parent != nil {
-		m.ParentId = m.Parent.Id
+	if _, err := relateResourceParent(resource); err != nil {
+		return nil, err
 	}
-
-	return &m, nil
+	return resource, nil
 }
 
-//获取分页数据
-func ResourceList() []*Resource {
-	query := orm.NewOrm().QueryTable(ResourceTBName())
+//获取资源列表
+func GetResourceList() []*Resource {
 	data := make([]*Resource, 0)
-	query.All(&data)
-	for _,e:= range data {
-		if e.Parent != nil {
-			e.ParentId = e.Parent.Id
-		}
-
-	}
-	logs.Debug("ResourceList:%+v", data)
+	err := Db.Model(&Resource{}).Find(&data).Error
+	utils.CheckError(err)
+	relateResourceListParent(data)
 	return data
 }
 
-//ResourceTreeGrid4Parent 获取可以成为某个节点父节点的列表
+// 删除资源列表
+func DeleteResources(ids [] int) (int64, error) {
+	tx := Db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if tx.Error != nil {
+		return 0, tx.Error
+	}
+	var count int64
+	// 删除资源
+	if err := Db.Where(ids).Delete(&Resource{}).Count(&count).Error; err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	//删除角色资源关系
+	if _, err := DeleteRoleResourceRelByResourceIdList(ids); err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	return  count, tx.Commit().Error
+}
+
+
+//获取可以成为某个节点父节点的列表
 func ResourceTreeGrid4Parent(id int) []*Resource {
-	list := ResourceList()
+	list := GetResourceList()
 	tmpList := make([] *Resource, 0)
 	if id > 0 {
 		for _, e := range list {
@@ -73,7 +113,7 @@ func ResourceTreeGrid4Parent(id int) []*Resource {
 }
 
 func CanParent(resourceId int, parentResourceId int) bool {
-	parentResource, _ := ResourceOne(parentResourceId)
+	parentResource, _ := GetResourceOne(parentResourceId)
 	if (parentResource.Parent != nil && parentResource.Parent.Id == resourceId) || resourceId == parentResourceId {
 		//logs.Debug("CanParent:%+v %+v %+v", resourceId, thisResourceId, thisResource.Parent.Id)
 		return false
@@ -87,9 +127,7 @@ func CanParent(resourceId int, parentResourceId int) bool {
 //根据用户获取有权管理的资源列表
 func GetResourceListByUserId(userId int) []*Resource {
 	var list []*Resource
-	o := orm.NewOrm()
-	user, err := UserOne(userId)
-	logs.Info("user:%+v", user)
+	user, err := GetUserOne(userId)
 	utils.CheckError(err)
 	if err != nil || user == nil {
 		return list
@@ -97,25 +135,24 @@ func GetResourceListByUserId(userId int) []*Resource {
 
 	var sql string
 	if user.IsSuper == 1 {
-		//如果是管理员，则查出所有的
-		sql = fmt.Sprintf(`SELECT * FROM %s  Order By seq asc,Id asc`, ResourceTBName())
-		o.Raw(sql).QueryRows(&list)
+		list = GetResourceList()
 	} else {
-		//	//联查多张表，找出某用户有权管理的
 		sql = fmt.Sprintf(`SELECT DISTINCT T2.*
 		FROM %s AS T0
 		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
 		INNER JOIN %s AS T2 ON T2.id = T0.resource_id
 		WHERE T1.user_id = ? `, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
-		o.Raw(sql, userId).QueryRows(&list)
-	}
-	result := list
-	for _,e:= range list {
-		if e.Parent != nil {
-			e.ParentId = e.Parent.Id
+		rows, err := Db.Raw(sql, userId).Rows()
+		defer rows.Close()
+		utils.CheckError(err)
+		for rows.Next(){
+			var resource  Resource
+			Db.ScanRows(rows, &resource)
+			list = append(list, &resource)
 		}
+		relateResourceListParent(list)
 	}
-	return result
+	return list
 }
 
 func TranResourceList2ResourceTree(resourceList []*Resource) []*Resource {
@@ -126,7 +163,7 @@ func TranResourceList2ResourceTree(resourceList []*Resource) []*Resource {
 			resourceTree = append(resourceTree, item)
 		}
 	}
-	logs.Debug("TranResourceList2ResourceTree:%+v", resourceTree)
+	//logs.Debug("TranResourceList2ResourceTree:%+v", resourceTree)
 	return resourceTree
 }
 func TranResourceList2ResourceTree_(cur *Resource, list []*Resource) *Resource {

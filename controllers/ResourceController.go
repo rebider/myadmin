@@ -6,7 +6,6 @@ import (
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/models"
 	"github.com/chnzrb/myadmin/utils"
-	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego/logs"
 	"encoding/json"
 )
@@ -15,9 +14,10 @@ type ResourceController struct {
 	BaseController
 }
 
+//获取资源列表
 func (c *ResourceController) List() {
 	//获取数据列表和总数
-	data := models.TranResourceList2ResourceTree(models.ResourceList())
+	data := models.TranResourceList2ResourceTree(models.GetResourceList())
 	result := make(map[string]interface{})
 	c.UrlFor2Link(data)
 	result["rows"] = data
@@ -25,26 +25,22 @@ func (c *ResourceController) List() {
 }
 
 func (c *ResourceController) ResourceTree() {
-	c.Result(enums.CodeSuccess, "获取资源树成功", models.TranResourceList2ResourceTree(models.ResourceList()))
+	c.Result(enums.CodeSuccess, "获取资源树成功", models.TranResourceList2ResourceTree(models.GetResourceList()))
 }
 
-//ParentTreeGrid 获取可以成为某节点的父节点列表
+//获取可以成为某节点的父节点列表
 func (c *ResourceController) GetParentResourceList() {
-	//Id, _ := c.GetInt("id", 0)
 	var params struct {
 		Id int `json:"id"`
 	}
 
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
-	logs.Debug("获取可以成为某节点的父节点列表:%+v", params)
 	tree := models.ResourceTreeGrid4Parent(params.Id)
-	////转换UrlFor 2 LinkUrl
-	//c.UrlFor2Link(tree)
 	c.Result(enums.CodeSuccess, "", tree)
 }
 
-// UrlFor2LinkOne 使用URLFor方法，将资源表里的UrlFor值转成LinkUrl
+// 将资源表里的UrlFor值转成LinkUrl
 func (c *ResourceController) UrlFor2LinkOne(urlfor string) string {
 	if len(urlfor) == 0 {
 		return ""
@@ -71,14 +67,12 @@ func (c *ResourceController) UrlFor2Link(src []*models.Resource) {
 	}
 }
 
-//Edit 资源编辑页面
+//资源添加资源
 func (c *ResourceController) Edit() {
 	m := models.Resource{}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err, "编辑资源")
 	logs.Info("编辑资源:%+v", m)
-	//var err error
-	o := orm.NewOrm()
 	parent := &models.Resource{}
 	//m := models.Resource{}
 	parentId := m.ParentId
@@ -89,7 +83,8 @@ func (c *ResourceController) Edit() {
 	//}
 	//获取父节点
 	if parentId > 0 {
-		parent, err = models.ResourceOne(parentId)
+		parent, err = models.GetResourceOne(parentId)
+		utils.CheckError(err)
 		if err == nil && parent != nil {
 			m.Parent = parent
 		} else {
@@ -103,7 +98,8 @@ func (c *ResourceController) Edit() {
 	}
 	//}
 	if m.Id == 0 {
-		if _, err = o.Insert(&m); err == nil {
+		err = models.Db.Save(&m).Error
+		if  err == nil {
 			c.Result(enums.CodeSuccess, "添加成功", m.Id)
 		} else {
 			c.Result(enums.CodeFail, "添加失败", m.Id)
@@ -115,7 +111,8 @@ func (c *ResourceController) Edit() {
 				c.Result(enums.CodeFail, "请重新选择父节点", "")
 			}
 		}
-		if _, err = o.Update(&m); err == nil {
+		err = models.Db.Save(&m).Error
+		if  err == nil {
 			c.Result(enums.CodeSuccess, "编辑成功", m.Id)
 		} else {
 			c.Result(enums.CodeFail, "编辑失败", m.Id)
@@ -129,8 +126,9 @@ func (c *ResourceController) Delete() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err)
 	logs.Info("删除资源:%+v", m)
-	query := orm.NewOrm().QueryTable(models.ResourceTBName())
-	if _, err := query.Filter("id", m[0]).Delete(); err == nil {
+	//query := orm.NewOrm().QueryTable(models.ResourceTBName())
+	_, err = models.DeleteResources(m)
+	if err == nil {
 		c.Result(enums.CodeSuccess, fmt.Sprintf("删除成功"), 0)
 	} else {
 		c.Result(enums.CodeFail, "删除失败", 0)

@@ -49,7 +49,7 @@ func (c *BaseController) CheckError(err error, msg... string) {
 	if err != nil {
 		errMsg := fmt.Sprintf("%s %v", msg, err)
 		logs.GetBeeLogger().Error(errMsg)
-		c.Result(enums.CodeFail, "[ERROR] " + errMsg, "")
+		c.Result(enums.CodeFail, errMsg, nil)
 	}
 }
 
@@ -117,7 +117,7 @@ func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
 }
 
 func (c *BaseController) setUser2Session(userId int) error {
-	m, err := models.UserOne(userId)
+	m, err := models.GetUserOne(userId)
 	if err != nil {
 		return err
 	}

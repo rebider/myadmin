@@ -1,12 +1,6 @@
 package utils
 
 import (
-	//"runtime"
-	//"path/filepath"
-	//"fmt"
-	//"github.com/chnzrb/myadmin/models"
-	//"encoding/json"
-	//"os"
 	"github.com/astaxie/beego"
 	"os/exec"
 	"bytes"
@@ -22,32 +16,6 @@ func CheckError(err error, msg... string) {
 		//fmt.Printf("[ERROR]%s:%d %s %v", fileBaseName, line, msg, err)
 	}
 }
-//
-//func ShowGameNodeJson(Data map[interface{}]interface{}) map[interface{}]interface{} {
-//	gameServerNodeList, _ := models.GetServerNodeList("type", 1)
-//	out,err := json.Marshal(gameServerNodeList)
-//	fmt.Println("game_node_list error:", err, gameServerNodeList)
-//	Data["game_node_list"] = string(out)
-//	return Data
-//}
-//func ShowGameNodeList(Data map[interface{}]interface{}) map[interface{}]interface{} {
-//	gameServerNodeList, _ := models.GetServerNodeList("type", 1)
-//	Data["game_node_list"] = gameServerNodeList
-//	return Data
-//}
-
-//func ShowPlatformList(Data map[interface{}]interface{}) map[interface{}]interface{} {
-//	platformMap := models.GetPlatformMap()
-//	platformList := make([]map[string]interface{}, 0, len(platformMap))
-//	for k, v := range platformMap {
-//		row := make(map[string]interface{})
-//		row["platform_id"] = k
-//		row["platform_name"] = v
-//		platformList = append(platformList, row)
-//	}
-//	Data["platform_list"] = platformList
-//	return Data
-//}
 
 func Nodetool(arg ... string) (string, error) {
 	centerNode := beego.AppConfig.String("node::center")

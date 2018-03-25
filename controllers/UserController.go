@@ -2,12 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/models"
 	"github.com/chnzrb/myadmin/utils"
-	//"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego/logs"
 )
 
@@ -17,24 +15,21 @@ type UserController struct {
 
 func (c *UserController) Info() {
 	m := c.curUser
-	platformList, err := models.GetPlatformList("data/json/Platform.json")
-	utils.CheckError(err)
-	gameServerList, _ := models.GetAllGameServer()
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
-			Name         string             `json:"name"`
-			ResourceTree []*models.Menu `json:"menuTree"`
-			PlatformList []*models.Platform
+			Name           string         `json:"name"`
+			ResourceTree   []*models.Menu `json:"menuTree"`
+			PlatformList   []*models.Platform
 			GameServerList []*models.GameServer
 		}{
-			Name: m.Name,
-			ResourceTree: models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id)),
-			PlatformList:platformList,
-			GameServerList:gameServerList,
-			})
+			Name:           m.Name,
+			ResourceTree:   models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id)),
+			PlatformList:   make([]*models.Platform, 0),
+			GameServerList: make([]*models.GameServer, 0),
+		})
 }
 
-
+// 获取用户列表
 func (c *UserController) List() {
 	var params models.UserQueryParam
 	json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -45,155 +40,64 @@ func (c *UserController) List() {
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取用户列表成功", result)
 }
-// Edit 添加 编辑 页面
+
+// 编辑 添加用户
 func (c *UserController) Edit() {
 	m := models.User{}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err, "编辑用户")
 	logs.Info("编辑用户:%+v", m)
 
-	//o := orm.NewOrm()
-
 	//删除旧的用户角色关系
-	_, err = models.DeleteRoleUserRelByUserIdList([] int {m.Id})
-	//_, err = o.QueryTable(models.RoleUserRelTBName()).Filter("user__id", m.Id).Delete()
-	utils.CheckError(err, "删除旧的用户角色关系")
-
-	//var relations []models.RoleUserRel
+	_, err = models.DeleteRoleUserRelByUserIdList([] int{m.Id})
+	c.CheckError(err, "删除旧的用户角色关系失败")
 	for _, roleId := range m.RoleIds {
-		//r := models.Role{Id: roleId}
-		relation := models.RoleUserRel{UserId: m.Id, RoleId:roleId}
+		relation := models.RoleUserRel{UserId: m.Id, RoleId: roleId}
 		m.RoleUserRel = append(m.RoleUserRel, &relation)
 	}
 	if m.Id == 0 {
-		//对密码进行加密
 		m.Password = utils.String2md5(m.ModifyPassword)
 		err = models.Db.Save(&m).Error
-		utils.CheckError(err)
-		if  err != nil {
-			c.Result(enums.CodeFail, "添加用户失败", m.Id)
-		}
+		c.CheckError(err, "添加用户失败")
 	} else {
-		if oM, err := models.UserOne(m.Id); err != nil {
-			utils.CheckError(err)
-			c.Result(enums.CodeFail, "未找到该用户", m.Id)
+		oM, err := models.GetUserOne(m.Id)
+		c.CheckError(err, "未找到该用户")
+		m.Password = strings.TrimSpace(m.ModifyPassword)
+		if len(m.Password) == 0 {
+			//密码为空则不修改
+			m.Password = oM.Password
 		} else {
-			m.Password = strings.TrimSpace(m.ModifyPassword)
-			if len(m.Password) == 0 {
-				//如果密码为空则不修改
-				m.Password = oM.Password
-			} else {
-				logs.Info("修改密码:%+v", m.Password)
-				m.Password = utils.String2md5(m.Password)
-			}
+			m.Password = utils.String2md5(m.Password)
 		}
 		err = models.Db.Save(&m).Error
-		utils.CheckError(err)
-		if err != nil {
-			logs.Error("%+v", m)
-			c.Result(enums.CodeFail, "保存用户失败", m.Id)
-		}
+		c.CheckError(err, "保存用户失败")
 	}
 	c.Result(enums.CodeSuccess, "保存成功", m.Id)
-	////添加关系
-	//var relations []models.RoleUserRel
-	//for _, roleId := range m.RoleIds {
-	//	r := models.Role{Id: roleId}
-	//	relation := models.RoleUserRel{User: &m, Role: &r}
-	//	relations = append(relations, relation)
-	//}
-	//if len(relations) > 0 {
-	//	//批量添加
-	//	if _, err := o.InsertMulti(len(relations), relations); err == nil {
-	//		c.Result(enums.CodeSuccess, "保存用户角色关系成功", m.Id)
-	//	} else {
-	//		c.Result(enums.CodeFail, "保存用户角色关系失败", m.Id)
-	//	}
-	//} else {
-	//	c.Result(enums.CodeSuccess, "保存成功", m.Id)
-	//}
 }
-//// Edit 添加 编辑 页面
-//func (c *UserController) Edit() {
-//	m := models.User{}
-//	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
-//	utils.CheckError(err, "编辑用户")
-//	logs.Info("编辑用户:%+v", m)
-//
-//	o := orm.NewOrm()
-//
-//	//删除旧的用户角色关系
-//	_, err = o.QueryTable(models.RoleUserRelTBName()).Filter("user__id", m.Id).Delete()
-//	utils.CheckError(err, "删除旧的用户角色关系")
-//
-//	if m.Id == 0 {
-//		//对密码进行加密
-//		m.Password = utils.String2md5(m.ModifyPassword)
-//		if _, err := o.Insert(&m); err != nil {
-//			c.Result(enums.CodeFail, "添加用户失败", m.Id)
-//		}
-//	} else {
-//		if oM, err := models.UserOne(m.Id); err != nil {
-//			c.Result(enums.CodeFail, "未找到该用户", m.Id)
-//		} else {
-//			m.Password = strings.TrimSpace(m.ModifyPassword)
-//			if len(m.Password) == 0 {
-//				//如果密码为空则不修改
-//				m.Password = oM.Password
-//			} else {
-//				logs.Info("修改密码:%+v", m.Password)
-//				m.Password = utils.String2md5(m.Password)
-//			}
-//		}
-//		if _, err := o.Update(&m); err != nil {
-//			c.Result(enums.CodeFail, "保存用户失败", m.Id)
-//		}
-//	}
-//	//添加关系
-//	var relations []models.RoleUserRel
-//	for _, roleId := range m.RoleIds {
-//		r := models.Role{Id: roleId}
-//		relation := models.RoleUserRel{User: &m, Role: &r}
-//		relations = append(relations, relation)
-//	}
-//	if len(relations) > 0 {
-//		//批量添加
-//		if _, err := o.InsertMulti(len(relations), relations); err == nil {
-//			c.Result(enums.CodeSuccess, "保存用户角色关系成功", m.Id)
-//		} else {
-//			c.Result(enums.CodeFail, "保存用户角色关系失败", m.Id)
-//		}
-//	} else {
-//		c.Result(enums.CodeSuccess, "保存成功", m.Id)
-//	}
-//}
 
+// 删除用户
 func (c *UserController) Delete() {
-	var userIdList  []int
+	var userIdList []int
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &userIdList)
 	utils.CheckError(err)
-	logs.Info("删除用户:%+v",  userIdList)
-	count, err := models.DeleteUsers(userIdList)
-	if err == nil {
-		c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", count), userIdList)
-	} else {
-		c.Result(enums.CodeFail, "删除失败", userIdList)
-	}
+	logs.Info("删除用户:%+v", userIdList)
+	err = models.DeleteUsers(userIdList)
+	c.CheckError(err, "删除用户失败")
+	c.Result(enums.CodeSuccess, "成功删除用户", userIdList)
 }
 
-
+//修改密码
 func (c *UserController) ChangePassword() {
 	var params struct {
 		OldPwd string `json:"oldPwd"`
 		NewPwd string `json:"newPwd"`
-		//NewPwd2 string `json:"newPwd2"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("修改密码:%+v", params)
 	Id := c.curUser.Id
-	user, err := models.UserOne(Id)
-	utils.CheckError(err)
+	user, err := models.GetUserOne(Id)
+	c.CheckError(err, "未找到该用户")
 	md5str := utils.String2md5(params.OldPwd)
 	if user.Password != md5str {
 		c.Result(enums.CodeFail, "原密码错误", "")
@@ -202,11 +106,8 @@ func (c *UserController) ChangePassword() {
 		c.Result(enums.CodeFail, "请输入新密码", "")
 	}
 	user.Password = utils.String2md5(params.NewPwd)
-	err = models.Db.Model(&user).Updates(models.User{Password:user.Password}).Error
-	if  err != nil {
-		c.Result(enums.CodeFail, "保存失败", user.Id)
-	} else {
-		c.setUser2Session(Id)
-		c.Result(enums.CodeSuccess, "保存成功", user.Id)
-	}
+	err = models.Db.Model(&user).Updates(models.User{Password: user.Password}).Error
+	c.CheckError(err, "保存失败")
+	c.setUser2Session(Id)
+	c.Result(enums.CodeSuccess, "保存成功", user.Id)
 }

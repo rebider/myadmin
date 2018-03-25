@@ -6,78 +6,55 @@ import (
 	"github.com/chnzrb/myadmin/models"
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
-	"github.com/astaxie/beego/orm"
 	"github.com/astaxie/beego/logs"
 )
 
-//RoleController 角色管理
+//角色管理
 type RoleController struct {
 	BaseController
 }
 
-// DataGrid 角色管理首页 表格获取数据
+// 获取角色列表
 func (c *RoleController) List() {
-	//直接反序化获取json格式的requestbody里的值
 	var params models.RoleQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
-	//获取数据列表和总数
-	data, total := models.RolePageList(&params)
-	//定义返回的数据结构
+	data, total := models.GetRoleList(&params)
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取角色列表成功", result)
 }
 
-////DataList 角色列表
-//func (c *RoleController) DataList() {
-//	var params = models.RoleQueryParam{}
-//	//获取数据列表和总数
-//	data := models.RoleDataList(&params)
-//	//定义返回的数据结构
-//	c.jsonResult(enums.JRCodeSucc, "", data)
-//}
-
-//Edit 添加、编辑角色界面
+//添加,编辑角色
 func (c *RoleController) Edit() {
 	m := models.Role{}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err, "编辑角色")
-	o := orm.NewOrm()
 	if m.Id == 0 {
-		if _, err = o.Insert(&m); err == nil {
-			c.Result(enums.CodeSuccess, "添加角色成功", m.Id)
-		} else {
-			c.Result(enums.CodeFail, "添加角色失败", m.Id)
-		}
-
+		err = models.Db.Save(&m).Error
+		c.CheckError(err, "添加角色失败")
+		c.Result(enums.CodeSuccess, "添加角色成功", m.Id)
 	} else {
-		if _, err = o.Update(&m); err == nil {
-			c.Result(enums.CodeSuccess, "编辑角色成功", m.Id)
-		} else {
-			c.Result(enums.CodeFail, "编辑角色失败", m.Id)
-		}
+		err = models.Db.Save(&m).Error
+		c.CheckError(err, "编辑角色失败")
+		c.Result(enums.CodeSuccess, "编辑角色成功", m.Id)
 	}
 }
 
-//Delete 批量删除
+//删除角色
 func (c *RoleController) Delete() {
 	var ids []int
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &ids)
 	utils.CheckError(err)
 	logs.Info("删除角色:%+v", ids)
-	if num, err := models.RoleBatchDelete(ids); err == nil {
-		c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", num), 0)
-	} else {
-		logs.Error("删除角色失败:%+v", err)
-		c.Result(enums.CodeFail, "删除失败", 0)
-	}
+	err = models.DeleteRoles(ids)
+	c.CheckError(err, "删除角色失败")
+	c.Result(enums.CodeSuccess, "成功删除角色", 0)
 }
 
 //角色分配资源
 func (c *RoleController) AllocateResource() {
-
 	var params struct {
 		Id          int    `json:"id"`
 		ResourceIds [] int `json:"resourceIds"`
@@ -89,29 +66,22 @@ func (c *RoleController) AllocateResource() {
 	roleId := params.Id
 	resourceIds := params.ResourceIds
 
-	o := orm.NewOrm()
-	m := models.Role{Id: roleId}
-	if err := o.Read(&m); err != nil {
-		c.Result(enums.CodeFail, "数据无效，请刷新后重试", "")
+	m, err := models.GetRoleOne(roleId)
+	c.CheckError(err, fmt.Sprintf("角色不存在:%d", roleId))
+
+	_, err = models.DeleteRoleResourceRelByRoleIdList([] int {roleId})
+	c.CheckError(err, "删除旧的角色资源关系失败")
+
+	for _, resourceId := range resourceIds {
+		_, err := models.GetResourceOne(resourceId)
+		c.CheckError(err, fmt.Sprintf("资源不存在:%d", resourceId))
+
+		relation := models.RoleResourceRel{RoleId: roleId, ResourceId: resourceId}
+		m.RoleResourceRel = append(m.RoleResourceRel, &relation)
 	}
-	//删除已关联的历史数据
-	if _, err := o.QueryTable(models.RoleResourceRelTBName()).Filter("role__id", m.Id).Delete(); err != nil {
-		c.Result(enums.CodeFail, "删除历史关系失败", "")
-	}
-	var relations []models.RoleResourceRel
-	for _, id := range resourceIds {
-		r := models.Resource{Id: id}
-		relation := models.RoleResourceRel{Role: &m, Resource: &r}
-		relations = append(relations, relation)
-		//}
-	}
-	if len(relations) > 0 {
-		//批量添加
-		if _, err := o.InsertMulti(len(relations), relations); err == nil {
-			c.Result(enums.CodeSuccess, "保存成功", "")
-		}
-	}
-	c.Result(0, "保存失败", "")
+	err = models.Db.Save(&m).Error
+	c.CheckError(err, "保存失败")
+	c.Result(enums.CodeSuccess, "保存成功", "")
 }
 
 
@@ -129,27 +99,20 @@ func (c *RoleController) AllocateMenu() {
 	roleId := params.Id
 	menuIds := params.MenuIds
 
-	o := orm.NewOrm()
-	m := models.Role{Id: roleId}
-	if err := o.Read(&m); err != nil {
-		c.Result(enums.CodeFail, "数据无效，请刷新后重试", "")
+	m, err := models.GetRoleOne(roleId)
+	c.CheckError(err, fmt.Sprintf("角色不存在:%d", roleId))
+
+	_, err = models.DeleteRoleMenuRelByRoleIdList([] int{roleId})
+	c.CheckError(err, "删除旧的角色菜单关系失败")
+
+	for _, menuId := range menuIds {
+		_, err := models.GetMenuOne(menuId)
+		c.CheckError(err, fmt.Sprintf("菜单不存在:%d", menuId))
+
+		relation := models.RoleMenuRel{RoleId: roleId, MenuId: menuId}
+		m.RoleMenuRel = append(m.RoleMenuRel, &relation)
 	}
-	//删除已关联的历史数据
-	if _, err := o.QueryTable(models.RoleMenuRelTBName()).Filter("role__id", m.Id).Delete(); err != nil {
-		c.Result(enums.CodeFail, "删除历史关系失败", "")
-	}
-	var relations []models.RoleMenuRel
-	for _, id := range menuIds {
-		r := models.Menu{Id: id}
-		relation := models.RoleMenuRel{Role: &m, Menu: &r}
-		relations = append(relations, relation)
-		//}
-	}
-	if len(relations) > 0 {
-		//批量添加
-		if _, err := o.InsertMulti(len(relations), relations); err == nil {
-			c.Result(enums.CodeSuccess, "保存成功", "")
-		}
-	}
-	c.Result(0, "保存失败", "")
+	err = models.Db.Save(&m).Error
+	c.CheckError(err, "保存失败")
+	c.Result(enums.CodeSuccess, "保存成功", "")
 }

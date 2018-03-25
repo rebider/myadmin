@@ -36,7 +36,6 @@ func (a *Player) TableName() string {
 
 //获取分页数据
 func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
-	//initGame()
 	db, err := GetDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
 	utils.CheckError(err)
 	defer db.Close()
@@ -68,7 +67,7 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	if params.PlayerId != "" {
 		db = db.Where("id = ?", params.PlayerId)
 	}
-	db.Scopes()
+	//db.Scopes()
 	//logs.Debug("Player:%+v", params)
 	db.Model(&Player{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	return data, count

@@ -27,7 +27,7 @@ func (c *LoginController) Login() {
 		c.Result(enums.CodeFail, "请输入用户名和密码", "")
 	}
 	password = utils.String2md5(password)
-	user, err := models.UserOneByAccount(account, password)
+	user, err := models.GetUserOneByAccount(account, password)
 	utils.CheckError(err)
 	if user != nil && err == nil {
 		if user.Status == enums.Disabled {

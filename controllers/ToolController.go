@@ -47,7 +47,7 @@ func (c *ToolController) Build() {
 	//c.Data["activeSidebarUrl"] = c.URLFor(c.controllerName + "." + c.actionName)
 	c.Data["pageTitle"] = "调试工具"
 	c.Data["game_server_list"] = gameServerList
-	models.ShowPlatformList(c.Data)
+	//models.ShowPlatformList(c.Data)
 	logs.Debug("serverId:%v, platformId:%v", serverId, platformId)
 	//logs.Debug(platformId)
 	c.Data[enums.ChoseServerId] = serverId

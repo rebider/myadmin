@@ -3,8 +3,6 @@ package models
 import (
 	"fmt"
 	"github.com/chnzrb/myadmin/utils"
-	"github.com/astaxie/beego/orm"
-	"github.com/astaxie/beego/logs"
 	"sort"
 )
 
@@ -12,69 +10,110 @@ func (a *Menu) TableName() string {
 	return MenuTBName()
 }
 
+func MenuTBName() string {
+	return TableName("menu")
+}
+
+
 type MenuQueryParam struct {
 	BaseQueryParam
 }
 
 //Menu 权限控制表
 type Menu struct {
-	Id       int     `json:"id,string"`
-	Title    string  `orm:"size(64)" json:"title"` //标题
-	Name     string  `orm:"size(64)" json:"name"`
-	Parent   *Menu   `orm:"null;rel(fk) " json:"-"` // RelForeignKey relation
-	ParentId int     `orm:"-" json:"parentId,string"`      // RelForeignKey relation
-	Seq      int     `json:"seq"`
-	Children []*Menu `orm:"reverse(many)" json:"children"` // fk 的反向关系
-	Icon     string  `orm:"size(32)" json:"icon"`
-	RoleMenuRel []*RoleMenuRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
+	Id          int            `json:"id"`
+	Title       string         `json:"title"`
+	Name        string         `json:"name"`
+	Parent      *Menu          `json:"-"`
+	ParentId    int            `json:"parentId"`
+	Seq         int            `json:"seq"`
+	Children    []*Menu        `json:"children"`
+	Icon        string         `json:"icon"`
+	RoleMenuRel []*RoleMenuRel `json:"-"`
 }
 
 type menuSlice [] *Menu
 
-func (s menuSlice) Len() int { return len(s) }
-func (s menuSlice) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s menuSlice) Len() int           { return len(s) }
+func (s menuSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s menuSlice) Less(i, j int) bool { return s[i].Seq < s[j].Seq }
-
 
 func sortMenuTree(list []*Menu) []*Menu {
 	sort.Sort(menuSlice(list))
 	for _, item := range list {
-		if item.Children != nil  {
+		if item.Children != nil {
 			sortMenuTree(item.Children)
 		}
 	}
 	return list
 }
 
-func MenuOne(id int) (*Menu, error) {
-	o := orm.NewOrm()
-	m := Menu{Id: id}
-	err := o.Read(&m)
-	if err != nil {
+// 获取单个菜单
+func GetMenuOne(id int) (*Menu, error) {
+	menu := &Menu{
+		Id: id,
+	}
+	if err := Db.First(&menu).Error; err != nil {
 		return nil, err
 	}
-	if m.Parent != nil {
-		m.ParentId = m.Parent.Id
+	if _, err := relateMenuParent(menu); err != nil {
+		return nil, err
 	}
-
-	return &m, nil
+	return menu, nil
+}
+func relateMenuListParent(menuList []*Menu){
+	for _, menu :=  range menuList{
+		relateMenuParent(menu)
+	}
 }
 
-//获取分页数据
-func MenuList() []*Menu {
-	query := orm.NewOrm().QueryTable(MenuTBName())
-	data := make([]*Menu, 0)
-	query.All(&data)
-	for _, e := range data {
-		if e.Parent != nil {
-			e.ParentId = e.Parent.Id
+func relateMenuParent(menu *Menu) (*Menu, error){
+	if menu.ParentId > 0 {
+		p := &Menu{}
+		if err := Db.Model(&menu).Related(&p, "ParentId").Error; err != nil {
+			return menu, err
 		}
+		menu.Parent = p
 	}
+	return menu, nil
+}
+
+//获取菜单列表
+func GetMenuList() []*Menu {
+	data := make([]*Menu, 0)
+	err := Db.Model(&Menu{}).Find(&data).Error
+	utils.CheckError(err)
+	relateMenuListParent(data)
 	return data
 }
 
+// 删除菜单列表
+func DeleteMenus(ids [] int) (int64, error) {
+	tx := Db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if tx.Error != nil {
+		return 0, tx.Error
+	}
+	var count int64
+	//删除菜单
+	if err := Db.Where(ids).Delete(&Menu{}).Count(&count).Error; err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	// 删除角色菜单关系
+	if _, err := DeleteRoleMenuRelByMenuIdList(ids); err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+	return count, tx.Commit().Error
+}
+
 func MenuTreeGrid4Parent(id int) []*Menu {
-	list := MenuList()
+	list := GetMenuList()
 	tmpList := make([] *Menu, 0)
 	if id > 0 {
 		for _, e := range list {
@@ -89,7 +128,7 @@ func MenuTreeGrid4Parent(id int) []*Menu {
 }
 
 func CanParentMenu(menuId int, parentMenuId int) bool {
-	parentMenu, _ := MenuOne(parentMenuId)
+	parentMenu, _ := GetMenuOne(parentMenuId)
 	if (parentMenu.Parent != nil && parentMenu.Parent.Id == menuId) || menuId == parentMenuId {
 		return false
 	}
@@ -102,9 +141,7 @@ func CanParentMenu(menuId int, parentMenuId int) bool {
 //根据用户获取有权管理的菜单列表
 func GetMenuListByUserId(userId int) []*Menu {
 	var list []*Menu
-	o := orm.NewOrm()
-	user, err := UserOne(userId)
-	logs.Info("user:%+v", user)
+	user, err := GetUserOne(userId)
 	utils.CheckError(err)
 	if err != nil || user == nil {
 		return list
@@ -112,25 +149,24 @@ func GetMenuListByUserId(userId int) []*Menu {
 
 	var sql string
 	if user.IsSuper == 1 {
-		//如果是管理员，则查出所有的
-		sql = fmt.Sprintf(`SELECT * FROM %s  Order By seq asc,Id asc`, MenuTBName())
-		o.Raw(sql).QueryRows(&list)
+		list = GetMenuList()
 	} else {
-		//	//联查多张表，找出某用户有权管理的
 		sql = fmt.Sprintf(`SELECT DISTINCT T2.*
 		FROM %s AS T0
 		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
 		INNER JOIN %s AS T2 ON T2.id = T0.menu_id
 		WHERE T1.user_id = ?  Order By T2.seq asc,T2.id asc`, RoleMenuRelTBName(), RoleUserRelTBName(), MenuTBName())
-		o.Raw(sql, userId).QueryRows(&list)
-	}
-	result := list
-	for _, e := range list {
-		if e.Parent != nil {
-			e.ParentId = e.Parent.Id
+		rows, err := Db.Raw(sql, userId).Rows()
+		defer rows.Close()
+		utils.CheckError(err)
+		for rows.Next(){
+			var menu  Menu
+			Db.ScanRows(rows, &menu)
+			list = append(list, &menu)
 		}
+		relateMenuListParent(list)
 	}
-	return result
+	return list
 }
 
 func TranMenuList2MenuTree(menuList []*Menu) []*Menu {

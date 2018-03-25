@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/astaxie/beego/orm"
 	"github.com/chnzrb/myadmin/utils"
 	"sort"
 )
@@ -10,89 +9,86 @@ func (a *Role) TableName() string {
 	return RoleTBName()
 }
 
+func RoleTBName() string {
+	return TableName("role")
+}
+
+
 type RoleQueryParam struct {
 	BaseQueryParam
-	NameLike string
 }
 
 //用户角色
 type Role struct {
 	Id              int                `form:"id" json:"id"`
 	Name            string             `form:"name" json:"name"`
-	ResourceIds     [] int             `orm:"-" json:"resourceIds"`
-	MenuIds         [] int             `orm:"-" json:"menuIds"`
-	RoleResourceRel []*RoleResourceRel `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
-	RoleMenuRel     []*RoleMenuRel     `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
-	//RoleUserRel     []*RoleUserRel     `orm:"reverse(many)" json:"-"` // 设置一对多的反向关系
+	ResourceIds     [] int             `json:"resourceIds" gorm:"-"`
+	MenuIds         [] int             `json:"menuIds" gorm:"-"`
+	RoleResourceRel []*RoleResourceRel `json:"-"`
+	RoleMenuRel     []*RoleMenuRel     `json:"-"`
 }
 
-//获取分页数据
-func RolePageList(params *RoleQueryParam) ([]*Role, int64) {
-	//query := orm.NewOrm().QueryTable(RoleTBName())
+//获取角色列表
+func GetRoleList(params *RoleQueryParam) ([]*Role, int64) {
 	data := make([]*Role, 0)
-	//默认排序
-	//sortorder := "Id"
-	//switch params.Sort {
-	//case "Id":
-	//	sortorder = "Id"
-	//case "Seq":
-	//	sortorder = "Seq"
-	//}
-	//if params.Order == "desc" {
-	//	sortorder = "-" + sortorder
-	//}
-	//query = query.Filter("name__istartswith", params.NameLike)
-	//total, _ := query.Count()
-	//query.RelatedSel().OrderBy(sortorder).Limit(params.Limit, params.Offset).All(&data)
 	var count int64
-	err := Db.Model(&Role{}).Count(&count).Where(&Role{Name:params.NameLike}).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
+	err := Db.Model(&Role{}).Count(&count).Find(&data).Error
 	utils.CheckError(err)
 	for _, v := range data {
 		err = Db.Model(&v).Related(&v.RoleResourceRel).Error
-		//_, error := orm.NewOrm().LoadRelated(v, "RoleResourceRel")
 		utils.CheckError(err)
+
 		err = Db.Model(&v).Related(&v.RoleMenuRel).Error
-		//_, error = orm.NewOrm().LoadRelated(v, "RoleMenuRel")
 		utils.CheckError(err)
 
-		resourceIds := make([] int, 0)
 		for _, e := range v.RoleResourceRel {
-			resourceIds = append(resourceIds, e.ResourceId)
+			v.ResourceIds = append(v.ResourceIds, e.ResourceId)
 		}
-		sort.Ints(resourceIds)
-		v.ResourceIds = resourceIds
+		sort.Ints(v.ResourceIds)
 
-		menuIds := make([] int, 0)
 		for _, e := range v.RoleMenuRel {
-			menuIds = append(menuIds, e.MenuId)
+			v.MenuIds = append(v.MenuIds, e.MenuId)
 		}
-		sort.Ints(menuIds)
-		v.MenuIds = menuIds
+		sort.Ints(v.MenuIds)
 	}
 	return data, count
 }
 
-//获取角色列表
-func RoleDataList(params *RoleQueryParam) []*Role {
-	params.Limit = -1
-	params.Sort = "Seq"
-	params.Order = "asc"
-	data, _ := RolePageList(params)
-	return data
+//删除角色
+func DeleteRoles(ids []int) error {
+	tx := Db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if err := Db.Where(ids).Delete(&Role{}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	if _, err := DeleteRoleResourceRelByRoleIdList(ids); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if _, err := DeleteRoleMenuRelByRoleIdList(ids); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if _, err := DeleteRoleUserRelByRoleIdList(ids); err != nil {
+		tx.Rollback()
+		return err
+	}
+	return  tx.Commit().Error
 }
 
-//批量删除
-func RoleBatchDelete(ids []int) (int64, error) {
-	query := orm.NewOrm().QueryTable(RoleTBName())
-	num, err := query.Filter("id__in", ids).Delete()
-	return num, err
-}
-func RoleOne(id int) (*Role, error) {
-	o := orm.NewOrm()
-	m := Role{Id: id}
-	err := o.Read(&m)
-	if err != nil {
-		return nil, err
+//获取单个角色
+func GetRoleOne(id int) (role *Role, err error) {
+	role = &Role{
+		Id: id,
 	}
-	return &m, nil
+	err = Db.First(&role).Error
+	return role, err
 }
