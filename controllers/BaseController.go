@@ -14,21 +14,16 @@ type BaseController struct {
 	curUser        models.User //当前用户信息
 }
 
-func (c *BaseController) AllowCross() {
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:9528")       //允许访问源
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Methods", "*")    //允许post访问
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Token") //header的类型
-	//c.Ctx.ResponseWriter.Header().Set("Access-Control-Max-Age", "1728000")
-	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
-	//c.Ctx.ResponseWriter.Header().Set("content-type", "application/json") //返回数据格式是json
-}
-
-//
+//func (c *BaseController) AllowCross() {
+//	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "http://localhost:9528")       //允许访问源
+//	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Methods", "*")    //允许post访问
+//	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Token") //header的类型
+//	c.Ctx.ResponseWriter.Header().Set("Access-Control-Allow-Credentials", "true")
+//}
 
 func (c *BaseController) Prepare() {
 	controllerName, actionName := c.GetControllerAndAction()
 
-	//c.AllowCross()
 	user := c.GetSession("user")
 	if user != nil {
 		c.curUser = user.(models.User)
@@ -44,7 +39,7 @@ func (c *BaseController) Prepare() {
 		c.checkAuthor()
 	}
 }
-
+//检查错误, 失败直接终止当前请求
 func (c *BaseController) CheckError(err error, msg... string) {
 	if err != nil {
 		errMsg := fmt.Sprintf("%s %v", msg, err)
@@ -129,8 +124,8 @@ func (c *BaseController) setUser2Session(userId int) error {
 	return nil
 }
 
-//返回json
-func (c *BaseController) Result(code enums.JsonResultCode, msg string, data interface{}) {
+//请求返回json
+func (c *BaseController) Result(code enums.ResultCode, msg string, data interface{}) {
 	r := &models.Result{Code:code, Data:data, Msg:msg}
 	c.Data["json"] = r
 	c.ServeJSON()

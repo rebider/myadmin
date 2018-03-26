@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-//角色与资源关系表
+//角色菜单关系表
 type RoleMenuRel struct {
 	Id      int
 	RoleId  int

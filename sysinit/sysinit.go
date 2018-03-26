@@ -2,8 +2,8 @@ package sysinit
 
 import (
 	"github.com/chnzrb/myadmin/utils"
-
 	"github.com/astaxie/beego"
+	_ "github.com/chnzrb/myadmin/models"
 )
 
 func init() {
@@ -13,6 +13,4 @@ func init() {
 	utils.InitLogs()
 	//初始化缓存
 	utils.InitCache()
-	//初始化数据库
-	InitDatabase()
 }

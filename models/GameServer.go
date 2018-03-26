@@ -22,18 +22,17 @@ func (t *GameServer) TableName() string {
 	return "c_game_server"
 }
 
-//获取所有数据
-func GetAllGameServer() ([]*GameServer, int64) {
-	var params GameServerQueryParam
-	params.Limit = -1
-	//获取数据列表和总数
-	data, total := GetGameServerList(&params)
-	return data, total
-}
+////获取所有数据
+//func GetAllGameServer() ([]*GameServer, int64) {
+//	var params GameServerQueryParam
+//	params.Limit = -1
+//	//获取数据列表和总数
+//	data, total := GetGameServerList(&params)
+//	return data, total
+//}
 
-//获取数据列表
+//获取游戏服列表
 func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
-	//默认排序
 	sortOrder := "Sid"
 	switch params.Sort {
 	case "Sid":
@@ -53,7 +52,8 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	return data, count
 }
 
-func GetGameServer(platformId int, id string) (*GameServer, error) {
+// 获取单个游戏服
+func GetGameServerOne(platformId int, id string) (*GameServer, error) {
 	gameServer := &GameServer{
 		Sid:        id,
 		PlatformId: platformId,

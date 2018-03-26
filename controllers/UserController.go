@@ -32,7 +32,8 @@ func (c *UserController) Info() {
 // 获取用户列表
 func (c *UserController) List() {
 	var params models.UserQueryParam
-	json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
 	logs.Info("查询用户列表:%+v", params)
 	data, total := models.GetUserList(&params)
 	result := make(map[string]interface{})

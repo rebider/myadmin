@@ -16,8 +16,8 @@ type PlayerQueryParam struct {
 }
 type Player struct {
 	Id              int    `json:"id"`
-	AccId           string `orm:"size(32)" json:"accId"`
-	Nickname        string `orm:"size(24)" json:"nickname"`
+	AccId           string `json:"accId"`
+	Nickname        string `json:"nickname"`
 	Sex             int    `json:"sex"`
 	ServerId        string `json:"serverId"`
 	DisableLogin    int    `json:"disableLogin"`
@@ -34,7 +34,7 @@ func (a *Player) TableName() string {
 }
 
 
-//获取分页数据
+//获取玩家列表
 func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	db, err := GetDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
 	utils.CheckError(err)
@@ -67,21 +67,15 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	if params.PlayerId != "" {
 		db = db.Where("id = ?", params.PlayerId)
 	}
-	//db.Scopes()
-	//logs.Debug("Player:%+v", params)
 	db.Model(&Player{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	return data, count
 }
 
-//// 根据id获取单条
-//func PlayerOne(id int) (*Player, error) {
-//	o := orm.NewOrm()
-//	err := o.Using("center")
-//	utils.CheckError(err)
-//	m := Player{Id: id}
-//	err = o.Read(&m)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return &m, nil
-//}
+// 获取单个玩家
+func PlayerOne(id int) (*Player, error) {
+	player := &Player{
+		Id: id,
+	}
+	err := Db.First(&player).Error
+	return player, err
+}

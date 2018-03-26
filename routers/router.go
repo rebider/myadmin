@@ -50,7 +50,6 @@ func init() {
 	beego.Router("/role/allocateResource", &controllers.RoleController{}, "*:AllocateResource")
 	beego.Router("/role/allocateMenu", &controllers.RoleController{}, "*:AllocateMenu")
 
-
 	//资源
 	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
 	beego.Router("/resource/edit/?:id", &controllers.ResourceController{}, "*:Edit")
@@ -77,11 +76,7 @@ func init() {
 	beego.Router("/login", &controllers.LoginController{}, "*:Login")
 	beego.Router("/logout", &controllers.LoginController{}, "*:Logout")
 
-
-
-
 	//工具
-	//beego.Router("/tool/build", &controllers.ToolController{}, "*:Build")
 	beego.Router("/tool/action", &controllers.ToolController{}, "*:Action")
 	beego.Router("/tool/send_prop", &controllers.ToolController{}, "*:SendProp")
 	beego.Router("/tool/set_task", &controllers.ToolController{}, "*:SetTask")

@@ -18,7 +18,6 @@ func (c *PlayerController) List() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("查询用户列表:%+v", params)
-	//获取数据列表和总数
 	data, total := models.GetPlayerList(&params)
 	result := make(map[string]interface{})
 	result["total"] = total

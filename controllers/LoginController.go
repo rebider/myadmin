@@ -6,7 +6,6 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/astaxie/beego/logs"
 	"encoding/json"
-	//"github.com/astaxie/beego/orm"
 	"time"
 )
 
@@ -28,7 +27,7 @@ func (c *LoginController) Login() {
 	}
 	password = utils.String2md5(password)
 	user, err := models.GetUserOneByAccount(account, password)
-	utils.CheckError(err)
+	c.CheckError(err, "用户不存在")
 	if user != nil && err == nil {
 		if user.Status == enums.Disabled {
 			c.Result(enums.CodeFail, "用户被禁用，请联系管理员", "")
@@ -39,7 +38,7 @@ func (c *LoginController) Login() {
 
 		//更新用户登录时间
 		err = models.Db.Model(&user).Updates(&models.User{LastLoginIp:c.Ctx.Input.IP(), LastLoginTime:int(time.Now().Unix())}).Error
-		utils.CheckError(err)
+		c.CheckError(err)
 
 
 		c.Result(enums.CodeSuccess, "登录成功",

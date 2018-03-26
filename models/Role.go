@@ -20,8 +20,8 @@ type RoleQueryParam struct {
 
 //用户角色
 type Role struct {
-	Id              int                `form:"id" json:"id"`
-	Name            string             `form:"name" json:"name"`
+	Id              int                `json:"id"`
+	Name            string             `json:"name"`
 	ResourceIds     [] int             `json:"resourceIds" gorm:"-"`
 	MenuIds         [] int             `json:"menuIds" gorm:"-"`
 	RoleResourceRel []*RoleResourceRel `json:"-"`

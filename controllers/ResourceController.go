@@ -45,7 +45,6 @@ func (c *ResourceController) UrlFor2LinkOne(urlfor string) string {
 	if len(urlfor) == 0 {
 		return ""
 	}
-	// ResourceController.Edit,:id,1
 	strs := strings.Split(urlfor, ",")
 	if len(strs) == 1 {
 		return c.URLFor(strs[0])
@@ -67,43 +66,28 @@ func (c *ResourceController) UrlFor2Link(src []*models.Resource) {
 	}
 }
 
-//资源添加资源
+//编辑添加资源
 func (c *ResourceController) Edit() {
 	m := models.Resource{}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err, "编辑资源")
 	logs.Info("编辑资源:%+v", m)
 	parent := &models.Resource{}
-	//m := models.Resource{}
 	parentId := m.ParentId
-	//parentId, _ := c.GetInt("Parent", 0)
-	//获取form里的值
-	//if err = c.ParseForm(&m); err != nil {
-	//	c.Result(enums.JRCodeFailed, "获取数据失败", m.Id)
-	//}
 	//获取父节点
 	if parentId > 0 {
 		parent, err = models.GetResourceOne(parentId)
-		utils.CheckError(err)
-		if err == nil && parent != nil {
-			m.Parent = parent
-		} else {
-			c.Result(enums.CodeFail, "父节点无效", "")
-		}
+		c.CheckError(err, "父节点无效")
+		m.Parent = parent
 	}
-	//if m.Type == 1 {
 	if c.UrlFor2LinkOne(m.UrlFor) != "" || strings.Contains(m.UrlFor, ".*") {
 	} else {
 		c.Result(enums.CodeFail, "控制器解析失败: "+m.UrlFor, "")
 	}
-	//}
 	if m.Id == 0 {
 		err = models.Db.Save(&m).Error
-		if  err == nil {
-			c.Result(enums.CodeSuccess, "添加成功", m.Id)
-		} else {
-			c.Result(enums.CodeFail, "添加失败", m.Id)
-		}
+		c.CheckError(err, "添加资源失败")
+		c.Result(enums.CodeSuccess, "添加资源成功", m.Id)
 
 	} else {
 		if parentId > 0 {
@@ -112,27 +96,20 @@ func (c *ResourceController) Edit() {
 			}
 		}
 		err = models.Db.Save(&m).Error
-		if  err == nil {
-			c.Result(enums.CodeSuccess, "编辑成功", m.Id)
-		} else {
-			c.Result(enums.CodeFail, "编辑失败", m.Id)
-		}
+		c.CheckError(err, "编辑资源失败")
+		c.Result(enums.CodeSuccess, "编辑资源成功", m.Id)
 	}
 }
 
-// Delete 删除
+//删除资源
 func (c *ResourceController) Delete() {
 	var m []int
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err)
 	logs.Info("删除资源:%+v", m)
-	//query := orm.NewOrm().QueryTable(models.ResourceTBName())
 	_, err = models.DeleteResources(m)
-	if err == nil {
-		c.Result(enums.CodeSuccess, fmt.Sprintf("删除成功"), 0)
-	} else {
-		c.Result(enums.CodeFail, "删除失败", 0)
-	}
+	c.CheckError(err, "删除资源失败")
+	c.Result(enums.CodeSuccess, fmt.Sprintf("删除资源成功"), 0)
 }
 
 //CheckUrlFor 填写UrlFor时进行验证
