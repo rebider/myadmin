@@ -15,6 +15,9 @@ type UserController struct {
 
 func (c *UserController) Info() {
 	m := c.curUser
+	platformList, err := models.GetPlatformList("data/json/Platform.json")
+	utils.CheckError(err)
+	gameServerList, _ := models.GetAllGameServer()
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
 			Name           string         `json:"name"`
@@ -24,8 +27,8 @@ func (c *UserController) Info() {
 		}{
 			Name:           m.Name,
 			ResourceTree:   models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id)),
-			PlatformList:   make([]*models.Platform, 0),
-			GameServerList: make([]*models.GameServer, 0),
+			PlatformList:   platformList,
+			GameServerList: gameServerList,
 		})
 }
 

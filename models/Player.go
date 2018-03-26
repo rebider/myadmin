@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/chnzrb/myadmin/utils"
+	"fmt"
 )
 
 type PlayerQueryParam struct {
@@ -72,10 +73,30 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 }
 
 // 获取单个玩家
-func PlayerOne(id int) (*Player, error) {
+func GetPlayerOne(platformId int, serverId string, id int) (*Player, error) {
+	db, err := GetDbByPlatformIdAndSid(platformId, serverId)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
 	player := &Player{
 		Id: id,
 	}
-	err := Db.First(&player).Error
+	err = db.First(&player).Error
 	return player, err
+}
+type PlayerDetail struct {
+	Name string
+	Age  int
+}
+
+func GetPlayerDetail(platformId int, serverId string, playerId int) {
+	db, err := GetDbByPlatformIdAndSid(platformId, serverId)
+	utils.CheckError(err)
+	defer db.Close()
+	sql := fmt.Sprintf(`SELECT *
+		FROM %s 
+		WHERE id = ? `, "player")
+	db.Raw(sql, playerId).Scan()
+	defer rows.Close()
 }

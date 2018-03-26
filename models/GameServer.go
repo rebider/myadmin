@@ -22,14 +22,14 @@ func (t *GameServer) TableName() string {
 	return "c_game_server"
 }
 
-////获取所有数据
-//func GetAllGameServer() ([]*GameServer, int64) {
-//	var params GameServerQueryParam
-//	params.Limit = -1
-//	//获取数据列表和总数
-//	data, total := GetGameServerList(&params)
-//	return data, total
-//}
+//获取所有数据
+func GetAllGameServer() ([]*GameServer, int64) {
+	var params GameServerQueryParam
+	params.Limit = -1
+	//获取数据列表和总数
+	data, total := GetGameServerList(&params)
+	return data, total
+}
 
 //获取游戏服列表
 func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {

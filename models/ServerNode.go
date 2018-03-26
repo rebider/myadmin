@@ -28,6 +28,7 @@ func (t *ServerNode) TableName() string {
 	return "c_server_node"
 }
 
+
 //获取分页数据
 func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 	data := make([]*ServerNode, 0)
