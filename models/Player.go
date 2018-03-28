@@ -15,6 +15,7 @@ type PlayerQueryParam struct {
 	PlatformId int
 	ServerId   string
 }
+
 type Player struct {
 	Id              int    `json:"id"`
 	AccId           string `json:"accId"`
@@ -33,7 +34,6 @@ type Player struct {
 func (a *Player) TableName() string {
 	return "player"
 }
-
 
 //获取玩家列表
 func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
@@ -60,7 +60,7 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		db = db.Where("last_login_ip = ?", params.Ip)
 	}
 	if params.Nickname != "" {
-		db = db.Where("nickname LIKE ?", "%" + params.Nickname + "%")
+		db = db.Where("nickname LIKE ?", "%"+params.Nickname+"%")
 	}
 	if params.IsOnline != "" {
 		db = db.Where("is_online = ?", params.IsOnline)
@@ -85,18 +85,30 @@ func GetPlayerOne(platformId int, serverId string, id int) (*Player, error) {
 	err = db.First(&player).Error
 	return player, err
 }
+
 type PlayerDetail struct {
-	Name string
-	Age  int
+	Player
+	VipLevel int `json:"vipLevel"`
+	Exp      int `json:"exp"`
+	Level    int `json:"level"`
+	TitleId  int
+	Attack   int `json:"attack"`
+	MaxHp    int `json:"maxHp"`
+	Defense  int `json:"defense"`
+	Hit      int `json:"hit"`
+	Dodge    int `json:"dodge"`
+	Critical int `json:"critical"`
+	Power    int `json:"power"`
 }
 
-func GetPlayerDetail(platformId int, serverId string, playerId int) {
+func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDetail, error) {
 	db, err := GetDbByPlatformIdAndSid(platformId, serverId)
 	utils.CheckError(err)
+
+	playerDetail := &PlayerDetail{}
 	defer db.Close()
-	sql := fmt.Sprintf(`SELECT *
-		FROM %s 
-		WHERE id = ? `, "player")
-	db.Raw(sql, playerId).Scan()
-	defer rows.Close()
+	sql := fmt.Sprintf(
+		`SELECT player.*, player_data.* FROM player LEFT JOIN player_data on player.id = player_data.player_id WHERE player.id = ? `)
+	err = db.Raw(sql, playerId).Scan(&playerDetail).Error
+	return playerDetail, err
 }

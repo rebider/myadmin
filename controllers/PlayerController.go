@@ -36,9 +36,9 @@ func (c *PlayerController) Detail() {
 	utils.CheckError(err)
 	logs.Info("查询玩家详细信息:%+v", params)
 	//获取数据列表和总数
-	data, err := models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
+	playerDetail, err := models.GetPlayerDetail(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err, "查询玩家详细信息失败")
-	result := make(map[string]interface{})
-	result["data"] = data
-	c.Result(enums.CodeSuccess, "获取玩家详细信息成功", result)
+	//result := make(map[string]interface{})
+	//result["data"] = data
+	c.Result(enums.CodeSuccess, "获取玩家详细信息成功", playerDetail)
 }
