@@ -42,3 +42,16 @@ func (c *PlayerController) Detail() {
 	//result["data"] = data
 	c.Result(enums.CodeSuccess, "获取玩家详细信息成功", playerDetail)
 }
+
+func (c *PlayerController) PlayerLoinLogList() {
+	var params models.PlayerLoginLogQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询玩家详细信息:%+v", params)
+	//获取数据列表和总数
+	data, total := models.GetPlayerLoginLogList(&params)
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取玩家登录日志", result)
+}

@@ -45,9 +45,9 @@ func GetUserList(params *UserQueryParam) ([]*User, int64) {
 		sortOrder = sortOrder + " desc"
 	}
 	var count int64
-	err := Db.Model(&User{}).Count(&count).Where(&User{
+	err := Db.Model(&User{}).Where(&User{
 		Account:params.Account,
-	}).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
 	utils.CheckError(err)
 	for _, v := range data {
 		err = Db.Model(&v).Related(&v.RoleUserRel).Error

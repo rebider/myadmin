@@ -16,6 +16,9 @@ var (
 
 //初始化
 func init() {
+	gorm.DefaultTableNameHandler = func (db *gorm.DB, defaultTableName string) string  {
+		return defaultTableName
+	}
 	initDb()
 	initCenter()
 }

@@ -43,11 +43,11 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	}
 	data := make([]*GameServer, 0)
 	var count int64
-	err := DbCenter.Model(&GameServer{}).Count(&count).Where(&GameServer{
+	err := DbCenter.Model(&GameServer{}).Where(&GameServer{
 		PlatformId: params.PlatformId,
 		Sid:        params.ServerId,
 		Node:       params.Node,
-	}).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
 	utils.CheckError(err)
 	return data, count
 }

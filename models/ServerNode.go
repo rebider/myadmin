@@ -42,11 +42,11 @@ func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 		sortOrder = sortOrder + " desc"
 	}
 	var count int64
-	err := DbCenter.Model(&ServerNode{}).Count(&count).Where(&ServerNode{
+	err := DbCenter.Model(&ServerNode{}).Where(&ServerNode{
 		Type:       params.Type,
 		Node:       params.Node,
 		PlatformId: params.PlatformId,
-	}).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
 	utils.CheckError(err)
 	return data, count
 }

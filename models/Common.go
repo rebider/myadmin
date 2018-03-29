@@ -28,6 +28,7 @@ func GetDbByPlatformIdAndSid(platformId int, Sid string) (db *gorm.DB, err error
 	//logs.Debug(serverNode.Ip)
 	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/game?charset=utf8&parseTime=True&loc=Local"
 	db, err = gorm.Open("mysql", dbArgs)
+	db.SingularTable(true)
 	return db, err
 }
 
