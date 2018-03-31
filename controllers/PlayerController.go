@@ -31,15 +31,11 @@ func (c *PlayerController) Detail() {
 		ServerId string `json:"serverId"`
 		PlayerId int `json:"playerId"`
 	}
-	//var params models.PlayerQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("查询玩家详细信息:%+v", params)
-	//获取数据列表和总数
 	playerDetail, err := models.GetPlayerDetail(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err, "查询玩家详细信息失败")
-	//result := make(map[string]interface{})
-	//result["data"] = data
 	c.Result(enums.CodeSuccess, "获取玩家详细信息成功", playerDetail)
 }
 
@@ -48,10 +44,32 @@ func (c *PlayerController) PlayerLoinLogList() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("查询玩家详细信息:%+v", params)
-	//获取数据列表和总数
 	data, total := models.GetPlayerLoginLogList(&params)
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取玩家登录日志", result)
 }
+
+func (c *PlayerController) PlayerOnlineLogList() {
+	var params models.PlayerOnlineLogQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询在线日志:%+v", params)
+	data, total := models.GetPlayerOnlineLogList(&params)
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取在线日志", result)
+}
+
+func (c *PlayerController) GetServerGeneralize() {
+	var params models.ServerGeneralizeQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询服务器概况:%+v", params)
+	data, err := models.GetServerGeneralize(params.PlatformId, params.ServerId)
+	c.CheckError(err)
+	c.Result(enums.CodeSuccess, "获取服务器概况", data)
+}
+

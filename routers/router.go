@@ -95,7 +95,8 @@ func init() {
 	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
 	beego.Router("/player/detail/", &controllers.PlayerController{}, "*:Detail")
 	beego.Router("/player/login_log/", &controllers.PlayerController{}, "*:PlayerLoinLogList")
-
+	beego.Router("/player/online_log/", &controllers.PlayerController{}, "*:PlayerOnlineLogList")
+	beego.Router("/player/get_server_generalize/", &controllers.PlayerController{}, "*:GetServerGeneralize")
 	//主页
 	beego.Router("/", &controllers.MainController{})
 }

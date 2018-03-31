@@ -3,10 +3,6 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
-	//"crypto/tls"
-	//"github.com/astaxie/beego/logs"
-	//"reflect"
-	//"strconv"
 )
 
 type PlayerQueryParam struct {
@@ -126,10 +122,10 @@ func GetPlayerPropList(platformId int, serverId string, playerId int) ([]*Player
 }
 
 type PlayerLoginLog struct {
-	Id        int `json:"id"`
-	PlayerId  int `json:"playerId"`
+	Id        int    `json:"id"`
+	PlayerId  int    `json:"playerId"`
 	Ip        string `json:"ip"`
-	Timestamp int `json:"time"`
+	Timestamp int    `json:"time"`
 }
 
 type PlayerLoginLogQueryParam struct {
@@ -188,6 +184,79 @@ func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDeta
 	playerDetail.PlayerPropList, err = GetPlayerPropList(platformId, serverId, playerId)
 	utils.CheckError(err)
 	return playerDetail, err
+}
+
+type PlayerOnlineLog struct {
+	Id          int `json:"id"`
+	PlayerId    int `json:"playerId"`
+	LoginTime   int `json:"loginTime"`
+	OfflineTime int `json:"offlineTime"`
+	OnlineTime  int `json:"onlineTime"`
+}
+
+type PlayerOnlineLogQueryParam struct {
+	BaseQueryParam
+	PlatformId int
+	ServerId   string
+	PlayerId   string
+	StartTime  int
+	EndTime    int
+}
+
+func GetPlayerOnlineLogList(params *PlayerOnlineLogQueryParam) ([]*PlayerOnlineLog, int64) {
+	db, err := GetDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
+	utils.CheckError(err)
+	defer db.Close()
+	data := make([]*PlayerOnlineLog, 0)
+	var count int64
+	sortOrder := "id"
+	if params.Order == "descending" {
+		sortOrder = sortOrder + " desc"
+	}
+	if params.PlayerId != "" {
+		db = db.Where("player_id = ?", params.PlayerId)
+	}
+	if params.StartTime != 0 {
+		db = db.Where("offline_time >= ?", params.StartTime)
+	}
+	if params.EndTime != 0 {
+		db = db.Where("offline_time <= ?", params.EndTime)
+	}
+	db.Model(&PlayerOnlineLog{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	return data, count
+}
+
+type ServerGeneralize struct {
+	PlatformId    int    `json:"platformId"`
+	ServerId      string `json:"serverId"`
+	OpenTime      int    `json:"openTime"`
+	Version       string `json:"version"`
+	TotalRegister int    `json:"totalRegister"`
+}
+
+type ServerGeneralizeQueryParam struct {
+	PlatformId int
+	ServerId   string
+}
+
+func GetServerGeneralize(platformId int, serverId string) (*ServerGeneralize, error) {
+	db, err := GetDbByPlatformIdAndSid(platformId, serverId)
+	defer db.Close()
+	utils.CheckError(err)
+	gameServer, err := GetGameServerOne(platformId, serverId)
+	utils.CheckError(err)
+	serverNode, err := GetServerNode(gameServer.Node)
+	utils.CheckError(err)
+	serverGeneralize := &ServerGeneralize{}
+	serverGeneralize.PlatformId = platformId
+	serverGeneralize.ServerId = serverId
+	serverGeneralize.OpenTime = serverNode.OpenTime
+	serverGeneralize.Version = serverNode.ServerVersion
+
+	var count int
+	db.Model(&Player{}).Count(&count)
+	serverGeneralize.TotalRegister = count
+	return serverGeneralize, err
 }
 
 //func GetPlayerDetail(platformId int, serverId string, playerId int) (*map[string] string, error) {
