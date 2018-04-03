@@ -93,10 +93,13 @@ func init() {
 
 	//玩家
 	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
+	beego.Router("/player/one", &controllers.PlayerController{}, "*:One")
 	beego.Router("/player/detail/", &controllers.PlayerController{}, "*:Detail")
 	beego.Router("/player/login_log/", &controllers.PlayerController{}, "*:PlayerLoinLogList")
 	beego.Router("/player/online_log/", &controllers.PlayerController{}, "*:PlayerOnlineLogList")
 	beego.Router("/player/get_server_generalize/", &controllers.PlayerController{}, "*:GetServerGeneralize")
+	beego.Router("/player/set_disable/", &controllers.PlayerController{}, "*:SetDisable")
+	beego.Router("/player/send_mail/", &controllers.PlayerController{}, "*:SendMail")
 	//主页
 	beego.Router("/", &controllers.MainController{})
 }

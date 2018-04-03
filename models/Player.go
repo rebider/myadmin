@@ -86,6 +86,7 @@ func GetPlayerOne(platformId int, serverId string, id int) (*Player, error) {
 	return player, err
 }
 
+
 type PlayerDetail struct {
 	Player
 	VipLevel         int `json:"vipLevel"`
@@ -232,6 +233,8 @@ type ServerGeneralize struct {
 	OpenTime      int    `json:"openTime"`
 	Version       string `json:"version"`
 	TotalRegister int    `json:"totalRegister"`
+	OnlineCount   int    `json:"onlineCount"`
+	Status        int    `json:"status"`
 }
 
 type ServerGeneralizeQueryParam struct {
@@ -252,10 +255,13 @@ func GetServerGeneralize(platformId int, serverId string) (*ServerGeneralize, er
 	serverGeneralize.ServerId = serverId
 	serverGeneralize.OpenTime = serverNode.OpenTime
 	serverGeneralize.Version = serverNode.ServerVersion
+	serverGeneralize.Status = serverNode.State
 
 	var count int
 	db.Model(&Player{}).Count(&count)
 	serverGeneralize.TotalRegister = count
+	db.Model(&Player{}).Where(&Player{IsOnline: 1}).Count(&count)
+	serverGeneralize.OnlineCount = count
 	return serverGeneralize, err
 }
 

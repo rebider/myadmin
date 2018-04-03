@@ -1,0 +1,43 @@
+//gm
+
+//设置封禁
+message m_set_disable_tos {
+    required string token = 1; //密钥
+    required int32 type = 2; //0:封号 1:禁言
+    required int32 player_id = 3; //玩家id
+    required int32 sec = 4; //封禁秒数
+}
+
+//设置封禁
+message m_set_disable_toc {
+    enum ENUM {
+        success = 1; //成功
+        fail = 2; //失败
+    }
+    required ENUM result = 1;
+    required int32 type = 2; //0:封号 1:禁言
+}
+
+
+//发送邮件
+message m_send_mail_tos {
+    message prop {
+        required int32 propType = 1;
+        required int32 propId = 2;
+        required int32 propNum = 3;
+    }
+    required string token = 1; //密钥
+    required string title = 2; //标题
+    required string content = 3; //内容
+    repeated prop propList = 4; //道具列表
+    required string playerNameList = 5; //玩家昵称列表
+}
+
+//发送邮件
+message m_send_mail_toc {
+    enum ENUM {
+        success = 1; //成功
+        fail = 2; //失败
+    }
+    required ENUM result = 1;
+}
