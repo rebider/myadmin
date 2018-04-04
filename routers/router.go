@@ -100,6 +100,7 @@ func init() {
 	beego.Router("/player/get_server_generalize/", &controllers.PlayerController{}, "*:GetServerGeneralize")
 	beego.Router("/player/set_disable/", &controllers.PlayerController{}, "*:SetDisable")
 	beego.Router("/player/send_mail/", &controllers.PlayerController{}, "*:SendMail")
+	beego.Router("/player/mail_log/", &controllers.PlayerController{}, "*:MailLogList")
 	//主页
 	beego.Router("/", &controllers.MainController{})
 }

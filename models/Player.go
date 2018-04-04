@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
+	//"encoding/json"
 )
 
 type PlayerQueryParam struct {
@@ -85,7 +86,6 @@ func GetPlayerOne(platformId int, serverId string, id int) (*Player, error) {
 	err = db.First(&player).Error
 	return player, err
 }
-
 
 type PlayerDetail struct {
 	Player
@@ -263,6 +263,43 @@ func GetServerGeneralize(platformId int, serverId string) (*ServerGeneralize, er
 	db.Model(&Player{}).Where(&Player{IsOnline: 1}).Count(&count)
 	serverGeneralize.OnlineCount = count
 	return serverGeneralize, err
+}
+
+type MailLog struct {
+	Id           int    `json:"id"`
+	PlatformId   int    `json:"platformId"`
+	ServerIdList string `json:"serverIdList"`
+	Title        string `json:"title"`
+	Content      string `json:"content"`
+	Time         int64  `json:"time"`
+	UserId       int    `json:"userId"`
+	ItemList     string `json:"itemList"`
+	UserName     string `json:"userName" gorm:"-"`
+}
+
+type MailLogQueryParam struct {
+	BaseQueryParam
+	PlatformId int
+	ServerId   string
+	StartTime  int
+	EndTime    int
+	UserId     int
+}
+
+func GetMailLogList(params *MailLogQueryParam) ([]*MailLog, int64) {
+	data := make([]*MailLog, 0)
+	var count int64
+	Db.Model(&MailLog{}).Where(&MailLog{
+		PlatformId: params.PlatformId,
+		UserId:     params.UserId,
+	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
+	for _, e := range data {
+		u, err := GetUserOne(e.UserId)
+		if err == nil {
+			e.UserName = u.Name
+		}
+	}
+	return data, count
 }
 
 //func GetPlayerDetail(platformId int, serverId string, playerId int) (*map[string] string, error) {

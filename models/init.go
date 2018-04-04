@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	//"github.com/zaaksam/dproxy/go/db"
 )
 var (
 	Db *gorm.DB
@@ -41,12 +42,14 @@ func initDb() {
 	//Db.LogMode(true)
 	Db.SetLogger(log.New(os.Stdout, "\r\n", 0))
 	utils.CheckError(err, "连接数据库失败")
+	Db.SingularTable(true)
 }
 
 func initCenter() {
 	dsn := "root:game1234@tcp(192.168.31.100:3306)/center?charset=utf8&parseTime=True&loc=Local"
 	var err error
 	DbCenter, err = gorm.Open("mysql", dsn)
+	DbCenter.SingularTable(true)
 	utils.CheckError(err, "连接中心服失败")
 }
 

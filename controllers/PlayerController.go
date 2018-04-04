@@ -13,6 +13,7 @@ import (
 	//"github.com/chnzrb/myadmin/proto"
 	//"github.com/chnzrb/myadmin/proto"
 	"github.com/chnzrb/myadmin/proto"
+	"time"
 )
 
 type PlayerController struct {
@@ -88,6 +89,19 @@ func (c *PlayerController) PlayerOnlineLogList() {
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取在线日志", result)
 }
+
+func (c *PlayerController) MailLogList() {
+	var params models.MailLogQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询邮件日志:%+v", params)
+	data, total := models.GetMailLogList(&params)
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取邮件日志", result)
+}
+
 func (c *PlayerController) GetServerGeneralize() {
 	var params models.ServerGeneralizeQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -162,7 +176,22 @@ func (c *PlayerController) SendMail() {
 	//c.CheckError(err)
 	//serverId:= c.GetString("serverId")
 	//playerId, err := c.GetInt("playerId")
-	//c.CheckError(err)
+	//c.CheckError
+	serverIdList, err := json.Marshal(params.ServerIdList)
+	c.CheckError(err )
+	itemList, err := json.Marshal(params.MailItemList)
+	c.CheckError(err )
+	mailLog := &models.MailLog{
+		PlatformId:params.PlatformId,
+		ServerIdList:string(serverIdList),
+		Title:params.Title,
+		Content:params.Content,
+		Time:time.Now().Unix(),
+		UserId:c.curUser.Id,
+		ItemList:string(itemList),
+	}
+	err = models.Db.Save(&mailLog).Error
+	c.CheckError(err, "写邮件日志失败")
 	for _, serverId := range params.ServerIdList {
 		conn,  err := models.GetWsByPlatformIdAndSid(params.PlatformId, serverId)
 		c.CheckError(err)
@@ -194,7 +223,6 @@ func (c *PlayerController) SendMail() {
 	}
 	c.Result(enums.CodeSuccess, "发送邮件成功", 0)
 	//conn.Read()
-
 }
 
 //封包
