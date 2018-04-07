@@ -50,3 +50,16 @@ func Cmd(commandName string, params []string) (string, error) {
 	err = cmd.Wait()
 	return out.String(), err
 }
+
+func RemoveDuplicateArray(s [] interface{}) [] interface{} {
+	maps := make(map[interface{}]interface{}, len(s))
+	r := make([] interface{}, 0)
+	for _,v := range s {
+		if _, ok := maps[v]; ok {
+			continue
+		}
+		maps[v] = true
+		r = append(r, v)
+	}
+	return r
+}

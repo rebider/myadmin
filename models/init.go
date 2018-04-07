@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	//"github.com/zaaksam/dproxy/go/db"
+	"github.com/astaxie/beego/logs"
 )
 var (
 	Db *gorm.DB
@@ -38,10 +39,11 @@ func initDb() {
 	//dsn := "root:game1234@tcp(192.168.31.100:3306)/center?charset=utf8&parseTime=True&loc=Local"
 	var err error
 
+	logs.Info("dbPwd:%v", dsn)
 	Db, err = gorm.Open("mysql", dsn)
+	utils.CheckError(err, "连接后台数据库失败")
 	//Db.LogMode(true)
 	Db.SetLogger(log.New(os.Stdout, "\r\n", 0))
-	utils.CheckError(err, "连接数据库失败")
 	Db.SingularTable(true)
 }
 

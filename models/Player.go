@@ -4,6 +4,10 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
 	//"encoding/json"
+	"github.com/jinzhu/gorm"
+	//"github.com/zaaksam/dproxy/go/db"
+	"errors"
+	"github.com/astaxie/beego/logs"
 )
 
 type PlayerQueryParam struct {
@@ -23,13 +27,14 @@ type Player struct {
 	Nickname        string `json:"nickname"`
 	Sex             int    `json:"sex"`
 	ServerId        string `json:"serverId"`
-	DisableLogin    int    `json:"disableLogin"`
+	ForbidType    int    `json:"forbidType"`
+	ForbidTime    int    `json:"forbidTime"`
 	RegTime         int    `json:"regTime"`
 	LastLoginTime   int    `json:"lastLoginTime"`
 	LastOfflineTime int    `json:"lastOfflineTime"`
 	LastLoginIp     string `json:"lastLoginIp"`
 	IsOnline        int    `json:"isOnline"`
-	DisableChatTime int    `json:"disableChatTime"`
+	//DisableChatTime int    `json:"disableChatTime"`
 }
 
 func (a *Player) TableName() string {
@@ -187,6 +192,25 @@ func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDeta
 	return playerDetail, err
 }
 
+func GetPlayerByPlatformIdAndSidAndNickname(platformId int, serverId string, nickname string) (*Player, error) {
+	if nickname == "" {
+		return nil, errors.New("nickname must not empty!")
+	}
+	logs.Debug("nickname:%v", nickname)
+	db, err := GetDbByPlatformIdAndSid(platformId, serverId)
+	utils.CheckError(err)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	player := &Player{}
+	err = db.Where(&Player{ServerId: serverId, Nickname: nickname}).First(&player).Error
+	if err != nil {
+		return nil, err
+	}
+	return player, err
+}
+
 type PlayerOnlineLog struct {
 	Id          int `json:"id"`
 	PlayerId    int `json:"playerId"`
@@ -266,15 +290,17 @@ func GetServerGeneralize(platformId int, serverId string) (*ServerGeneralize, er
 }
 
 type MailLog struct {
-	Id           int    `json:"id"`
-	PlatformId   int    `json:"platformId"`
-	ServerIdList string `json:"serverIdList"`
-	Title        string `json:"title"`
-	Content      string `json:"content"`
-	Time         int64  `json:"time"`
-	UserId       int    `json:"userId"`
-	ItemList     string `json:"itemList"`
-	UserName     string `json:"userName" gorm:"-"`
+	Id             int    `json:"id"`
+	PlatformId     int    `json:"platformId"`
+	ServerIdList   string `json:"serverIdList"`
+	PlayerNameList string `json:"playerNameList"`
+	Title          string `json:"title"`
+	Content        string `json:"content"`
+	Time           int64  `json:"time"`
+	UserId         int    `json:"userId"`
+	ItemList       string `json:"itemList"`
+	Status         int    `json:"status"`
+	UserName       string `json:"userName" gorm:"-"`
 }
 
 type MailLogQueryParam struct {
@@ -289,10 +315,68 @@ type MailLogQueryParam struct {
 func GetMailLogList(params *MailLogQueryParam) ([]*MailLog, int64) {
 	data := make([]*MailLog, 0)
 	var count int64
-	Db.Model(&MailLog{}).Where(&MailLog{
+	sortOrder := "id"
+	if params.Order == "descending" {
+		sortOrder = sortOrder + " desc"
+	}
+	f := func(db *gorm.DB) *gorm.DB {
+		if params.StartTime > 0 {
+			return db.Where("time between ? and ?", params.StartTime, params.EndTime)
+		}
+		return db
+	}
+	f(Db.Model(&MailLog{}).Where(&MailLog{
 		PlatformId: params.PlatformId,
 		UserId:     params.UserId,
-	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
+	}).Where("server_id_list LIKE ?", "%"+params.ServerId+"%")).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	for _, e := range data {
+		u, err := GetUserOne(e.UserId)
+		if err == nil {
+			e.UserName = u.Name
+		}
+	}
+	return data, count
+}
+
+// 删除邮件日志
+func DeleteMailLog(ids [] int) error {
+	err := Db.Where(ids).Delete(&MailLog{}).Error
+	return err
+}
+
+type ForbidLog struct {
+	PlatformId int    `json:"platformId" gorm:"primary_key"`
+	ServerId   string `json:"serverId" gorm:"primary_key"`
+	PlayerName string `json:"playerName" gorm:"primary_key"`
+	ForbidType int32    `json:"forbidType"`
+	ForbidTime int32  `json:"forbidTime"`
+	Time       int64  `json:"time"`
+	UserId     int    `json:"userId"`
+	UserName   string `json:"userName" gorm:"-"`
+}
+
+type ForbidLogQueryParam struct {
+	BaseQueryParam
+	PlatformId int
+	ServerId   string
+	PlayerName string
+	StartTime  int
+	EndTime    int
+	UserId     int
+}
+
+func GetForbidLogList(params *ForbidLogQueryParam) ([]*ForbidLog, int64) {
+	data := make([]*ForbidLog, 0)
+	var count int64
+	sortOrder := "time"
+	if params.Order == "descending" {
+		sortOrder = sortOrder + " desc"
+	}
+	Db.Model(&ForbidLog{}).Where(&ForbidLog{
+		PlatformId: params.PlatformId,
+		ServerId:   params.ServerId,
+		PlayerName: params.PlayerName,
+	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	for _, e := range data {
 		u, err := GetUserOne(e.UserId)
 		if err == nil {
