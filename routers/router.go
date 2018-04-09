@@ -1,11 +1,12 @@
-
 package routers
 
 import (
 	"github.com/chnzrb/myadmin/controllers"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/plugins/cors"
+	"github.com/astaxie/beego/context"
 )
+
 // @APIVersion 1.0.0
 // @Title 后台管理系统
 // @Description documents of server API powered by swagger, you can also generate client code by swagger. refer : https://github.com/swagger-api/swagger-codegen
@@ -22,6 +23,12 @@ func init() {
 		ExposeHeaders:    []string{"*", "Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
 		AllowCredentials: true,
 	}))
+	var FilterNoCache = func(ctx *context.Context) {
+		ctx.Output.Header("Cache-Control", "no-cache, no-store")
+		ctx.Output.Header("Pragma", "no-cache")
+		ctx.Output.Header("Expires", "0")
+	}
+	beego.InsertFilter("*", beego.BeforeStatic, FilterNoCache)
 	beego.InsertFilter("*", beego.BeforeStatic, cors.Allow(&cors.Options{
 		//AllowAllOrigins:  true,
 		AllowOrigins:     []string{"http://localhost:9528"},
@@ -41,7 +48,6 @@ func init() {
 		),
 	)
 	beego.AddNamespace(ns)
-
 
 	//角色
 	beego.Router("/role/list", &controllers.RoleController{}, "*:List")
@@ -95,14 +101,32 @@ func init() {
 	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
 	beego.Router("/player/one", &controllers.PlayerController{}, "*:One")
 	beego.Router("/player/detail/", &controllers.PlayerController{}, "*:Detail")
-	beego.Router("/player/login_log/", &controllers.PlayerController{}, "*:PlayerLoinLogList")
-	beego.Router("/player/online_log/", &controllers.PlayerController{}, "*:PlayerOnlineLogList")
+	beego.Router("/log/login_log/", &controllers.LogController{}, "*:PlayerLoinLogList")
+	beego.Router("/log/online_log/", &controllers.LogController{}, "*:PlayerOnlineLogList")
 	beego.Router("/player/get_server_generalize/", &controllers.PlayerController{}, "*:GetServerGeneralize")
-	beego.Router("/player/set_disable/", &controllers.PlayerController{}, "*:SetDisable")
-	beego.Router("/player/send_mail/", &controllers.PlayerController{}, "*:SendMail")
-	beego.Router("/player/mail_log/", &controllers.PlayerController{}, "*:MailLogList")
-	beego.Router("/player/del_mail_log/", &controllers.PlayerController{}, "*:DelMailLog")
-	beego.Router("/player/forbid_log/", &controllers.PlayerController{}, "*:ForbidLogList")
+
+
+	beego.Router("/player/online_statistics/", &controllers.PlayerController{}, "*:GetServerOnlineStatistics")
+
+
+	//封禁
+	beego.Router("/forbid/set_forbid/", &controllers.ForbidController{}, "*:SetForbid")
+	beego.Router("/forbid/forbid_log/", &controllers.ForbidController{}, "*:ForbidLogList")
+
+	//公告
+	beego.Router("/notice/send_notice/", &controllers.NoticeController{}, "*:SendNotice")
+	beego.Router("/notice/notice_log/", &controllers.NoticeController{}, "*:NoticeLogList")
+	beego.Router("/notice/del_notice_log/", &controllers.NoticeController{}, "*:DelNoticeLog")
+
+
+	//邮件
+	beego.Router("/mail/send_mail/", &controllers.MailController{}, "*:SendMail")
+	beego.Router("/mail/mail_log/", &controllers.MailController{}, "*:MailLogList")
+	beego.Router("/mail/del_mail_log/", &controllers.MailController{}, "*:DelMailLog")
+
+	//留存
+	beego.Router("/remain/total_remain/", &controllers.RemainController{}, "*:GetTotalRemain")
+
 	//主页
 	beego.Router("/", &controllers.MainController{})
 }

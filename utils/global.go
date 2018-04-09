@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"os"
 	"github.com/astaxie/beego/logs"
+	"encoding/binary"
+	"time"
 )
 
 func CheckError(err error, msg... string) {
@@ -62,4 +64,25 @@ func RemoveDuplicateArray(s [] interface{}) [] interface{} {
 		r = append(r, v)
 	}
 	return r
+}
+
+//封包
+func Packet(methodNum int, message []byte) []byte {
+	return append(append([]byte{0}, IntToBytes(methodNum)...), message...)
+}
+
+//整形转换成字节
+func IntToBytes(n int) []byte {
+	x := int32(n)
+
+	bytesBuffer := bytes.NewBuffer([]byte{})
+	binary.Write(bytesBuffer, binary.BigEndian, x)
+	return bytesBuffer.Bytes()
+}
+
+//获取今日0点时间戳
+func GetTodayZeroTimestamp() int64{
+	t := time.Now()
+	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	return tm1.Unix()
 }

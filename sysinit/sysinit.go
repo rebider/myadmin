@@ -4,6 +4,7 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/astaxie/beego"
 	_ "github.com/chnzrb/myadmin/models"
+	_ "github.com/chnzrb/myadmin/crons"
 )
 
 func init() {

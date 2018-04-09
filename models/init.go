@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	//"github.com/zaaksam/dproxy/go/db"
 	"github.com/astaxie/beego/logs"
 )
 var (
@@ -24,6 +23,7 @@ func init() {
 	initDb()
 	initCenter()
 }
+
 func initDb() {
 	//数据库名称
 	dbName := beego.AppConfig.String("mysql" + "::db_name")

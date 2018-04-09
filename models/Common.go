@@ -52,8 +52,3 @@ func GetWsByPlatformIdAndSid(platformId int, Sid string) (*websocket.Conn, error
 	ws, err := websocket.Dial(wsUrl, "", wsUrl)
 	return ws, err
 }
-//func GetCenterDb() (db *gorm.DB, err error) {
-//	dbArgs := "root:game1234@tcp(192.168.31.100:3306)/center?charset=utf8&parseTime=True&loc=Local"
-//	db, err = gorm.Open("mysql", dbArgs)
-//	return db, err
-//}

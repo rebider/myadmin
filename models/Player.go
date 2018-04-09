@@ -3,11 +3,10 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
-	//"encoding/json"
 	"github.com/jinzhu/gorm"
-	//"github.com/zaaksam/dproxy/go/db"
 	"errors"
 	"github.com/astaxie/beego/logs"
+	"strconv"
 )
 
 type PlayerQueryParam struct {
@@ -27,8 +26,8 @@ type Player struct {
 	Nickname        string `json:"nickname"`
 	Sex             int    `json:"sex"`
 	ServerId        string `json:"serverId"`
-	ForbidType    int    `json:"forbidType"`
-	ForbidTime    int    `json:"forbidTime"`
+	ForbidType      int    `json:"forbidType"`
+	ForbidTime      int    `json:"forbidTime"`
 	RegTime         int    `json:"regTime"`
 	LastLoginTime   int    `json:"lastLoginTime"`
 	LastOfflineTime int    `json:"lastOfflineTime"`
@@ -127,54 +126,6 @@ func GetPlayerPropList(platformId int, serverId string, playerId int) ([]*Player
 	return playerPropList, err
 }
 
-type PlayerLoginLog struct {
-	Id        int    `json:"id"`
-	PlayerId  int    `json:"playerId"`
-	Ip        string `json:"ip"`
-	Timestamp int    `json:"time"`
-}
-
-type PlayerLoginLogQueryParam struct {
-	BaseQueryParam
-	PlatformId int
-	ServerId   string
-	Ip         string
-	PlayerId   string
-	StartTime  int
-	EndTime    int
-}
-
-func GetPlayerLoginLogList(params *PlayerLoginLogQueryParam) ([]*PlayerLoginLog, int64) {
-	db, err := GetDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
-	utils.CheckError(err)
-	defer db.Close()
-	data := make([]*PlayerLoginLog, 0)
-	var count int64
-	sortOrder := "id"
-	//switch params.Sort {
-	//case "id":
-	//	sortOrder = "id"
-	//case "lastLoginTime":
-	//	sortOrder = "last_login_time"
-	//}
-	if params.Order == "descending" {
-		sortOrder = sortOrder + " desc"
-	}
-	if params.Ip != "" {
-		db = db.Where("ip = ?", params.Ip)
-	}
-	if params.PlayerId != "" {
-		db = db.Where("player_id = ?", params.PlayerId)
-	}
-	if params.StartTime != 0 {
-		db = db.Where("timestamp >= ?", params.StartTime)
-	}
-	if params.EndTime != 0 {
-		db = db.Where("timestamp <= ?", params.EndTime)
-	}
-	db.Model(&PlayerLoginLog{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
-	return data, count
-}
 
 func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDetail, error) {
 	db, err := GetDbByPlatformIdAndSid(platformId, serverId)
@@ -211,46 +162,6 @@ func GetPlayerByPlatformIdAndSidAndNickname(platformId int, serverId string, nic
 	return player, err
 }
 
-type PlayerOnlineLog struct {
-	Id          int `json:"id"`
-	PlayerId    int `json:"playerId"`
-	LoginTime   int `json:"loginTime"`
-	OfflineTime int `json:"offlineTime"`
-	OnlineTime  int `json:"onlineTime"`
-}
-
-type PlayerOnlineLogQueryParam struct {
-	BaseQueryParam
-	PlatformId int
-	ServerId   string
-	PlayerId   string
-	StartTime  int
-	EndTime    int
-}
-
-func GetPlayerOnlineLogList(params *PlayerOnlineLogQueryParam) ([]*PlayerOnlineLog, int64) {
-	db, err := GetDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
-	utils.CheckError(err)
-	defer db.Close()
-	data := make([]*PlayerOnlineLog, 0)
-	var count int64
-	sortOrder := "id"
-	if params.Order == "descending" {
-		sortOrder = sortOrder + " desc"
-	}
-	if params.PlayerId != "" {
-		db = db.Where("player_id = ?", params.PlayerId)
-	}
-	if params.StartTime != 0 {
-		db = db.Where("offline_time >= ?", params.StartTime)
-	}
-	if params.EndTime != 0 {
-		db = db.Where("offline_time <= ?", params.EndTime)
-	}
-	db.Model(&PlayerOnlineLog{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
-	return data, count
-}
-
 type ServerGeneralize struct {
 	PlatformId    int    `json:"platformId"`
 	ServerId      string `json:"serverId"`
@@ -281,149 +192,102 @@ func GetServerGeneralize(platformId int, serverId string) (*ServerGeneralize, er
 	serverGeneralize.Version = serverNode.ServerVersion
 	serverGeneralize.Status = serverNode.State
 
-	var count int
-	db.Model(&Player{}).Count(&count)
-	serverGeneralize.TotalRegister = count
-	db.Model(&Player{}).Where(&Player{IsOnline: 1}).Count(&count)
-	serverGeneralize.OnlineCount = count
+	//var count int
+	//db.Model(&Player{}).Count(&count)
+	serverGeneralize.TotalRegister = GetTotalRegister(db)
+	//db.Model(&Player{}).Where(&Player{IsOnline: 1}).Count(&count)
+	serverGeneralize.OnlineCount = GetNowOnlineCount(db)
 	return serverGeneralize, err
 }
 
-type MailLog struct {
-	Id             int    `json:"id"`
-	PlatformId     int    `json:"platformId"`
-	ServerIdList   string `json:"serverIdList"`
-	PlayerNameList string `json:"playerNameList"`
-	Title          string `json:"title"`
-	Content        string `json:"content"`
-	Time           int64  `json:"time"`
-	UserId         int    `json:"userId"`
-	ItemList       string `json:"itemList"`
-	Status         int    `json:"status"`
-	UserName       string `json:"userName" gorm:"-"`
+//获取总注册人数
+func GetTotalRegister(db *gorm.DB) int {
+	var count int
+	db.Model(&Player{}).Count(&count)
+	return count
 }
 
-type MailLogQueryParam struct {
-	BaseQueryParam
-	PlatformId int
-	ServerId   string
-	StartTime  int
-	EndTime    int
-	UserId     int
+//获取当前在线人数
+func GetNowOnlineCount(db *gorm.DB) int {
+	var count int
+	db.Model(&Player{}).Where(&Player{IsOnline: 1}).Count(&count)
+	return count
 }
 
-func GetMailLogList(params *MailLogQueryParam) ([]*MailLog, int64) {
-	data := make([]*MailLog, 0)
-	var count int64
-	sortOrder := "id"
-	if params.Order == "descending" {
-		sortOrder = sortOrder + " desc"
+//获取当前在线人数
+func GetMaxOnlineCount(platformId int, serverId string) int {
+	gameServer, err := GetGameServerOne(platformId, serverId)
+	utils.CheckError(err)
+	var data struct {
+		Count int
 	}
-	f := func(db *gorm.DB) *gorm.DB {
-		if params.StartTime > 0 {
-			return db.Where("time between ? and ?", params.StartTime, params.EndTime)
-		}
-		return db
+	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
+	sql := fmt.Sprintf(
+		`SELECT max(online_num) as count FROM c_server_trace_log WHERE node = ? `)
+	err = DbCenter.Raw(sql, gameServer.Node).Scan(&data).Error
+	utils.CheckError(err)
+	//logs.Info("ppp:%v,%v", gameServer.Node, data.Count)
+	return data.Count
+}
+
+type CServerTraceLog struct {
+	Node      string
+	Time      int
+	OnlineNum int
+}
+
+type ServerOnlineStatistics struct {
+	PlatformId                int    `json:"platformId"`
+	ServerId                  string `json:"serverId"`
+	TotalRegister             int    `json:"totalRegister"`
+	TodayRegister             int    `json:"todayRegister"`
+	OnlineCount               int    `json:"onlineCount"`
+	MaxOnlineCount            int    `json:"maxOnlineCount"`
+	AverageOnlineCount        int    `json:"averageOnlineCount"`
+	TodayOnlineList           [] string `json:"todayOnlineList"`
+	YesterdayOnlineList       [] string `json:"yesterdayOnlineList"`
+	BeforeYesterdayOnlineList [] string `json:"beforeYesterdayOnlineList"`
+}
+
+func GetServerOnlineStatistics(platformId int, serverId string) (*ServerOnlineStatistics, error) {
+	db, err := GetDbByPlatformIdAndSid(platformId, serverId)
+	defer db.Close()
+	utils.CheckError(err)
+	gameServer, err := GetGameServerOne(platformId, serverId)
+	utils.CheckError(err)
+	//todayOnlineList := make([]string, 0)
+	//yesterdayTodayOnlineList := make([]int, 0)
+	//beforeYesterdayTodayOnlineList := make([]int, 0)
+	todayZeroTimestamp := int(utils.GetTodayZeroTimestamp())
+	yesterdayZeroTimestamp := todayZeroTimestamp - 86400
+	beforeYesterdayZeroTimestamp := yesterdayZeroTimestamp - 86400
+	serverOnlineStatistics := &ServerOnlineStatistics{
+		PlatformId:                platformId,
+		ServerId:                  serverId,
+		TotalRegister:             GetTotalRegister(db),
+		OnlineCount:               GetNowOnlineCount(db),
+		MaxOnlineCount:            GetMaxOnlineCount(platformId, serverId),
+		TodayOnlineList:           get24hoursOnlineCount(gameServer.Node, todayZeroTimestamp),
+		YesterdayOnlineList:       get24hoursOnlineCount(gameServer.Node, yesterdayZeroTimestamp),
+		BeforeYesterdayOnlineList: get24hoursOnlineCount(gameServer.Node, beforeYesterdayZeroTimestamp),
 	}
-	f(Db.Model(&MailLog{}).Where(&MailLog{
-		PlatformId: params.PlatformId,
-		UserId:     params.UserId,
-	}).Where("server_id_list LIKE ?", "%"+params.ServerId+"%")).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
-	for _, e := range data {
-		u, err := GetUserOne(e.UserId)
+	return serverOnlineStatistics, nil
+}
+
+func get24hoursOnlineCount(node string, zeroTimestamp int) [] string {
+	onlineCountList := make([] string, 0)
+	for i := zeroTimestamp; i < zeroTimestamp + 86400; i = i + 10 * 60 {
+		cServerTraceLog := &CServerTraceLog{}
+		err := DbCenter.Where(&CServerTraceLog{
+			Node: node,
+			Time: i,
+		}).First(&cServerTraceLog).Error
 		if err == nil {
-			e.UserName = u.Name
+			onlineCountList = append(onlineCountList, strconv.Itoa(cServerTraceLog.OnlineNum))
+		} else {
+			onlineCountList = append(onlineCountList, "null")
 		}
 	}
-	return data, count
+	logs.Info("%+v", len(onlineCountList))
+	return onlineCountList
 }
-
-// 删除邮件日志
-func DeleteMailLog(ids [] int) error {
-	err := Db.Where(ids).Delete(&MailLog{}).Error
-	return err
-}
-
-type ForbidLog struct {
-	PlatformId int    `json:"platformId" gorm:"primary_key"`
-	ServerId   string `json:"serverId" gorm:"primary_key"`
-	PlayerName string `json:"playerName" gorm:"primary_key"`
-	ForbidType int32    `json:"forbidType"`
-	ForbidTime int32  `json:"forbidTime"`
-	Time       int64  `json:"time"`
-	UserId     int    `json:"userId"`
-	UserName   string `json:"userName" gorm:"-"`
-}
-
-type ForbidLogQueryParam struct {
-	BaseQueryParam
-	PlatformId int
-	ServerId   string
-	PlayerName string
-	StartTime  int
-	EndTime    int
-	UserId     int
-}
-
-func GetForbidLogList(params *ForbidLogQueryParam) ([]*ForbidLog, int64) {
-	data := make([]*ForbidLog, 0)
-	var count int64
-	sortOrder := "time"
-	if params.Order == "descending" {
-		sortOrder = sortOrder + " desc"
-	}
-	Db.Model(&ForbidLog{}).Where(&ForbidLog{
-		PlatformId: params.PlatformId,
-		ServerId:   params.ServerId,
-		PlayerName: params.PlayerName,
-	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
-	for _, e := range data {
-		u, err := GetUserOne(e.UserId)
-		if err == nil {
-			e.UserName = u.Name
-		}
-	}
-	return data, count
-}
-
-//func GetPlayerDetail(platformId int, serverId string, playerId int) (*map[string] string, error) {
-//	db, err := GetDbByPlatformIdAndSid(platformId, serverId)
-//	utils.CheckError(err)
-//	defer db.Close()
-//	//playerDetail := &PlayerDetail{}
-//
-//	//m := make(map[interface{}]interface{}, 0)
-//	sql := fmt.Sprintf(
-//		`SELECT player.*, player_data.* FROM player LEFT JOIN player_data on player.id = player_data.player_id WHERE player.id = ? `)
-//	rows, err := db.Raw(sql, playerId).Rows()
-//	utils.CheckError(err)
-//	columns, _ := rows.Columns()
-//	scanArgs := make([]interface{}, len(columns))
-//	values := make([]interface{}, len(columns))
-//	for i := range values {
-//		scanArgs[i] = &values[i]
-//	}
-//	for rows.Next() {
-//		err = rows.Scan(scanArgs...)
-//		record := make(map[string] string)
-//		for i, col := range values {
-//			if col != nil {
-//				logs.Debug("%+v", col)
-//				logs.Debug("%+v", reflect.TypeOf(col))
-//				switch reflect.TypeOf(col).String() {
-//				case "int":
-//					record[columns[i]] = strconv.Itoa(col.(int))
-//				case "int32":
-//					record[columns[i]] = strconv.Itoa(int(col.(int32)))
-//				case "int64":
-//					record[columns[i]] = strconv.Itoa(int(col.(int64)))
-//				case "[]uint8":
-//					record[columns[i]] = string(col.([]byte))
-//				}
-//
-//			}
-//		}
-//		return &record, err
-//	}
-//	return nil, err
-//}

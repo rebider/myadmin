@@ -1,0 +1,51 @@
+package controllers
+
+import (
+	"encoding/json"
+	"github.com/chnzrb/myadmin/enums"
+	"github.com/chnzrb/myadmin/models"
+	"github.com/astaxie/beego/logs"
+	"github.com/chnzrb/myadmin/utils"
+)
+
+type LogController struct {
+	BaseController
+}
+
+func (c *LogController) PlayerLoinLogList() {
+	var params models.PlayerLoginLogQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询玩家详细信息:%+v", params)
+	if params.PlayerName != "" {
+		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		if player == nil || err != nil {
+			c.Result(enums.CodeFail, "玩家不存在", 0)
+		}
+		params.PlayerId = player.Id
+	}
+	data, total := models.GetPlayerLoginLogList(&params)
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取玩家登录日志", result)
+}
+
+func (c *LogController) PlayerOnlineLogList() {
+	var params models.PlayerOnlineLogQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询在线日志:%+v", params)
+	if params.PlayerName != "" {
+		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		if player == nil || err != nil {
+			c.Result(enums.CodeFail, "玩家不存在", 0)
+		}
+		params.PlayerId = player.Id
+	}
+	data, total := models.GetPlayerOnlineLogList(&params)
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取在线日志", result)
+}

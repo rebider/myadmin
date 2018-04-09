@@ -19,8 +19,10 @@ message m_set_disable_toc {
 }
 
 
+
 //发送邮件
 message m_send_mail_tos {
+    //物品
     message prop {
         required int32 propType = 1;
         required int32 propId = 2;
@@ -35,6 +37,21 @@ message m_send_mail_tos {
 
 //发送邮件
 message m_send_mail_toc {
+    enum ENUM {
+        success = 1; //成功
+        fail = 2; //失败
+    }
+    required ENUM result = 1;
+}
+
+//发送公告
+message m_send_notice_tos {
+    required string token = 1; //密钥
+    required string content = 3; //内容
+}
+
+//发送公告
+message m_send_notice_toc {
     enum ENUM {
         success = 1; //成功
         fail = 2; //失败
