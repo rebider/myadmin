@@ -81,8 +81,23 @@ func IntToBytes(n int) []byte {
 }
 
 //获取今日0点时间戳
-func GetTodayZeroTimestamp() int64{
+func GetTodayZeroTimestamp() int{
 	t := time.Now()
 	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
-	return tm1.Unix()
+	return int(tm1.Unix())
+}
+
+//获取昨日0点时间戳
+func GetYesterdayZeroTimestamp() int{
+	t := time.Now()
+	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	return int(tm1.Unix()) - 86400
+}
+func GetThatZeroTimestamp(timestamp int64) int{
+	t := time.Unix(timestamp, 0)
+	t1:= time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	return int(t1.Unix())
+}
+func GetTimestamp() int{
+	return int(time.Now().Unix())
 }

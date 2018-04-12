@@ -67,6 +67,35 @@ func (c *PlayerController) GetServerOnlineStatistics() {
 	c.Result(enums.CodeSuccess, "查询在线统计成功", serverOnlineStatistics)
 }
 
+func (c *PlayerController) GetDailyStatistics() {
+	var params models.DailyStatisticsQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	gameServer, err:= models.GetGameServerOne(params.PlatformId, params.ServerId)
+	c.CheckError(err)
+	params.Node = gameServer.Node
+	data, total := models.GetDailyStatisticsList(&params)
+	c.CheckError(err, "查询每日汇总")
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "查询每日汇总成功", result)
+}
+
+func (c *PlayerController) GetRemainTask() {
+	var params struct {
+		PlatformId int    `json:"platformId"`
+		ServerId   string `json:"serverId"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	data := models.GetRemainTask(params.PlatformId, params.ServerId)
+	c.CheckError(err, "任务分布")
+	result := make(map[string]interface{})
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "查询任务分布成功", result)
+}
+
 //func (c *PlayerController) GetTotalRemain() {
 //	logs.Info("查询总体留存")
 //	platformId, err := c.GetInt("platformId")

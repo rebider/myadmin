@@ -2,14 +2,16 @@ package models
 
 import (
 	"github.com/chnzrb/myadmin/utils"
+	"github.com/jinzhu/gorm"
 )
 
 type PlayerOnlineLog struct {
-	Id          int `json:"id"`
-	PlayerId    int `json:"playerId"`
-	LoginTime   int `json:"loginTime"`
-	OfflineTime int `json:"offlineTime"`
-	OnlineTime  int `json:"onlineTime"`
+	Id          int    `json:"id"`
+	PlayerId    int    `json:"playerId"`
+	PlayerName  string `json:"playerName" gorm:"-"`
+	LoginTime   int    `json:"loginTime"`
+	OfflineTime int    `json:"offlineTime"`
+	OnlineTime  int    `json:"onlineTime"`
 }
 
 type PlayerOnlineLogQueryParam struct {
@@ -23,24 +25,35 @@ type PlayerOnlineLogQueryParam struct {
 }
 
 func GetPlayerOnlineLogList(params *PlayerOnlineLogQueryParam) ([]*PlayerOnlineLog, int64) {
-	db, err := GetDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
+	gameDb, err := GetGameDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
 	utils.CheckError(err)
-	defer db.Close()
+	defer gameDb.Close()
 	data := make([]*PlayerOnlineLog, 0)
 	var count int64
 	sortOrder := "id"
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
 	}
-	if params.PlayerId != 0 {
-		db = db.Where("player_id = ?", params.PlayerId)
+	//if params.PlayerId != 0 {
+	//	gameDb = gameDb.Where("player_id = ?", params.PlayerId)
+	//}
+	//if params.StartTime != 0 {
+	//	gameDb = gameDb.Where("offline_time >= ?", params.StartTime)
+	//}
+	//if params.EndTime != 0 {
+	//	gameDb = gameDb.Where("offline_time <= ?", params.EndTime)
+	//}
+	f := func(db *gorm.DB) *gorm.DB {
+		if params.StartTime > 0 {
+			return db.Where("offline_time between ? and ?", params.StartTime, params.EndTime)
+		}
+		return db
 	}
-	if params.StartTime != 0 {
-		db = db.Where("offline_time >= ?", params.StartTime)
+	f(gameDb.Model(&PlayerOnlineLog{}).Where(&PlayerOnlineLog{
+		PlayerId: params.PlayerId,
+	})).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	for _, e := range data {
+		e.PlayerName = GetPlayerName(gameDb, e.PlayerId)
 	}
-	if params.EndTime != 0 {
-		db = db.Where("offline_time <= ?", params.EndTime)
-	}
-	db.Model(&PlayerOnlineLog{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	return data, count
 }

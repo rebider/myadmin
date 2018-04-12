@@ -3,18 +3,21 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	//"github.com/zaaksam/dproxy/go/db"
-	"github.com/jinzhu/gorm"
 )
 
-type PlayerLoginLog struct {
-	Id         int    `json:"id"`
-	PlayerId   int    `json:"playerId"`
+type PlayerPropLog struct {
+	Id          int `json:"id"`
+	PlayerId    int `json:"playerId"`
 	PlayerName string `json:"playerName" gorm:"-"`
-	Ip         string `json:"ip"`
-	Timestamp  int    `json:"time"`
+	PropType    int `json:"propType"`
+	PropId      int `json:"propId"`
+	OpType      int `json:"opType"`
+	OpTime      int `json:"opTime"`
+	ChangeValue int `json:"changeValue"`
+	NewValue    int `json:"newValue"`
 }
 
-type PlayerLoginLogQueryParam struct {
+type PlayerPropLogQueryParam struct {
 	BaseQueryParam
 	PlatformId int
 	ServerId   string
@@ -23,18 +26,20 @@ type PlayerLoginLogQueryParam struct {
 	PlayerName string
 	StartTime  int
 	EndTime    int
+	PropType   int
+	PropId     int
 }
 
-func GetPlayerLoginLogList(params *PlayerLoginLogQueryParam) ([]*PlayerLoginLog, int64) {
+func GetPlayerPropLogList(params *PlayerPropLogQueryParam) ([]*PlayerPropLog, int64) {
 	gameDb, err := GetGameDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
 	utils.CheckError(err)
 	defer gameDb.Close()
-	data := make([]*PlayerLoginLog, 0)
+	data := make([]*PlayerPropLog, 0)
 	var count int64
 	sortOrder := "id"
-	if params.Order == "descending" {
-		sortOrder = sortOrder + " desc"
-	}
+	//if params.Order == "descending" {
+	//	sortOrder = sortOrder + " desc"
+	//}
 	//if params.Ip != "" {
 	//	gameDb = gameDb.Where("ip = ?", params.Ip)
 	//}
@@ -47,16 +52,7 @@ func GetPlayerLoginLogList(params *PlayerLoginLogQueryParam) ([]*PlayerLoginLog,
 	//if params.EndTime != 0 {
 	//	gameDb = gameDb.Where("timestamp <= ?", params.EndTime)
 	//}
-	f := func(db *gorm.DB) *gorm.DB {
-		if params.StartTime > 0 {
-			return db.Where("timestamp between ? and ?", params.StartTime, params.EndTime)
-		}
-		return db
-	}
-	f(gameDb.Model(&PlayerLoginLog{}).Where(&PlayerLoginLog{
-		Ip:params.Ip,
-		PlayerId:params.PlayerId,
-	})).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	gameDb.Model(&PlayerPropLog{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	for _,e := range data {
 		e.PlayerName = GetPlayerName(gameDb, e.PlayerId)
 	}

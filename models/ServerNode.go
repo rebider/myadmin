@@ -10,6 +10,7 @@ type ServerNodeQueryParam struct {
 	Node       string
 	PlatformId int `json:"platformId"`
 }
+
 type ServerNode struct {
 	Node          string `gorm:"primary_key" json:"node"`
 	Ip            string `json:"ip"`
@@ -57,4 +58,14 @@ func GetServerNode(node string) (*ServerNode, error) {
 	}
 	err := DbCenter.First(&serverNode).Error
 	return serverNode, err
+}
+
+// 获取所有游戏节点
+func GetAllGameServerNode() []*ServerNode{
+	data := make([]*ServerNode, 0)
+	err := DbCenter.Model(&ServerNode{}).Where(&ServerNode{
+		Type:       1,
+	}).Find(&data).Error
+	utils.CheckError(err)
+	return data
 }

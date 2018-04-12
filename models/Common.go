@@ -14,6 +14,8 @@ type Result struct {
 	Data interface{}      `json:"data"`
 }
 
+//type GameDb gorm.DB
+
 type BaseQueryParam struct {
 	Sort   string `json:"sort"`
 	Order  string `json:"order"`
@@ -22,16 +24,25 @@ type BaseQueryParam struct {
 }
 
 // 通过平台id和区服id获取 gorm.DB 实例
-func GetDbByPlatformIdAndSid(platformId int, Sid string) (db *gorm.DB, err error) {
+func GetGameDbByPlatformIdAndSid(platformId int, Sid string) (gameDb *gorm.DB, err error) {
 	gameServer, err := GetGameServerOne(platformId, Sid)
 	utils.CheckError(err)
 	serverNode, err := GetServerNode(gameServer.Node)
 	utils.CheckError(err)
 	//logs.Debug(serverNode.Ip)
 	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/game?charset=utf8&parseTime=True&loc=Local"
-	db, err = gorm.Open("mysql", dbArgs)
-	db.SingularTable(true)
-	return db, err
+	gameDb, err = gorm.Open("mysql", dbArgs)
+	gameDb.SingularTable(true)
+	return gameDb, err
+}
+
+// 通过ServerNode获取 gorm.DB 实例
+func GetGameDbByServerNode(serverNode *ServerNode) (gameDb *gorm.DB, err error) {
+	//logs.Debug(serverNode.Ip)
+	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/game?charset=utf8&parseTime=True&loc=Local"
+	gameDb, err = gorm.Open("mysql", dbArgs)
+	gameDb.SingularTable(true)
+	return gameDb, err
 }
 
 // 通过平台id和区服id 获取ip地址和端口

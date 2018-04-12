@@ -97,14 +97,21 @@ func init() {
 	beego.Router("/server_node/edit/?:node", &controllers.ServerNodeController{}, "*:Edit")
 	beego.Router("/server_node/delete", &controllers.ServerNodeController{}, "*:Delete")
 
+	//日志
+	beego.Router("/log/login_log/", &controllers.LogController{}, "*:PlayerLoinLogList")
+	beego.Router("/log/online_log/", &controllers.LogController{}, "*:PlayerOnlineLogList")
+	beego.Router("/log/challenge_mission_log/", &controllers.LogController{}, "*:PlayerChallengeMissionLogList")
+	beego.Router("/log/prop_log/", &controllers.LogController{}, "*:PlayerPropLogList")
+	beego.Router("/log/charge_list/", &controllers.LogController{}, "*:ChargeList")
+
 	//玩家
 	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
 	beego.Router("/player/one", &controllers.PlayerController{}, "*:One")
 	beego.Router("/player/detail/", &controllers.PlayerController{}, "*:Detail")
-	beego.Router("/log/login_log/", &controllers.LogController{}, "*:PlayerLoinLogList")
-	beego.Router("/log/online_log/", &controllers.LogController{}, "*:PlayerOnlineLogList")
-	beego.Router("/player/get_server_generalize/", &controllers.PlayerController{}, "*:GetServerGeneralize")
 
+	beego.Router("/player/get_server_generalize/", &controllers.PlayerController{}, "*:GetServerGeneralize")
+	beego.Router("/player/daily_statistics/", &controllers.PlayerController{}, "*:GetDailyStatistics")
+	beego.Router("/player/get_remain_task/", &controllers.PlayerController{}, "*:GetRemainTask")
 
 	beego.Router("/player/online_statistics/", &controllers.PlayerController{}, "*:GetServerOnlineStatistics")
 

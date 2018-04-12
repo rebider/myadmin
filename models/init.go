@@ -13,6 +13,7 @@ import (
 var (
 	Db *gorm.DB
 	DbCenter *gorm.DB
+	DbCharge *gorm.DB
 )
 
 //初始化
@@ -22,6 +23,7 @@ func init() {
 	}
 	initDb()
 	initCenter()
+	initCharge()
 }
 
 func initDb() {
@@ -53,6 +55,28 @@ func initCenter() {
 	DbCenter, err = gorm.Open("mysql", dsn)
 	DbCenter.SingularTable(true)
 	utils.CheckError(err, "连接中心服失败")
+}
+
+func initCharge() {
+	//数据库名称
+	dbName := beego.AppConfig.String("charge_db" + "::db_name")
+	//数据库用户名
+	dbUser := beego.AppConfig.String("charge_db" + "::db_user")
+	//数据库密码
+	dbPwd := beego.AppConfig.String("charge_db" + "::db_pwd")
+	//数据库IP
+	dbHost := beego.AppConfig.String("charge_db" + "::db_host")
+	//数据库端口
+	dbPort := beego.AppConfig.String("charge_db" + "::db_port")
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", dbUser, dbPwd, dbHost, dbPort, dbName)
+	var err error
+
+	logs.Info("dbPwd:%v", dsn)
+	DbCharge, err = gorm.Open("mysql", dsn)
+	utils.CheckError(err, "连接充值数据库失败")
+	//Db.LogMode(true)
+	DbCharge.SetLogger(log.New(os.Stdout, "\r\n", 0))
+	DbCharge.SingularTable(true)
 }
 
 func TableName(name string) string {

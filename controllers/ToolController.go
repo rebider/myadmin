@@ -54,6 +54,16 @@ func (c *ToolController) Action() {
 		out = strings.Replace(out, "\\n", "<br>", -1)
 		c.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
 	} else {
+		if params.Action == "build_table"{
+			commandArgs = []string{
+				"ci",
+				"/opt/h5/trunk/client/client_enum",
+				"-m",
+				"web_submit",
+			}
+			_, err = utils.Cmd("svn", commandArgs)
+			c.CheckError(err, "提交客户端枚举")
+		}
 		c.Result(enums.CodeSuccess, "成功!", 0)
 	}
 }

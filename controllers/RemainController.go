@@ -18,7 +18,7 @@ func (c *RemainController) GetTotalRemain() {
 	var params models.TotalRemainQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	c.CheckError(err)
-	data, total := models.GetTotalRemainList(&params)
+	data, total := models.GetRemainTotalList(&params)
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
