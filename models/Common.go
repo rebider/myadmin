@@ -14,7 +14,7 @@ type Result struct {
 	Data interface{}      `json:"data"`
 }
 
-//type GameDb gorm.DB
+
 
 type BaseQueryParam struct {
 	Sort   string `json:"sort"`

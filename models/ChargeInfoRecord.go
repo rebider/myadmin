@@ -20,6 +20,7 @@ type ChargeInfoRecord struct {
 	CurrPower  int    `json:"currPower"`
 	PlayerId   int    `json:"playerId"`
 	PlayerName string `json:"playerName" gorm:"-"`
+	LastLoginTime  int `json:"lastLoginTime" gorm:"-"`
 	Money      int    `json:"money"`
 	Ingot      int    `json:"ingot"`
 	RecordTime int    `json:"recordTime"`
@@ -51,14 +52,16 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 		return db
 	}
 	err := f(DbCharge.Model(&ChargeInfoRecord{}).Where(&ChargeInfoRecord{
-		PartId:   params.PlatformId,
-		ServerId: params.ServerId,
-		AccId:    params.AccId,
-		OrderId:  params.OrderId,
+		PartId:     params.PlatformId,
+		ServerId:   params.ServerId,
+		AccId:      params.AccId,
+		OrderId:    params.OrderId,
+		ChargeType: 99,
 	})).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
 	utils.CheckError(err)
-	//for _, e := range data {
-	//	e.PlayerName = GetPlayerName(gameDb, e.PlayerId)
-	//}
+	for _, e := range data {
+		e.PlayerName = GetPlayerName_2(e.PartId, e.ServerId,e.PlayerId)
+		e.LastLoginTime = GetPlayerLastLoginTime(e.PartId, e.ServerId,e.PlayerId)
+	}
 	return data, count
 }

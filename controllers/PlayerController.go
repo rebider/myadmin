@@ -39,14 +39,6 @@ func (c *PlayerController) Detail() {
 }
 
 func (c *PlayerController) One() {
-	//var params struct {
-	//	PlatformId int `json:"platformId"`
-	//	ServerId string `json:"serverId"`
-	//	PlayerId int `json:"playerId"`
-	//}
-	//err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	//utils.CheckError(err)
-	//logs.Info("查询玩家详细信息:%+v", params)
 	platformId, err := c.GetInt("platformId")
 	c.CheckError(err)
 	serverId := c.GetString("serverId")
@@ -67,20 +59,20 @@ func (c *PlayerController) GetServerOnlineStatistics() {
 	c.Result(enums.CodeSuccess, "查询在线统计成功", serverOnlineStatistics)
 }
 
-func (c *PlayerController) GetDailyStatistics() {
-	var params models.DailyStatisticsQueryParam
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	utils.CheckError(err)
-	gameServer, err:= models.GetGameServerOne(params.PlatformId, params.ServerId)
-	c.CheckError(err)
-	params.Node = gameServer.Node
-	data, total := models.GetDailyStatisticsList(&params)
-	c.CheckError(err, "查询每日汇总")
-	result := make(map[string]interface{})
-	result["total"] = total
-	result["rows"] = data
-	c.Result(enums.CodeSuccess, "查询每日汇总成功", result)
-}
+//func (c *PlayerController) GetDailyStatistics() {
+//	var params models.DailyStatisticsQueryParam
+//	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+//	utils.CheckError(err)
+//	gameServer, err:= models.GetGameServerOne(params.PlatformId, params.ServerId)
+//	c.CheckError(err)
+//	params.Node = gameServer.Node
+//	data, total := models.GetDailyStatisticsList(&params)
+//	c.CheckError(err, "查询每日汇总")
+//	result := make(map[string]interface{})
+//	result["total"] = total
+//	result["rows"] = data
+//	c.Result(enums.CodeSuccess, "查询每日汇总成功", result)
+//}
 
 func (c *PlayerController) GetRemainTask() {
 	var params struct {
@@ -93,20 +85,39 @@ func (c *PlayerController) GetRemainTask() {
 	c.CheckError(err, "任务分布")
 	result := make(map[string]interface{})
 	result["rows"] = data
+	//result["total"] = models.GetTotalCreateRoleCount()
 	c.Result(enums.CodeSuccess, "查询任务分布成功", result)
 }
 
-//func (c *PlayerController) GetTotalRemain() {
-//	logs.Info("查询总体留存")
-//	platformId, err := c.GetInt("platformId")
-//	c.CheckError(err)
-//	serverId := c.GetString("serverId")
-//	c.CheckError(err)
-//
-//	serverOnlineStatistics, err := models.GetServerOnlineStatistics(platformId, serverId)
-//	c.CheckError(err, "查询在线统计")
-//	c.Result(enums.CodeSuccess, "查询在线统计成功", serverOnlineStatistics)
-//}
+func (c *PlayerController) GetRemainLevel() {
+	var params struct {
+		PlatformId int    `json:"platformId"`
+		ServerId   string `json:"serverId"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	data := models.GetRemainLevel(params.PlatformId, params.ServerId)
+	c.CheckError(err, "等级分布")
+	result := make(map[string]interface{})
+	result["rows"] = data
+	//result["total"] = models.GetTotalCreateRoleCount()
+	c.Result(enums.CodeSuccess, "查询等级分布成功", result)
+}
+
+func (c *PlayerController) GetRemainTime() {
+	var params struct {
+		PlatformId int    `json:"platformId"`
+		ServerId   string `json:"serverId"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	data := models.GetRemainTime(params.PlatformId, params.ServerId)
+	c.CheckError(err, "时长分布")
+	result := make(map[string]interface{})
+	result["rows"] = data
+	//result["total"] = models.GetTotalCreateRoleCount()
+	c.Result(enums.CodeSuccess, "查询时长分布成功", result)
+}
 
 
 func (c *PlayerController) GetServerGeneralize() {

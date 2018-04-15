@@ -9,10 +9,16 @@ import (
 //更新所有游戏节点  DailyStatistics
 func UpdateAllGameNodeDailyStatistics() {
 	todayZeroTimestamp := utils.GetTodayZeroTimestamp()
-	logs.Info("UpdateAllGameNodeDailyStatistics:%v, %v", todayZeroTimestamp)
+	logs.Info("UpdateAllGameNodeDailyStatistics:%v", todayZeroTimestamp)
 	gameServerNodeList := models.GetAllGameServerNode()
 	for _, serverNode := range gameServerNodeList {
-		err := models.UpdateDailyStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		//err := models.UpdateDailyStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		//utils.CheckError(err)
+		err := models.UpdateDailyChargeStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		utils.CheckError(err)
+		err = models.UpdateDailyOnlineStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		utils.CheckError(err)
+		err = models.UpdateDailyRegisterStatistics(serverNode.Node, todayZeroTimestamp - 86400)
 		utils.CheckError(err)
 	}
 }

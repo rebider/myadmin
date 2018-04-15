@@ -110,12 +110,18 @@ func init() {
 	beego.Router("/player/detail/", &controllers.PlayerController{}, "*:Detail")
 
 	beego.Router("/player/get_server_generalize/", &controllers.PlayerController{}, "*:GetServerGeneralize")
-	beego.Router("/player/daily_statistics/", &controllers.PlayerController{}, "*:GetDailyStatistics")
+	//beego.Router("/player/daily_statistics/", &controllers.PlayerController{}, "*:GetDailyStatistics")
 	beego.Router("/player/get_remain_task/", &controllers.PlayerController{}, "*:GetRemainTask")
+	beego.Router("/player/get_remain_level/", &controllers.PlayerController{}, "*:GetRemainLevel")
+	beego.Router("/player/get_remain_time/", &controllers.PlayerController{}, "*:GetRemainTime")
 
 	beego.Router("/player/online_statistics/", &controllers.PlayerController{}, "*:GetServerOnlineStatistics")
 
-
+	//统计
+	beego.Router("/statistics/online_statistics/", &controllers.StatisticsController{}, "*:OnlineStatisticsList")
+	beego.Router("/statistics/register_statistics/", &controllers.StatisticsController{}, "*:RegisterStatisticsList")
+	beego.Router("/statistics/charge_statistics/", &controllers.StatisticsController{}, "*:ChargeStatisticsList")
+	beego.Router("/statistics/consume_statistics/", &controllers.StatisticsController{}, "*:ConsumeStatistics")
 	//封禁
 	beego.Router("/forbid/set_forbid/", &controllers.ForbidController{}, "*:SetForbid")
 	beego.Router("/forbid/forbid_log/", &controllers.ForbidController{}, "*:ForbidLogList")
@@ -130,6 +136,11 @@ func init() {
 	beego.Router("/mail/send_mail/", &controllers.MailController{}, "*:SendMail")
 	beego.Router("/mail/mail_log/", &controllers.MailController{}, "*:MailLogList")
 	beego.Router("/mail/del_mail_log/", &controllers.MailController{}, "*:DelMailLog")
+
+
+	//充值
+	beego.Router("/charge/background_charge/", &controllers.BackgroundController{}, "*:Charge")
+	beego.Router("/charge/background_charge_list/", &controllers.BackgroundController{}, "*:List")
 
 	//留存
 	beego.Router("/remain/total_remain/", &controllers.RemainController{}, "*:GetTotalRemain")

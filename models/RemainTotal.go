@@ -41,10 +41,10 @@ func GetRemainTotalList(params *TotalRemainQueryParam) ([]*RemainTotal, int64) {
 	err = f(Db.Model(&RemainTotal{}).Where(&RemainTotal{Node: gameServer.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
 	utils.CheckError(err)
 	for _, e := range data {
-		dailyStatistics, err := GetDailyStatisticsOne(e.Node, e.Time)
+		dailyRegisterStatistics, err := GetDailyRegisterStatisticsOne(e.Node, e.Time)
 		utils.CheckError(err)
-		e.CreateRole = dailyStatistics.CreateRoleNum
-		e.RegisterRole = dailyStatistics.RegisterNum
+		e.CreateRole = dailyRegisterStatistics.CreateRoleCount
+		e.RegisterRole = dailyRegisterStatistics.RegisterCount
 	}
 	return data, count
 }

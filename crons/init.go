@@ -14,6 +14,9 @@ func init() {
 	go dailyZeroClockCron()
 	// 每小时定时器
 	go everyHourClockCron()
+
+	//go UpdateAllGameNodeDailyStatistics()
+
 	//go UpdateAllGameNodeRemainTotal()
 	//go UpdateAllGameNodeDailyStatistics()
 }

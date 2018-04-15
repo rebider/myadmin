@@ -5,46 +5,9 @@ import (
 	"fmt"
 	"github.com/chnzrb/myadmin/utils"
 	"strconv"
-	//"github.com/astaxie/beego/logs"
-	//"github.com/zaaksam/dproxy/go/db"
-	//"github.com/astaxie/beego/logs"
+	//"time"
 )
 
-//获取总注册人数
-func GetTotalCreateRole(db *gorm.DB) int {
-	var count int
-	db.Model(&Player{}).Count(&count)
-	return count
-}
-
-//获取今日创角人数
-func GetTodayCreateRole(db *gorm.DB) int {
-	var data struct {
-		Count int
-	}
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
-	todayZeroTimestamp := utils.GetTodayZeroTimestamp()
-	sql := fmt.Sprintf(
-		`SELECT count(1) as count FROM player WHERE reg_time between ? and ?`)
-	err := db.Raw(sql, todayZeroTimestamp, todayZeroTimestamp+86400).Scan(&data).Error
-	utils.CheckError(err)
-	//logs.Info("ppp:%v,%v", gameServer.Node, data.Count)
-	return data.Count
-}
-
-//获取某日创角人数
-func GetThatDayCreateRole(db *gorm.DB, zeroTimestamp int) int {
-	var data struct {
-		Count int
-	}
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
-	sql := fmt.Sprintf(
-		`SELECT count(1) as count FROM player WHERE reg_time between ? and ?`)
-	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
-	utils.CheckError(err)
-	//logs.Info("ppp:%v,%v", gameServer.Node, data.Count)
-	return data.Count
-}
 
 //获取某日创角的玩家Id列表
 func GetThatDayCreateRolePlayerIdList(db *gorm.DB, zeroTimestamp int) [] int {
@@ -52,7 +15,6 @@ func GetThatDayCreateRolePlayerIdList(db *gorm.DB, zeroTimestamp int) [] int {
 		Id int
 	}
 
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
 	sql := fmt.Sprintf(
 		`SELECT id FROM player WHERE reg_time between ? and ?`)
 	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Find(&data).Error
@@ -61,7 +23,6 @@ func GetThatDayCreateRolePlayerIdList(db *gorm.DB, zeroTimestamp int) [] int {
 	for _, e := range data {
 		idList = append(idList, e.Id)
 	}
-	//logs.Info("ppp:%v,%v", gameServer.Node, data.Count)
 	return idList
 }
 
@@ -94,27 +55,39 @@ func GetMaxOnlineCount(platformId int, serverId string) int {
 	var data struct {
 		Count int
 	}
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
 	sql := fmt.Sprintf(
-		`SELECT max(online_num) as count FROM c_server_trace_log WHERE node = ? `)
+		`SELECT max(online_num) as count FROM c_ten_minute_statics WHERE node = ? `)
 	err = DbCenter.Raw(sql, gameServer.Node).Scan(&data).Error
 	utils.CheckError(err)
-	//logs.Info("ppp:%v,%v", gameServer.Node, data.Count)
 	return data.Count
 }
 
-//获取当前在线人数
+//获取该服最高等级
 func GetMaxPlayerLevel(db *gorm.DB) int {
 	var data struct {
 		MaxLevel int
 	}
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
 	sql := fmt.Sprintf(
 		`SELECT max(level) as max_level FROM player_data `)
 	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
-	//logs.Info("ppp:%v,%v", data.MaxLevel)
 	return data.MaxLevel
+}
+
+//获取那天平均在线时长
+func GetAvgOnlineTime(node string, zeroTimestamp int) int {
+	serverNode ,err:= GetServerNode(node)
+	utils.CheckError(err)
+	gameDb, err := GetGameDbByServerNode(serverNode)
+	utils.CheckError(err)
+	var data struct {
+		Time float32
+	}
+	sql := fmt.Sprintf(
+		`SELECT avg(online_time) as time FROM player_online_log where login_time between ? and ? `)
+	err = gameDb.Raw(sql, zeroTimestamp, zeroTimestamp + 86400).Scan(&data).Error
+	utils.CheckError(err)
+	return int(data.Time)
 }
 
 
@@ -123,31 +96,11 @@ func GetThatDayAverageOnlineCount(node string, zeroTimestamp int) float32 {
 	var data struct {
 		Count float32
 	}
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
 	sql := fmt.Sprintf(
-		`SELECT avg(online_num)  as count FROM c_server_trace_log where node = ? and time between ? and ? `)
+		`SELECT avg(online_num)  as count FROM c_ten_minute_statics where node = ? and time between ? and ? `)
 	err := DbCenter.Raw(sql, node, zeroTimestamp, zeroTimestamp + 86400).Scan(&data).Error
 	utils.CheckError(err)
-	//logs.Info("ppp:%v,%v", data.MaxLevel)
 	return data.Count
-	//averageOnlineCount := 0
-	//num := 0
-	//for i := zeroTimestamp; i < zeroTimestamp+86400; i = i + 60*60 {
-	//	cServerTraceLog := &CServerTraceLog{}
-	//	err := DbCenter.Where(&CServerTraceLog{
-	//		Node: node,
-	//		Time: i,
-	//	}).First(&cServerTraceLog).Error
-	//	if err == nil {
-	//		averageOnlineCount += cServerTraceLog.OnlineNum
-	//		num += 1
-	//	}
-	//}
-	////logs.Info("%v %v %v", num, averageOnlineCount, averageOnlineCount/num)
-	//if num == 0 {
-	//	return 0
-	//}
-	//return averageOnlineCount/num
 }
 
 // 获取当天 最高在线人数
@@ -155,12 +108,10 @@ func GetThatDayMaxOnlineCount(node string, zeroTimestamp int) int {
 	var data struct {
 		Count int
 	}
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
 	sql := fmt.Sprintf(
-		`SELECT max(online_num)  as count FROM c_server_trace_log where node = ? and time between ? and ? `)
+		`SELECT max(online_num)  as count FROM c_ten_minute_statics where node = ? and time between ? and ? `)
 	err := DbCenter.Raw(sql, node, zeroTimestamp, zeroTimestamp + 86400).Scan(&data).Error
 	utils.CheckError(err)
-	//logs.Info("ppp:%v,%v", data.MaxLevel)
 	return data.Count
 }
 
@@ -169,23 +120,21 @@ func GetThatDayMinOnlineCount(node string, zeroTimestamp int) int {
 	var data struct {
 		Count int
 	}
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
 	sql := fmt.Sprintf(
-		`SELECT min(online_num)  as count FROM c_server_trace_log where node = ? and time between ? and ? `)
+		`SELECT min(online_num)  as count FROM c_ten_minute_statics where node = ? and time between ? and ? `)
 	err := DbCenter.Raw(sql, node, zeroTimestamp, zeroTimestamp + 86400).Scan(&data).Error
 	utils.CheckError(err)
-	//logs.Info("ppp:%v,%v", data.MaxLevel)
 	return data.Count
 }
 
 type RemainTask struct {
 	TaskId int `json:"taskId"`
 	Count int `json:"count"`
+	Rate float32 `json:"rate"`
 }
 
 // 获取任务分布
-func GetRemainTask(platformId int, serverId string) [] *RemainTask {
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
+func GetRemainTask(platformId int, serverId string) [] *RemainTask{
 	gameDb, err:= GetGameDbByPlatformIdAndSid(platformId, serverId)
 	utils.CheckError(err)
 	defer gameDb.Close()
@@ -194,15 +143,149 @@ func GetRemainTask(platformId int, serverId string) [] *RemainTask {
 		`SELECT task_id, count(*) as count FROM player_task group by task_id `)
 	err = gameDb.Raw(sql).Find(&data).Error
 	utils.CheckError(err)
-	//logs.Info("ppp:%v,%v", data.MaxLevel)
+
+	totalCreateRole := GetTotalCreateRoleCount(gameDb)
+	for _,e:= range data {
+		e.Rate = float32(e.Count) / float32(totalCreateRole) * 100
+	}
+	return data
+}
+
+type RemainLevel struct {
+	Level int `json:"level"`
+	Count int `json:"count"`
+	Rate float32 `json:"rate"`
+}
+
+// 获取等级分布
+func GetRemainLevel(platformId int, serverId string) [] *RemainLevel{
+	gameDb, err:= GetGameDbByPlatformIdAndSid(platformId, serverId)
+	utils.CheckError(err)
+	defer gameDb.Close()
+	data := make([] *RemainLevel, 0)
+	sql := fmt.Sprintf(
+		`SELECT level, count(*) as count FROM player_data group by level `)
+	err = gameDb.Raw(sql).Find(&data).Error
+	utils.CheckError(err)
+
+	totalCreateRole := GetTotalCreateRoleCount(gameDb)
+	for _,e:= range data {
+		e.Rate = float32(e.Count) / float32(totalCreateRole) * 100
+	}
+	return data
+}
+
+type RemainTime struct {
+	StartTime int `json:"-"`
+	EndTime int `json:"-"`
+	TimeString string `json:"timeString"`
+	Count int `json:"count"`
+	Rate float32 `json:"rate"`
+}
+
+// 获取时长分布
+func GetRemainTime(platformId int, serverId string) [] *RemainTime{
+	gameDb, err:= GetGameDbByPlatformIdAndSid(platformId, serverId)
+	utils.CheckError(err)
+	defer gameDb.Close()
+	var data = [] *RemainTime {
+		&RemainTime{
+			StartTime:0,
+			EndTime:60,
+			TimeString:"小于1分钟",
+			},
+		&RemainTime{
+			StartTime:60,
+			EndTime:300,
+			TimeString:"1~5分钟",
+		},
+		&RemainTime{
+			StartTime:300,
+			EndTime:600,
+			TimeString:"5~10分钟",
+		},
+		&RemainTime{
+			StartTime:600,
+			EndTime:1800,
+			TimeString:"10~30分钟",
+		},
+		&RemainTime{
+			StartTime:1800,
+			EndTime:3600,
+			TimeString:"30~60分钟",
+		},
+		&RemainTime{
+			StartTime:3600,
+			EndTime:3600 * 2,
+			TimeString:"1~2小时",
+		},
+		&RemainTime{
+			StartTime:3600 * 2,
+			EndTime:3600 * 3,
+			TimeString:"2~3小时",
+		},
+		&RemainTime{
+			StartTime:3600 * 3,
+			EndTime:3600 * 4,
+			TimeString:"3~4小时",
+		},
+		&RemainTime{
+			StartTime:3600 * 4,
+			EndTime:3600 * 5,
+			TimeString:"4~5小时",
+		},
+		&RemainTime{
+			StartTime:3600 * 5,
+			EndTime:3600 * 6,
+			TimeString:"5~6小时",
+		},
+		&RemainTime{
+			StartTime:3600 * 6,
+			EndTime:3600 * 9,
+			TimeString:"6~9小时",
+		},
+		&RemainTime{
+			StartTime:3600 * 9,
+			EndTime:3600 * 12,
+			TimeString:"9~12小时",
+		},
+		&RemainTime{
+			StartTime:3600 * 12,
+			EndTime:3600 * 24,
+			TimeString:"12~24小时",
+		},
+		&RemainTime{
+			StartTime:3600 * 24,
+			EndTime:3600 * 48,
+			TimeString:"1~2天",
+		},
+		&RemainTime{
+			StartTime:3600 * 48,
+			EndTime:3600 * 72,
+			TimeString:"2~3天",
+		},
+		&RemainTime{
+			StartTime:3600 * 72,
+			EndTime:3600 * 999999,
+			TimeString:">3天",
+		},
+	}
+	totalCreateRole := GetTotalCreateRoleCount(gameDb)
+	for _,e:= range data {
+		sql := fmt.Sprintf(
+			`SELECT count(*) as count FROM player where total_online_time >= ? and total_online_time < ? `)
+		err = gameDb.Raw(sql, e.StartTime, e.EndTime).Find(&e).Error
+		utils.CheckError(err)
+		e.Rate = float32(e.Count) / float32(totalCreateRole) * 100
+	}
 	return data
 }
 
 func get24hoursOnlineCount(node string, zeroTimestamp int) [] string {
 	onlineCountList := make([] string, 0)
 	for i := zeroTimestamp; i < zeroTimestamp+86400; i = i + 10*60 {
-		cServerTraceLog := &CServerTraceLog{}
-		err := DbCenter.Where(&CServerTraceLog{
+		cServerTraceLog := &CTenMinuteStatics{}
+		err := DbCenter.Where(&CTenMinuteStatics{
 			Node: node,
 			Time: i,
 		}).First(&cServerTraceLog).Error
@@ -216,8 +299,40 @@ func get24hoursOnlineCount(node string, zeroTimestamp int) [] string {
 	return onlineCountList
 }
 
-//获取当前在线人数
+//获取玩家名字
 func GetPlayerName(db *gorm.DB, playerId int) string {
+	var data struct {
+		Name string
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT nickname as name FROM player where id = ? `)
+	err := db.Raw(sql, playerId).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Name
+}
+
+//获取玩家最近登录时间
+func GetPlayerLastLoginTime(platformId int, serverId string, playerId int) int {
+	gameDb, err:= GetGameDbByPlatformIdAndSid(platformId, serverId)
+	utils.CheckError(err)
+	defer gameDb.Close()
+	var data struct {
+		Time int
+	}
+	sql := fmt.Sprintf(
+		`SELECT last_login_time as time FROM player where id = ? `)
+	err = gameDb.Raw(sql, playerId).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Time
+}
+
+
+//获取玩家名字
+func GetPlayerName_2(platformId int, serverId string, playerId int) string {
+	gameDb, err:= GetGameDbByPlatformIdAndSid(platformId, serverId)
+	utils.CheckError(err)
+	defer gameDb.Close()
 	var data struct {
 		Name string
 	}
@@ -226,8 +341,138 @@ func GetPlayerName(db *gorm.DB, playerId int) string {
 	sql := fmt.Sprintf(
 		`SELECT nickname as name FROM player where id = ? `)
 	//logs.Info("GetPlayerName:%v", playerId)
-	err := db.Raw(sql, playerId).Scan(&data).Error
+	err = gameDb.Raw(sql, playerId).Scan(&data).Error
 	utils.CheckError(err)
 	//logs.Info("ppp:%v,%v", data.MaxLevel)
 	return data.Name
 }
+
+
+//获取区服付费人数
+func GetServerChargePlayerCount(platformId int, serverId string) int {
+	var data struct {
+		Count int
+	}
+	gameServer, err:= GetGameServerOne(platformId, serverId)
+	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	sql := fmt.Sprintf(
+		`select count(DISTINCT player_id) as count from charge_info_record where node = ? and charge_type = 99;`)
+	err = DbCharge.Raw(sql, gameServer.Node).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+
+//获取区服付费人数
+func GetThatDayServerChargePlayerCount(node string, time int) int {
+	var data struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`select count(DISTINCT player_id) as count from charge_info_record where node = ? and charge_type = 99 and ( record_time between ? and ?);`)
+	err := DbCharge.Raw(sql, node, time, time + 86400).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+
+
+// arpu
+func CaclARPU(totalChargeValueNum int, totalChargePlayerCount int) float32 {
+	if totalChargePlayerCount == 0 {
+		return 0
+	}
+	return float32(totalChargeValueNum) / float32(totalChargePlayerCount) /100
+}
+//付费率
+func CaclChargeRate(totalChargePlayerCount int, totalRoleCount int) float32 {
+	if totalRoleCount == 0 {
+		return 0
+	}
+	return float32(totalChargePlayerCount) / float32(totalRoleCount)
+}
+//二次付费率
+func CaclSceondChargeRate(secondChargePlayerCount int, totalChargePlayerCount int) float32 {
+	if totalChargePlayerCount == 0 {
+		return 0
+	}
+	return float32(secondChargePlayerCount) / float32(totalChargePlayerCount)
+}
+
+//获取区服二次付费人数
+func GetServerSecondChargePlayerCount(platformId int, serverId string) int {
+	var data struct {
+		Count int
+	}
+	gameServer, err:= GetGameServerOne(platformId, serverId)
+	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	sql := fmt.Sprintf(
+		`select count(DISTINCT player_id) as count from charge_info_record where node = ? and is_first = 0 and charge_type = 99;`)
+	err = DbCharge.Raw(sql, gameServer.Node).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+
+//获取区服首次付费人数
+func GetThadDayServerSecondChargePlayerCount(node string, time int) int {
+	var data struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`select count(DISTINCT player_id) as count from charge_info_record where node = ? and is_first = 0 and charge_type = 99 and (record_time between ? and ?);`)
+	err := DbCharge.Raw(sql, node, time, time + 86400).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+
+//获取区服总充值元宝
+func GetServerTotalChargeIngot(platformId int, serverId string) int {
+	var data struct {
+		Count int
+	}
+	gameServer, err:= GetGameServerOne(platformId, serverId)
+	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	sql := fmt.Sprintf(
+		`select sum(ingot) as count from charge_info_record where node = ? and charge_type = 99;`)
+	err = DbCharge.Raw(sql, gameServer.Node).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+
+//获取区服总充值人民币
+func GetThatDayServerTotalChargeMoney(node string, time int) int {
+	var data struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`select sum(money) as count from charge_info_record where node = ? and charge_type = 99 and (record_time between ? and ?);`)
+	err := DbCharge.Raw(sql, node, time, time + 86400).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+
+
+//获取区服总充值人民币
+func GetServerTotalChargeMoney(platformId int, serverId string) int {
+	var data struct {
+		Count int
+	}
+	gameServer, err:= GetGameServerOne(platformId, serverId)
+	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	sql := fmt.Sprintf(
+		`select sum(money) as count from charge_info_record where node = ? and charge_type = 99;`)
+	err = DbCharge.Raw(sql, gameServer.Node).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+

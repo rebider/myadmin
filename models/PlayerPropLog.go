@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	//"github.com/zaaksam/dproxy/go/db"
+	"github.com/jinzhu/gorm"
 )
 
 type PlayerPropLog struct {
@@ -28,6 +29,7 @@ type PlayerPropLogQueryParam struct {
 	EndTime    int
 	PropType   int
 	PropId     int
+	Type     	int //1：获得 2：消耗
 }
 
 func GetPlayerPropLogList(params *PlayerPropLogQueryParam) ([]*PlayerPropLog, int64) {
@@ -52,7 +54,26 @@ func GetPlayerPropLogList(params *PlayerPropLogQueryParam) ([]*PlayerPropLog, in
 	//if params.EndTime != 0 {
 	//	gameDb = gameDb.Where("timestamp <= ?", params.EndTime)
 	//}
-	gameDb.Model(&PlayerPropLog{}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	f := func(db *gorm.DB) *gorm.DB {
+		if params.StartTime > 0 {
+			return db.Where("op_time between ? and ?", params.StartTime, params.EndTime)
+		}
+		return db
+	}
+	f1 := func(db *gorm.DB) *gorm.DB {
+		if params.Type == 1 {
+			return db.Where("change_value > 0")
+		}
+		if params.Type == 2 {
+			return db.Where("change_value < 0")
+		}
+		return db
+	}
+	f1(f(gameDb.Model(&PlayerPropLog{}).Where(&PlayerPropLog{
+		PlayerId:	params.PlayerId,
+		PropType:params.PropType,
+		PropId:params.PropId,
+	}))).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	for _,e := range data {
 		e.PlayerName = GetPlayerName(gameDb, e.PlayerId)
 	}
