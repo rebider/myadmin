@@ -1,3 +1,4 @@
+// 后台充值
 package controllers
 
 import (
@@ -9,7 +10,6 @@ import (
 	"net/http"
 	"io/ioutil"
 	"fmt"
-	//"time"
 )
 
 type BackgroundController struct {
@@ -22,7 +22,7 @@ func (c *BackgroundController) List() {
 	utils.CheckError(err)
 	logs.Info("查询后台充值日志列表:%+v", params)
 	if params.PlayerName != "" {
-		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
 		if player == nil || err != nil {
 			c.Result(enums.CodeFail, "玩家不存在", 0)
 		}
@@ -35,29 +35,11 @@ func (c *BackgroundController) List() {
 	c.Result(enums.CodeSuccess, "获取后台充值日志列表成功", result)
 }
 
-//func httpGet() {
-//	url := fmt.Sprintf("http://192.168.31.100:9999/gm_charge?sid=trunk&uid=dasdas&money=1&gold=1&partid=1&ftime=1523514762&charge_type=1&orderSerial=1523514762741&gm_id=game&sign=8ceeda91663c445b43dab92c1d846f0e")
-//	resp, err := http.Get(url)
-//	if err != nil {
-//		// handle error
-//	}
-//
-//	defer resp.Body.Close()
-//	body, err := ioutil.ReadAll(resp.Body)
-//	if err != nil {
-//		// handle error
-//	}
-//
-//	fmt.Println(string(body))
-//}
-
 func (c *BackgroundController) Charge() {
 	var params struct {
-		Account string
-		Ip      string
-		//PlayerId    int
-		Nickname    string
-		PlayerId       int
+		Account     string
+		Ip          string
+		PlayerId    int
 		PlatformId  int
 		ChargeValue int
 		ServerId    string
@@ -69,10 +51,12 @@ func (c *BackgroundController) Charge() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	logs.Info("后台充值:%v", params)
 	c.CheckError(err)
+
 	player, err := models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err)
+
 	args := fmt.Sprintf("sid=%s&uid=%s&game_charge_id=0&gold=%d&partid=%d&ftime=%d&charge_type=%s&gm_id=%s",
-		params.ServerId,
+		player.ServerId,
 		player.AccId,
 		params.ChargeValue,
 		params.PlatformId,
@@ -85,29 +69,25 @@ func (c *BackgroundController) Charge() {
 	url := "http://192.168.31.100:9999/gm_charge?" + args + "&sign=" + sign
 
 	resp, err := http.Get(url)
-	logs.Info("url:%v", url)
-	if err != nil {
-		// handle error
-	}
+	c.CheckError(err)
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		// handle error
-	}
+	c.CheckError(err)
+
 	err = json.Unmarshal(body, &result)
 	logs.Info("result:%v", string(body))
 	c.CheckError(err)
 	logs.Info("后台充值结果:%v", result)
 	if result.ErrorCode == 1 {
 		backgroundChargeLog := &models.BackgroundChargeLog{
-			PlatformId: params.PlatformId,
-			ServerId:   string(params.ServerId),
-			PlayerId: params.PlayerId,
-			Time: utils.GetTimestamp(),
-			ChargeType: params.ChargeType,
-			ChargeValue:params.ChargeValue,
-			UserId:     c.curUser.Id,
+			PlatformId:  params.PlatformId,
+			ServerId:    string(player.ServerId),
+			PlayerId:    params.PlayerId,
+			Time:        utils.GetTimestamp(),
+			ChargeType:  params.ChargeType,
+			ChargeValue: params.ChargeValue,
+			UserId:      c.curUser.Id,
 		}
 		err = models.Db.Save(&backgroundChargeLog).Error
 		c.CheckError(err, "写后台充值日志失败")

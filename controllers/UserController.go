@@ -17,13 +17,13 @@ func (c *UserController) Info() {
 	m := c.curUser
 	platformList, err := models.GetPlatformList("data/json/Platform.json")
 	utils.CheckError(err)
-	gameServerList, _ := models.GetAllGameServer()
+	gameServerList := models.GetServerList()
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
 			Name           string         `json:"name"`
 			ResourceTree   []*models.Menu `json:"menuTree"`
 			PlatformList   []*models.Platform
-			GameServerList []*models.GameServer
+			GameServerList []*models.Server
 		}{
 			Name:           m.Name,
 			ResourceTree:   models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id)),

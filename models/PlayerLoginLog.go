@@ -17,7 +17,7 @@ type PlayerLoginLog struct {
 type PlayerLoginLogQueryParam struct {
 	BaseQueryParam
 	PlatformId int
-	ServerId   string
+	Node        string `json:"serverId"`
 	Ip         string
 	PlayerId   int
 	PlayerName string
@@ -26,7 +26,7 @@ type PlayerLoginLogQueryParam struct {
 }
 
 func GetPlayerLoginLogList(params *PlayerLoginLogQueryParam) ([]*PlayerLoginLog, int64) {
-	gameDb, err := GetGameDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
+	gameDb, err := GetGameDbByNode(params.Node)
 	utils.CheckError(err)
 	defer gameDb.Close()
 	data := make([]*PlayerLoginLog, 0)

@@ -12,15 +12,15 @@ type DailyChargeStatistics struct {
 	Time                 int    `json:"time"`
 	ChargeMoney          int    `json:"chargeMoney"`
 	ChargePlayerCount    int    `json:"chargePlayerCount"`
-	ARPU                 float32    `json:"arpu"`
+	ARPU                 float32    `json:"arpu" gorm:"-"`
 	NewChargePlayerCount int    `json:"newChargePlayerCount"`
 }
 
 type DailyChargeStatisticsQueryParam struct {
 	BaseQueryParam
 	PlatformId int
-	ServerId   string
-	Node       string
+	//ServerId   string
+	Node       string `json:"serverId"`
 	StartTime  int
 	EndTime    int
 }
@@ -34,11 +34,11 @@ func GetDailyChargeStatisticsList(params *DailyChargeStatisticsQueryParam) ([]*D
 		}
 		return db
 	}
-	serverNode, err := GetGameServerOne(params.PlatformId, params.ServerId)
-	if err != nil {
-		return nil, 0
-	}
-	params.Node = serverNode.Node
+	//serverNode, err := GetGameServerOne(params.PlatformId, params.ServerId)
+	//if err != nil {
+	//	return nil, 0
+	//}
+	//params.Node = serverNode.Node
 	f(Db.Model(&DailyChargeStatistics{}).Where(&DailyChargeStatistics{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
 	for _, e := range data {
 		e.ARPU = CaclARPU(e.ChargeMoney, e.ChargePlayerCount)

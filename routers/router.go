@@ -122,6 +122,8 @@ func init() {
 	beego.Router("/statistics/register_statistics/", &controllers.StatisticsController{}, "*:RegisterStatisticsList")
 	beego.Router("/statistics/charge_statistics/", &controllers.StatisticsController{}, "*:ChargeStatisticsList")
 	beego.Router("/statistics/consume_statistics/", &controllers.StatisticsController{}, "*:ConsumeStatistics")
+	beego.Router("/statistics/charge_rank/", &controllers.StatisticsController{}, "*:ChargeRankList")
+
 	//封禁
 	beego.Router("/forbid/set_forbid/", &controllers.ForbidController{}, "*:SetForbid")
 	beego.Router("/forbid/forbid_log/", &controllers.ForbidController{}, "*:ForbidLogList")
@@ -138,7 +140,7 @@ func init() {
 	beego.Router("/mail/del_mail_log/", &controllers.MailController{}, "*:DelMailLog")
 
 
-	//充值
+	//后台充值
 	beego.Router("/charge/background_charge/", &controllers.BackgroundController{}, "*:Charge")
 	beego.Router("/charge/background_charge_list/", &controllers.BackgroundController{}, "*:List")
 

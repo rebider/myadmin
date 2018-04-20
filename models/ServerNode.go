@@ -69,3 +69,23 @@ func GetAllGameServerNode() []*ServerNode{
 	utils.CheckError(err)
 	return data
 }
+// 获取所有游戏节点
+func GetAllGameServerNodeByPlatformId(platformId int) []*ServerNode{
+	data := make([]*ServerNode, 0)
+	err := DbCenter.Model(&ServerNode{}).Where(&ServerNode{
+		Type:       1,
+		PlatformId:platformId,
+	}).Find(&data).Error
+	utils.CheckError(err)
+	return data
+}
+
+// 获取所有游戏节点
+func GetAllGameNodeByPlatformId(platformId int) []string{
+	data := make([]string, 0)
+	serverNodeList := GetAllGameServerNodeByPlatformId(platformId)
+	for _, e := range serverNodeList{
+		data = append(data, e.Node)
+	}
+	return data
+}

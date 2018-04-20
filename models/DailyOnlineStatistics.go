@@ -19,8 +19,8 @@ type DailyOnlineStatistics struct {
 type DailyOnlineStatisticsQueryParam struct {
 	BaseQueryParam
 	PlatformId int
-	ServerId   string
-	Node       string
+	//ServerId   string
+	Node       string `json:"serverId"`
 	StartTime  int
 	EndTime    int
 }
@@ -34,11 +34,11 @@ func GetDailyOnlineStatisticsList(params *DailyOnlineStatisticsQueryParam) ([]*D
 		}
 		return db
 	}
-	serverNode, err := GetGameServerOne(params.PlatformId, params.ServerId)
-	if err != nil {
-		return nil, 0
-	}
-	params.Node = serverNode.Node
+	//serverNode, err := GetGameServerOne(params.PlatformId, params.ServerId)
+	//if err != nil {
+	//	return nil, 0
+	//}
+	//params.Node = serverNode.Node
 	f(Db.Model(&DailyOnlineStatistics{}).Where(&DailyOnlineStatistics{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
 	return data, count
 }

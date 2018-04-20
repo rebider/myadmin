@@ -25,15 +25,15 @@ func (c *RemainController) GetTotalRemain() {
 	c.Result(enums.CodeSuccess, "查询在线统计成功", result)
 }
 
-
-func (c *RemainController) GetLevelRemain() {
-	logs.Info("查询等级留存")
-	var params models.TotalRemainQueryParam
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	c.CheckError(err)
-	data, total := models.GetRemainTotalList(&params)
-	result := make(map[string]interface{})
-	result["total"] = total
-	result["rows"] = data
-	c.Result(enums.CodeSuccess, "查询在线统计成功", result)
-}
+//
+//func (c *RemainController) GetLevelRemain() {
+//	logs.Info("查询等级留存")
+//	var params models.TotalRemainQueryParam
+//	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+//	c.CheckError(err)
+//	data, total := models.GetRemainTotalList(&params)
+//	result := make(map[string]interface{})
+//	result["total"] = total
+//	result["rows"] = data
+//	c.Result(enums.CodeSuccess, "查询在线统计成功", result)
+//}

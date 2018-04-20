@@ -4,23 +4,10 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
 	"errors"
-	"github.com/astaxie/beego/logs"
-	//"github.com/jinzhu/gorm"
+	//"github.com/astaxie/beego/logs"
 	"strings"
 	"github.com/jinzhu/gorm"
-	//"github.com/zaaksam/dproxy/go/db"
 )
-
-type PlayerQueryParam struct {
-	BaseQueryParam
-	Account    string
-	Ip         string
-	PlayerId   string
-	Nickname   string
-	IsOnline   string
-	PlatformId int
-	ServerId   string
-}
 
 type Player struct {
 	Id              int    `json:"id"`
@@ -42,13 +29,24 @@ type Player struct {
 	FactionName     string `json:"factionName" gorm:"-"`
 }
 
+type PlayerQueryParam struct {
+	BaseQueryParam
+	Account    string
+	Ip         string
+	PlayerId   string
+	Nickname   string
+	IsOnline   string
+	PlatformId int
+	Node       string `json:"serverId"`
+}
+
 func (a *Player) TableName() string {
 	return "player"
 }
 
 //获取玩家列表
 func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
-	gameDb, err := GetGameDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
+	gameDb, err := GetGameDbByNode(params.Node)
 	utils.CheckError(err)
 	defer gameDb.Close()
 	data := make([]*Player, 0)
@@ -70,17 +68,18 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		sortOrder = sortOrder + " desc"
 	}
 
-	err = gameDb.Model(&Player{}).Count(&count).Error
-	utils.CheckError(err)
+
 	whereArray := make([] string, 0)
 	if params.Account != "" {
-		whereArray = append(whereArray, fmt.Sprintf(" acc_id = %s", params.Account))
+		whereArray = append(whereArray, fmt.Sprintf(" acc_id = '%s'", params.Account))
 	}
 	if params.Ip != "" {
 		whereArray = append(whereArray, fmt.Sprintf(" last_login_ip = %s", params.Ip))
 	}
 	if params.Nickname != "" {
-		whereArray = append(whereArray, fmt.Sprintf(" nickname LIKE '%%%s%%' ", params.Nickname))
+		serverId, playerName, err := SplitPlayerName(params.Nickname)
+		utils.CheckError(err)
+		whereArray = append(whereArray, fmt.Sprintf("server_id = '%s' and nickname LIKE '%%%s%%' ", serverId, playerName))
 	}
 	if params.IsOnline != "" {
 		whereArray = append(whereArray, fmt.Sprintf(" is_online = %s", params.IsOnline))
@@ -102,9 +101,11 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	)
 	err = gameDb.Debug().Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
-
+	err = gameDb.Model(&Player{}).Raw("select count(1) from player " + whereParam).Count(&count).Error
+	utils.CheckError(err)
 	for _, e := range data {
 		e.FactionName = GetPlayerFactionName(gameDb, e.Id)
+		e.Nickname = e.ServerId + "." + e.Nickname
 	}
 	return data, count
 }
@@ -116,20 +117,18 @@ func GetPlayerFactionName(gameDb *gorm.DB, playerId int) string {
 	var faction struct {
 		Name string
 	}
-	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
-	//todayZeroTimestamp := utils.GetTodayZeroTimestamp()
 	sql := fmt.Sprintf(
 		`SELECT faction_id  FROM faction_member WHERE player_id = ?`)
-	err := gameDb.Raw(sql, playerId).Scan(&factionMember).Error
-	utils.CheckError(err)
-	if err != nil {
+	isNotFound := gameDb.Raw(sql, playerId).Scan(&factionMember).RecordNotFound()
+	//utils.CheckError(err)
+	if isNotFound {
 		return ""
 	}
 
 	//logs.Info("faction_id:%d", factionMember.FactionId)
 	sql = fmt.Sprintf(
 		`SELECT name  FROM faction WHERE id = ?`)
-	err = gameDb.Raw(sql, factionMember.FactionId).Scan(&faction).Error
+	err := gameDb.Raw(sql, factionMember.FactionId).Scan(&faction).Error
 	utils.CheckError(err)
 	if err != nil {
 		return ""
@@ -137,6 +136,20 @@ func GetPlayerFactionName(gameDb *gorm.DB, playerId int) string {
 	//logs.Info("faction_name:%s", faction.Name)
 	//logs.Info("ppp:%v,%v", gameServer.Node, data.Count)
 	return faction.Name
+}
+
+// 获取单个玩家
+func GetPlayerOneByNode(node string, id int) (*Player, error) {
+	gameDb, err := GetGameDbByNode(node)
+	if err != nil {
+		return nil, err
+	}
+	defer gameDb.Close()
+	player := &Player{
+		Id: id,
+	}
+	err = gameDb.First(&player).Error
+	return player, err
 }
 
 // 获取单个玩家
@@ -153,13 +166,21 @@ func GetPlayerOne(platformId int, serverId string, id int) (*Player, error) {
 	return player, err
 }
 
-//func GetPlayerData(gameDb *gorm.DB, playerId int) ( *PlayerData, error) {
-//	playerData := &PlayerData{
-//		PlayerId: playerId,
-//	}
-//	err := gameDb.First(&playerData).Error
-//	return playerData, err
-//}
+func GetPlayerByDb(gameDb *gorm.DB, playerId int) (*Player, error) {
+	player := &Player{
+		Id: playerId,
+	}
+	err := gameDb.First(&player).Error
+	return player, err
+}
+
+func GetPlayerDataByDb(gameDb *gorm.DB, playerId int) (*PlayerData, error) {
+	playerData := &PlayerData{
+		PlayerId: playerId,
+	}
+	err := gameDb.First(&playerData).Error
+	return playerData, err
+}
 
 type PlayerData struct {
 	PlayerId int `json:"playerId" gorm:"primary_key"`
@@ -175,16 +196,16 @@ type PlayerDetail struct {
 	Level    int `json:"level"`
 	TaskId   int `json:"taskId"`
 	//FactionId        int `json:"-"`
-	FactionName      string `json:"factionName"`
+	FactionName      string         `json:"factionName"`
 	TitleId          int
-	Attack           int `json:"attack"`
-	MaxHp            int `json:"maxHp"`
-	Defense          int `json:"defense"`
-	Hit              int `json:"hit"`
-	Dodge            int `json:"dodge"`
-	Critical         int `json:"critical"`
-	Power            int `json:"power"`
-	LastWorldSceneId int `json:"lastWorldSceneId"`
+	Attack           int            `json:"attack"`
+	MaxHp            int            `json:"maxHp"`
+	Defense          int            `json:"defense"`
+	Hit              int            `json:"hit"`
+	Dodge            int            `json:"dodge"`
+	Critical         int            `json:"critical"`
+	Power            int            `json:"power"`
+	LastWorldSceneId int            `json:"lastWorldSceneId"`
 	PlayerPropList   [] *PlayerProp `json:"playerPropList"`
 }
 
@@ -194,8 +215,8 @@ type PlayerProp struct {
 	Num      int `json:"num"`
 }
 
-func GetPlayerPropList(platformId int, serverId string, playerId int) ([]*PlayerProp, error) {
-	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
+func GetPlayerPropList(node string, playerId int) ([]*PlayerProp, error) {
+	gameDb, err := GetGameDbByNode(node)
 	utils.CheckError(err)
 	defer gameDb.Close()
 	playerPropList := make([]*PlayerProp, 0)
@@ -206,8 +227,8 @@ func GetPlayerPropList(platformId int, serverId string, playerId int) ([]*Player
 	return playerPropList, err
 }
 
-func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDetail, error) {
-	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
+func GetPlayerDetail(platformId int, node string, playerId int) (*PlayerDetail, error) {
+	gameDb, err := GetGameDbByNode(node)
 	utils.CheckError(err)
 	defer gameDb.Close()
 	playerDetail := &PlayerDetail{}
@@ -217,30 +238,52 @@ func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDeta
 		`SELECT player.*, player_data.*, player_task.task_id, player_vip.level as vip_level FROM ((player LEFT JOIN player_data on player.id = player_data.player_id) LEFT JOIN player_task on player.id = player_task.player_id) LEFT JOIN player_vip on player_vip.player_id = player.id WHERE player.id = ? `)
 	err = gameDb.Raw(sql, playerId).Scan(&playerDetail).Error
 
-	playerDetail.PlayerPropList, err = GetPlayerPropList(platformId, serverId, playerId)
+	playerDetail.PlayerPropList, err = GetPlayerPropList(node, playerId)
 	playerDetail.FactionName = GetPlayerFactionName(gameDb, playerId)
 	utils.CheckError(err)
 	return playerDetail, err
 }
 
-func GetPlayerByPlatformIdAndSidAndNickname(platformId int, serverId string, nickname string) (*Player, error) {
+func GetPlayerByPlatformIdAndNickname(platformId int, nickname string) (*Player, error) {
 	if nickname == "" {
-		return nil, errors.New("nickname must not empty!")
+		return nil, errors.New("角色名字不能为空!")
 	}
-	logs.Debug("nickname:%v", nickname)
+	serverId, playerName, err := SplitPlayerName(nickname)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("非法角色名:%s", nickname))
+	}
 	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
-	utils.CheckError(err)
 	if err != nil {
 		return nil, err
 	}
 	defer gameDb.Close()
 	player := &Player{}
-	err = gameDb.Where(&Player{ServerId: serverId, Nickname: nickname}).First(&player).Error
-	if err != nil {
-		return nil, err
+	isNotFound := gameDb.Where(&Player{ServerId: serverId, Nickname: playerName}).First(&player).RecordNotFound()
+	if isNotFound {
+		return nil, errors.New(fmt.Sprintf("角色不存在:%s", nickname))
 	}
+	player.Nickname = player.ServerId + "." + player.Nickname
 	return player, err
 }
+
+//func GetPlayerByNodeAndNickname(node string, serverId string, nickname string) (*Player, error) {
+//	if nickname == "" {
+//		return nil, errors.New("角色名字不能为空!")
+//	}
+//	logs.Debug("nickname:%v", nickname)
+//	gameDb, err := GetGameDbByNode(node)
+//	utils.CheckError(err)
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer gameDb.Close()
+//	player := &Player{}
+//	err = gameDb.Where(&Player{ServerId: serverId, Nickname: nickname}).First(&player).Error
+//	if err != nil {
+//		return nil, err
+//	}
+//	return player, err
+//}
 
 //`c_ten_minute_statics`
 type CTenMinuteStatics struct {
@@ -251,24 +294,27 @@ type CTenMinuteStatics struct {
 }
 
 type ServerOnlineStatistics struct {
-	PlatformId                int       `json:"platformId"`
-	ServerId                  string    `json:"serverId"`
-	TodayCreateRole           int       `json:"todayCreateRole"`
-	TodayRegister             int       `json:"todayRegister"`
-	OnlineCount               int       `json:"onlineCount"`
-	MaxOnlineCount            int       `json:"maxOnlineCount"`
-	AverageOnlineCount        float32   `json:"averageOnlineCount"`
-	TodayOnlineList           [] string `json:"todayOnlineList"`
-	YesterdayOnlineList       [] string `json:"yesterdayOnlineList"`
-	BeforeYesterdayOnlineList [] string `json:"beforeYesterdayOnlineList"`
+	PlatformId int `json:"platformId"`
+	//ServerId                    string    `json:"serverId"`
+	TodayCreateRole             int       `json:"todayCreateRole"`
+	TodayRegister               int       `json:"todayRegister"`
+	OnlineCount                 int       `json:"onlineCount"`
+	MaxOnlineCount              int       `json:"maxOnlineCount"`
+	AverageOnlineCount          float32   `json:"averageOnlineCount"`
+	TodayOnlineList             [] string `json:"todayOnlineList"`
+	YesterdayOnlineList         [] string `json:"yesterdayOnlineList"`
+	BeforeYesterdayOnlineList   [] string `json:"beforeYesterdayOnlineList"`
+	TodayRegisterList           [] string `json:"todayRegisterList"`
+	YesterdayRegisterList       [] string `json:"yesterdayRegisterList"`
+	BeforeYesterdayRegisterList [] string `json:"beforeYesterdayRegisterList"`
 }
 
-func GetServerOnlineStatistics(platformId int, serverId string) (*ServerOnlineStatistics, error) {
-	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
+func GetServerOnlineStatistics(platformId int, node string) (*ServerOnlineStatistics, error) {
+	gameDb, err := GetGameDbByNode(node)
 	defer gameDb.Close()
 	utils.CheckError(err)
-	gameServer, err := GetGameServerOne(platformId, serverId)
-	utils.CheckError(err)
+	//gameServer, err := GetGameServerOne(platformId, serverId)
+	//utils.CheckError(err)
 	//todayOnlineList := make([]string, 0)
 	//yesterdayTodayOnlineList := make([]int, 0)
 	//beforeYesterdayTodayOnlineList := make([]int, 0)
@@ -276,16 +322,19 @@ func GetServerOnlineStatistics(platformId int, serverId string) (*ServerOnlineSt
 	yesterdayZeroTimestamp := todayZeroTimestamp - 86400
 	beforeYesterdayZeroTimestamp := yesterdayZeroTimestamp - 86400
 	serverOnlineStatistics := &ServerOnlineStatistics{
-		PlatformId:                platformId,
-		ServerId:                  serverId,
-		TodayCreateRole:           GetTodayCreateRoleCount(gameDb),
-		TodayRegister:             GetTodayRegister(gameDb),
-		OnlineCount:               GetNowOnlineCount(gameDb),
-		MaxOnlineCount:            GetMaxOnlineCount(platformId, serverId),
-		TodayOnlineList:           get24hoursOnlineCount(gameServer.Node, todayZeroTimestamp),
-		YesterdayOnlineList:       get24hoursOnlineCount(gameServer.Node, yesterdayZeroTimestamp),
-		BeforeYesterdayOnlineList: get24hoursOnlineCount(gameServer.Node, beforeYesterdayZeroTimestamp),
-		AverageOnlineCount:        GetThatDayAverageOnlineCount(gameServer.Node, todayZeroTimestamp),
+		PlatformId: platformId,
+		//ServerId:                    serverId,
+		TodayCreateRole:             GetTodayCreateRoleCount(gameDb),
+		TodayRegister:               GetTodayRegister(gameDb),
+		OnlineCount:                 GetNowOnlineCount(gameDb),
+		MaxOnlineCount:              GetMaxOnlineCount(node),
+		TodayOnlineList:             get24hoursOnlineCount(node, todayZeroTimestamp),
+		YesterdayOnlineList:         get24hoursOnlineCount(node, yesterdayZeroTimestamp),
+		BeforeYesterdayOnlineList:   get24hoursOnlineCount(node, beforeYesterdayZeroTimestamp),
+		TodayRegisterList:           get24hoursRegisterCount(node, todayZeroTimestamp),
+		YesterdayRegisterList:       get24hoursRegisterCount(node, yesterdayZeroTimestamp),
+		BeforeYesterdayRegisterList: get24hoursRegisterCount(node, beforeYesterdayZeroTimestamp),
+		AverageOnlineCount:          GetThatDayAverageOnlineCount(node, todayZeroTimestamp),
 	}
 	return serverOnlineStatistics, nil
 }

@@ -1,3 +1,4 @@
+// 公告管理
 package controllers
 
 import (
@@ -14,19 +15,13 @@ type NoticeController struct {
 	BaseController
 }
 
-
+// 发送公告
 func (c *NoticeController) SendNotice() {
-	//type platformServer struct {
-	//	PlatformId   int
-	//	ServerIdList [] string
-	//}
 	var params struct {
 		Id           int
 		PlatformId   int
-		ServerIdList [] string
-		//platformServerList [] *platformServer
-		//PlayerNameList     string
-		//Title              string
+		NodeList [] string `json:"serverIdList"`
+		IsAllServer int
 		Content    string
 		NoticeType int
 		NoticeTime int
@@ -34,17 +29,16 @@ func (c *NoticeController) SendNotice() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("发送公告:%+v", params)
-	//platformId, err := c.GetInt("platformId")
-	//c.CheckError(err)
-	//serverId:= c.GetString("serverId")
-	//playerId, err := c.GetInt("playerId")
-	//c.CheckError
-	serverIdList, err := json.Marshal(params.ServerIdList)
+	nodeList, err := json.Marshal(params.NodeList)
 	c.CheckError(err)
+	if params.NoticeType != enums.NoticeTypeMoment  &&  params.NoticeType != enums.NoticeTypeClock  &&  params.NoticeType != enums.NoticeTypeLoop {
+		c.Result(enums.CodeFail, "公告类型错误", 0)
+	}
 	noticeLog := &models.NoticeLog{
 		Id:           params.Id,
 		PlatformId:   params.PlatformId,
-		ServerIdList: string(serverIdList),
+		NodeList: string(nodeList),
+		IsAllServer:params.IsAllServer,
 		Content:      params.Content,
 		Time:         time.Now().Unix(),
 		UserId:       c.curUser.Id,
@@ -53,14 +47,16 @@ func (c *NoticeController) SendNotice() {
 		Status:       0,
 	}
 	err = models.Db.Save(&noticeLog).Error
-	//logs.Debug("noticeLog:%+v", noticeLog.Id)
 	c.CheckError(err, "写公告日志失败")
 	// 异步处理日志
-	go crons.DealNoticeLog(noticeLog.Id)
+	if params.NoticeType == enums.NoticeTypeMoment {
+		go crons.DealNoticeLog(noticeLog.Id)
+	}
 	c.Result(enums.CodeSuccess, "发送公告成功", 0)
 }
 
 
+// 获取公告列表
 func (c *NoticeController) NoticeLogList() {
 	var params models.NoticeLogQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -73,6 +69,7 @@ func (c *NoticeController) NoticeLogList() {
 	c.Result(enums.CodeSuccess, "获取公告日志", result)
 }
 
+//删除公告
 func (c *NoticeController) DelNoticeLog() {
 	var idList []int
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &idList)

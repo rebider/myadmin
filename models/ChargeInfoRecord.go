@@ -29,7 +29,8 @@ type ChargeInfoRecord struct {
 type ChargeInfoRecordQueryParam struct {
 	BaseQueryParam
 	PlatformId int
-	ServerId   string
+	Node string  `json:"serverId"`
+	//ServerId   string
 	PlayerId   int
 	PlayerName string
 	OrderId    string
@@ -51,14 +52,26 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 		}
 		return db
 	}
-	err := f(DbCharge.Model(&ChargeInfoRecord{}).Where(&ChargeInfoRecord{
-		PartId:     params.PlatformId,
-		ServerId:   params.ServerId,
-		AccId:      params.AccId,
-		OrderId:    params.OrderId,
-		ChargeType: 99,
-	})).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
-	utils.CheckError(err)
+	if params.Node == "" {
+		err := f(DbCharge.Model(&ChargeInfoRecord{}).Where(&ChargeInfoRecord{
+			PartId:     params.PlatformId,
+			//ServerId:   params.ServerId,
+			AccId:      params.AccId,
+			OrderId:    params.OrderId,
+			ChargeType: 99,
+		})).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+		utils.CheckError(err)
+	} else {
+		err := f(DbCharge.Model(&ChargeInfoRecord{}).Where(&ChargeInfoRecord{
+			PartId:     params.PlatformId,
+			//ServerId:   params.ServerId,
+			AccId:      params.AccId,
+			OrderId:    params.OrderId,
+			ChargeType: 99,
+		})).Where("server_id in(?)", GetGameServerIdListByNode(params.Node)).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+		utils.CheckError(err)
+	}
+
 	for _, e := range data {
 		e.PlayerName = GetPlayerName_2(e.PartId, e.ServerId,e.PlayerId)
 		e.LastLoginTime = GetPlayerLastLoginTime(e.PartId, e.ServerId,e.PlayerId)

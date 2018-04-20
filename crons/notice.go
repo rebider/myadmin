@@ -7,10 +7,10 @@ import (
 	"github.com/chnzrb/myadmin/proto"
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/chnzrb/myadmin/models"
+	"github.com/chnzrb/myadmin/enums"
 	"github.com/golang/protobuf/proto"
 	"fmt"
 )
-
 
 
 func ClockDealAllNoticeLog() {
@@ -18,6 +18,7 @@ func ClockDealAllNoticeLog() {
 	noticeLogList := models.GetAllNoticeLog()
 	for _, noticeLog := range noticeLogList {
 		if noticeLog.Status == 0 {
+			// 处理未完成的公告
 			go DealNoticeLog(noticeLog.Id)
 		}
 	}
@@ -31,15 +32,15 @@ func DealNoticeLog(id int) {
 	isGo := false
 	now := int(time.Now().Unix())
 	if noticeLog.Status == 0 {
-		if noticeLog.NoticeType == 0 {
+		if noticeLog.NoticeType == enums.NoticeTypeMoment {
 			// 立即发送
 			isGo = true
-		} else if noticeLog.NoticeType == 1 {
+		} else if noticeLog.NoticeType == enums.NoticeTypeClock {
 			//定时发送
 			if now > noticeLog.NoticeTime {
 				isGo = true
 			}
-		} else if noticeLog.NoticeType == 2 {
+		} else if noticeLog.NoticeType == enums.NoticeTypeLoop {
 			// 循环发送
 			if (now - noticeLog.LastSendTime) / 60 > noticeLog.NoticeTime {
 				isGo = true
@@ -48,16 +49,22 @@ func DealNoticeLog(id int) {
 	}
 	if isGo == true {
 		logs.Info("处理公告:%+v", noticeLog)
-		serverIdList := make([] string, 0)
-		err := json.Unmarshal([]byte(noticeLog.ServerIdList), &serverIdList)
-		if err != nil {
-			logs.Error("解析公告(%+v)区服列表失败%+v", id, err)
-			return
+		nodeList := make([] string, 0)
+		if noticeLog.IsAllServer == 0 {
+			err := json.Unmarshal([]byte(noticeLog.NodeList), &nodeList)
+			if err != nil {
+				logs.Error("解析公告(%+v)区服列表失败%+v", id, err)
+				return
+			}
+		} else {
+			// 全服
+			nodeList = models.GetAllGameNodeByPlatformId(noticeLog.PlatformId)
 		}
-		for _, serverId := range serverIdList {
-			logs.Info("发送公告 PlatformId: %v, serverId: %v", noticeLog.PlatformId, serverId)
-			conn, err := models.GetWsByPlatformIdAndSid(noticeLog.PlatformId, serverId)
-			utils.CheckError(err, fmt.Sprintf("连接游戏服失败 PlatformId: %v, serverId: %v", noticeLog.PlatformId, serverId))
+
+		for _, node := range nodeList {
+			logs.Info("开始发送公告 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
+			conn, err := models.GetWsByNode(node)
+			utils.CheckError(err, fmt.Sprintf("连接游戏服websocket失败 PlatformId: %v, node: %v", noticeLog.PlatformId, node))
 			if err != nil {
 				continue
 			}
@@ -67,7 +74,7 @@ func DealNoticeLog(id int) {
 				Content: proto.String(noticeLog.Content),
 			}
 			mRequest, err := proto.Marshal(&request)
-			utils.CheckError(err)
+			utils.CheckError(err, "发送公告协议失败")
 			if err != nil {
 				continue
 			}
@@ -82,21 +89,22 @@ func DealNoticeLog(id int) {
 			if err != nil {
 				continue
 			}
-			respone := &gm.MSendNoticeToc{}
+			response := &gm.MSendNoticeToc{}
 			data := receive[5:n]
-			err = proto.Unmarshal(data, respone)
+			err = proto.Unmarshal(data, response)
 			utils.CheckError(err)
 			if err != nil {
 				continue
 			}
-			if *respone.Result == gm.MSendNoticeToc_success {
-				//logs.Info("发送公告 PlatformId: %v, serverId: %v", noticeLog.PlatformId, serverId)
+			if *response.Result == gm.MSendNoticeToc_success {
+				logs.Info("发送公告成功 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
 			} else {
-				logs.Info("发送公告失败 PlatformId: %v, serverId: %v", noticeLog.PlatformId, serverId)
-				//logs.Error("发送公告失败:%+v", request)
+				logs.Info("发送公告失败 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
 			}
 		}
-		noticeLog.Status = 1
+		if noticeLog.NoticeType != enums.NoticeTypeLoop {
+			noticeLog.Status = 1
+		}
 		noticeLog.LastSendTime = now
 		err = models.Db.Save(&noticeLog).Error
 		utils.CheckError(err, "保存公告日志失败")

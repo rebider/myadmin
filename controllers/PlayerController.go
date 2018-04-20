@@ -27,13 +27,13 @@ func (c *PlayerController) List() {
 func (c *PlayerController) Detail() {
 	var params struct {
 		PlatformId int    `json:"platformId"`
-		ServerId   string `json:"serverId"`
+		Node   string `json:"serverId"`
 		PlayerId   int    `json:"playerId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("查询玩家详细信息:%+v", params)
-	playerDetail, err := models.GetPlayerDetail(params.PlatformId, params.ServerId, params.PlayerId)
+	playerDetail, err := models.GetPlayerDetail(params.PlatformId, params.Node, params.PlayerId)
 	c.CheckError(err, "查询玩家详细信息失败")
 	c.Result(enums.CodeSuccess, "获取玩家详细信息成功", playerDetail)
 }
@@ -41,10 +41,10 @@ func (c *PlayerController) Detail() {
 func (c *PlayerController) One() {
 	platformId, err := c.GetInt("platformId")
 	c.CheckError(err)
-	serverId := c.GetString("serverId")
+	//serverId := c.GetString("serverId")
 	playerName := c.GetString("playerName")
 	c.CheckError(err)
-	player, err := models.GetPlayerByPlatformIdAndSidAndNickname(platformId, serverId, playerName)
+	player, err := models.GetPlayerByPlatformIdAndNickname(platformId, playerName)
 	c.CheckError(err, "查询玩家失败")
 	c.Result(enums.CodeSuccess, "获取玩家成功", player)
 }
@@ -77,11 +77,11 @@ func (c *PlayerController) GetServerOnlineStatistics() {
 func (c *PlayerController) GetRemainTask() {
 	var params struct {
 		PlatformId int    `json:"platformId"`
-		ServerId   string `json:"serverId"`
+		Node   string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
-	data := models.GetRemainTask(params.PlatformId, params.ServerId)
+	data := models.GetRemainTask(params.Node)
 	c.CheckError(err, "任务分布")
 	result := make(map[string]interface{})
 	result["rows"] = data
@@ -92,11 +92,11 @@ func (c *PlayerController) GetRemainTask() {
 func (c *PlayerController) GetRemainLevel() {
 	var params struct {
 		PlatformId int    `json:"platformId"`
-		ServerId   string `json:"serverId"`
+		Node   string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
-	data := models.GetRemainLevel(params.PlatformId, params.ServerId)
+	data := models.GetRemainLevel(params.Node)
 	c.CheckError(err, "等级分布")
 	result := make(map[string]interface{})
 	result["rows"] = data
@@ -107,11 +107,11 @@ func (c *PlayerController) GetRemainLevel() {
 func (c *PlayerController) GetRemainTime() {
 	var params struct {
 		PlatformId int    `json:"platformId"`
-		ServerId   string `json:"serverId"`
+		Node   string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
-	data := models.GetRemainTime(params.PlatformId, params.ServerId)
+	data := models.GetRemainTime(params.Node)
 	c.CheckError(err, "时长分布")
 	result := make(map[string]interface{})
 	result["rows"] = data
@@ -125,7 +125,7 @@ func (c *PlayerController) GetServerGeneralize() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("查询服务器概况:%+v", params)
-	data, err := models.GetServerGeneralize(params.PlatformId, params.ServerId)
+	data, err := models.GetServerGeneralize(params.PlatformId, params.Node)
 	c.CheckError(err)
 	c.Result(enums.CodeSuccess, "获取服务器概况", data)
 }

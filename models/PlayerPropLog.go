@@ -7,21 +7,21 @@ import (
 )
 
 type PlayerPropLog struct {
-	Id          int `json:"id"`
-	PlayerId    int `json:"playerId"`
-	PlayerName string `json:"playerName" gorm:"-"`
-	PropType    int `json:"propType"`
-	PropId      int `json:"propId"`
-	OpType      int `json:"opType"`
-	OpTime      int `json:"opTime"`
-	ChangeValue int `json:"changeValue"`
-	NewValue    int `json:"newValue"`
+	Id          int    `json:"id"`
+	PlayerId    int    `json:"playerId"`
+	PlayerName  string `json:"playerName" gorm:"-"`
+	PropType    int    `json:"propType"`
+	PropId      int    `json:"propId"`
+	OpType      int    `json:"opType"`
+	OpTime      int    `json:"opTime"`
+	ChangeValue int    `json:"changeValue"`
+	NewValue    int    `json:"newValue"`
 }
 
 type PlayerPropLogQueryParam struct {
 	BaseQueryParam
 	PlatformId int
-	ServerId   string
+	Node   string `json:"serverId"`
 	Ip         string
 	PlayerId   int
 	PlayerName string
@@ -29,11 +29,12 @@ type PlayerPropLogQueryParam struct {
 	EndTime    int
 	PropType   int
 	PropId     int
-	Type     	int //1：获得 2：消耗
+	OpType    int
+	Type       int //1：获得 2：消耗
 }
 
 func GetPlayerPropLogList(params *PlayerPropLogQueryParam) ([]*PlayerPropLog, int64) {
-	gameDb, err := GetGameDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
+	gameDb, err := GetGameDbByNode(params.Node)
 	utils.CheckError(err)
 	defer gameDb.Close()
 	data := make([]*PlayerPropLog, 0)
@@ -70,11 +71,12 @@ func GetPlayerPropLogList(params *PlayerPropLogQueryParam) ([]*PlayerPropLog, in
 		return db
 	}
 	f1(f(gameDb.Model(&PlayerPropLog{}).Where(&PlayerPropLog{
-		PlayerId:	params.PlayerId,
-		PropType:params.PropType,
-		PropId:params.PropId,
+		PlayerId: params.PlayerId,
+		PropType: params.PropType,
+		PropId:   params.PropId,
+		OpType:params.OpType,
 	}))).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
-	for _,e := range data {
+	for _, e := range data {
 		e.PlayerName = GetPlayerName(gameDb, e.PlayerId)
 	}
 	return data, count

@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/chnzrb/myadmin/utils"
+	"strings"
 )
 
 type GameServerQueryParam struct {
@@ -60,4 +61,29 @@ func GetGameServerOne(platformId int, id string) (*GameServer, error) {
 	}
 	err := DbCenter.First(&gameServer).Error
 	return gameServer, err
+}
+// 获取该节点关联的所有游戏服
+func GetGameServerByNode(node string) [] *GameServer {
+	data := make([]*GameServer, 0)
+	err := DbCenter.Model(&GameServer{}).Where(&GameServer{
+		Node:node,
+	}).Find(&data).Error
+	utils.CheckError(err)
+	return data
+}
+func GetGameServerIdListStringByNode(node string)  string {
+	serverIdList := GetGameServerIdListByNode(node)
+	return "'" +strings.Join(serverIdList, "','") + "'"
+}
+func GetGameServerIdListByNode(node string) [] string {
+	data := make([]*GameServer, 0)
+	serverIdList := make([]string, 0)
+	err := DbCenter.Model(&GameServer{}).Where(&GameServer{
+		Node:node,
+	}).Find(&data).Error
+	utils.CheckError(err)
+	for _, e := range data{
+		serverIdList = append(serverIdList, e.Sid)
+	}
+	return serverIdList
 }

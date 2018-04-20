@@ -55,7 +55,7 @@ func (c *StatisticsController) ConsumeStatistics() {
 	utils.CheckError(err)
 	logs.Info("获取消费分析统计:%+v", params)
 	if params.PlayerName != "" {
-		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
 		if player == nil || err != nil {
 			c.Result(enums.CodeFail, "玩家不存在", 0)
 		}
@@ -68,4 +68,16 @@ func (c *StatisticsController) ConsumeStatistics() {
 	c.Result(enums.CodeSuccess, "消费分析统计", result)
 }
 
+
+func (c *StatisticsController) ChargeRankList() {
+	var params models.PlayerChargeDataQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询充值排行:%+v", params)
+	data, total := models.GetPlayerChargeDataList(&params)
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "查询充值排行", result)
+}
 

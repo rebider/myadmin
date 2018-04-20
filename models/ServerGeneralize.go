@@ -28,20 +28,20 @@ type ServerGeneralize struct {
 
 type ServerGeneralizeQueryParam struct {
 	PlatformId int
-	ServerId   string
+	Node   string `json:"serverId"`
 }
 
-func GetServerGeneralize(platformId int, serverId string) (*ServerGeneralize, error) {
-	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
+func GetServerGeneralize(platformId int, node string) (*ServerGeneralize, error) {
+	gameDb, err := GetGameDbByNode(node)
 	defer gameDb.Close()
 	utils.CheckError(err)
-	gameServer, err := GetGameServerOne(platformId, serverId)
-	utils.CheckError(err)
-	serverNode, err := GetServerNode(gameServer.Node)
+	//gameServer, err := GetGameServerOne(platformId, serverId)
+	//utils.CheckError(err)
+	serverNode, err := GetServerNode(node)
 	utils.CheckError(err)
 	serverGeneralize := &ServerGeneralize{}
 	serverGeneralize.PlatformId = platformId
-	serverGeneralize.ServerId = serverId
+	serverGeneralize.ServerId = GetGameServerIdListStringByNode(node)
 	serverGeneralize.OpenTime = serverNode.OpenTime
 	serverGeneralize.Version = serverNode.ServerVersion
 	serverGeneralize.Status = serverNode.State
@@ -55,12 +55,12 @@ func GetServerGeneralize(platformId int, serverId string) (*ServerGeneralize, er
 	serverGeneralize.MaxLevel = GetMaxPlayerLevel(gameDb)
 	serverGeneralize.TodayCreateRole = GetTodayCreateRoleCount(gameDb)
 	serverGeneralize.TodayRegister = GetTodayRegister(gameDb)
-	serverGeneralize.MaxOnlineCount = GetMaxOnlineCount(platformId, serverId)
+	serverGeneralize.MaxOnlineCount = GetMaxOnlineCount(node)
 
-	serverGeneralize.TotalChargeIngot = GetServerTotalChargeIngot(platformId, serverId)
-	serverGeneralize.TotalChargeMoney = GetServerTotalChargeMoney(platformId, serverId)
-	serverGeneralize.TotalChargePlayerCount = GetServerChargePlayerCount(platformId, serverId)
-	serverGeneralize.SecondChargePlayerCount = GetServerSecondChargePlayerCount(platformId, serverId)
+	serverGeneralize.TotalChargeIngot = GetServerTotalChargeIngot(node)
+	serverGeneralize.TotalChargeMoney = GetServerTotalChargeMoney(node)
+	serverGeneralize.TotalChargePlayerCount = GetServerChargePlayerCount(node)
+	serverGeneralize.SecondChargePlayerCount = GetServerSecondChargePlayerCount(node)
 
 	serverGeneralize.ARPU = CaclARPU(serverGeneralize.TotalChargeMoney, serverGeneralize.TotalChargePlayerCount)
 	serverGeneralize.ChargeRate = CaclChargeRate(serverGeneralize.TotalChargePlayerCount, serverGeneralize.TotalCreateRole)

@@ -1,16 +1,16 @@
 package models
 
-import (
-)
+import ()
 
 type NoticeLog struct {
 	Id           int    `json:"id"`
 	PlatformId   int    `json:"platformId"`
-	ServerIdList string `json:"serverIdList"`
+	NodeList     string `json:"serverIdList"`
 	Content      string `json:"content"`
 	NoticeType   int    `json:"noticeType"`
 	NoticeTime   int    `json:"noticeTime"`
 	Status       int    `json:"status"`
+	IsAllServer  int    `json:"isAllServer"`
 	Time         int64  `json:"time"`
 	UserId       int    `json:"userId"`
 	UserName     string `json:"userName" gorm:"-"`
@@ -23,6 +23,7 @@ type NoticeLogQueryParam struct {
 	StartTime  int
 	EndTime    int
 	UserId     int
+	NoticeType int
 }
 
 func GetNoticeLogOne(id int) (*NoticeLog, error) {
@@ -48,6 +49,7 @@ func GetNoticeLogList(params *NoticeLogQueryParam) ([]*NoticeLog, int64) {
 	}
 	Db.Model(&NoticeLog{}).Where(&NoticeLog{
 		PlatformId: params.PlatformId,
+		NoticeType:params.NoticeType,
 	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	for _, e := range data {
 		u, err := GetUserOne(e.UserId)

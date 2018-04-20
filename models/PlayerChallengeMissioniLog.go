@@ -7,20 +7,20 @@ import (
 )
 
 type PlayerChallengeMissionLog struct {
-	Id          int `json:"id"`
-	PlayerId    int `json:"playerId"`
-	PlayerName string `json:"playerName" gorm:"-"`
-	MissionType int `json:"missionType"`
-	MissionId   int `json:"missionId"`
-	Result      int `json:"result"`
-	Time        int `json:"time"`
-	UsedTime    int `json:"usedTime"`
+	Id          int    `json:"id"`
+	PlayerId    int    `json:"playerId"`
+	PlayerName  string `json:"playerName" gorm:"-"`
+	MissionType int    `json:"missionType"`
+	MissionId   int    `json:"missionId"`
+	Result      int    `json:"result"`
+	Time        int    `json:"time"`
+	UsedTime    int    `json:"usedTime"`
 }
 
 type PlayerChallengeMissionLogQueryParam struct {
 	BaseQueryParam
 	PlatformId  int
-	ServerId    string
+	Node        string `json:"serverId"`
 	Ip          string
 	PlayerId    int
 	PlayerName  string
@@ -30,27 +30,12 @@ type PlayerChallengeMissionLogQueryParam struct {
 }
 
 func GetPlayerChallengeMissionLogList(params *PlayerChallengeMissionLogQueryParam) ([]*PlayerChallengeMissionLog, int64) {
-	gameDb, err := GetGameDbByPlatformIdAndSid(params.PlatformId, params.ServerId)
+	gameDb, err := GetGameDbByNode(params.Node)
 	utils.CheckError(err)
 	defer gameDb.Close()
 	data := make([]*PlayerChallengeMissionLog, 0)
 	var count int64
 	sortOrder := "id"
-	//if params.Order == "descending" {
-	//	sortOrder = sortOrder + " desc"
-	//}
-	//if params.Ip != "" {
-	//	gameDb = gameDb.Where("ip = ?", params.Ip)
-	//}
-	//if params.PlayerId != 0 {
-	//	gameDb = gameDb.Where("player_id = ?", params.PlayerId)
-	//}
-	//if params.StartTime != 0 {
-	//	gameDb = gameDb.Where("timestamp >= ?", params.StartTime)
-	//}
-	//if params.EndTime != 0 {
-	//	gameDb = gameDb.Where("timestamp <= ?", params.EndTime)
-	//}
 	f := func(db *gorm.DB) *gorm.DB {
 		if params.StartTime > 0 {
 			return db.Where("time between ? and ?", params.StartTime, params.EndTime)
@@ -58,10 +43,10 @@ func GetPlayerChallengeMissionLogList(params *PlayerChallengeMissionLogQueryPara
 		return db
 	}
 	f(gameDb.Model(&PlayerChallengeMissionLog{}).Where(&PlayerChallengeMissionLog{
-		PlayerId: params.PlayerId,
-		MissionType:params.MissionType,
+		PlayerId:    params.PlayerId,
+		MissionType: params.MissionType,
 	})).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
-	for _,e := range data {
+	for _, e := range data {
 		e.PlayerName = GetPlayerName(gameDb, e.PlayerId)
 	}
 	return data, count

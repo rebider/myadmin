@@ -10,9 +10,15 @@ const (
 	CodeNoLogin      = 50014 //未登录
 )
 
-
 const (
 	Deleted  = iota - 1 //删除
 	Disabled            //禁止
 	Enabled             //启用
+)
+
+// 公告类型
+const (
+	NoticeTypeMoment = 1 //立即发送
+	NoticeTypeClock  = 2 //定时发送
+	NoticeTypeLoop   = 3 //循环发送
 )

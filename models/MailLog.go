@@ -8,7 +8,7 @@ import (
 type MailLog struct {
 	Id             int    `json:"id"`
 	PlatformId     int    `json:"platformId"`
-	ServerIdList   string `json:"serverIdList"`
+	NodeList   string `json:"serverIdList"`
 	PlayerNameList string `json:"playerNameList"`
 	Title          string `json:"title"`
 	Content        string `json:"content"`
@@ -44,7 +44,7 @@ func GetMailLogList(params *MailLogQueryParam) ([]*MailLog, int64) {
 	f(Db.Model(&MailLog{}).Where(&MailLog{
 		PlatformId: params.PlatformId,
 		UserId:     params.UserId,
-	}).Where("server_id_list LIKE ?", "%"+params.ServerId+"%")).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	}).Where("node_list LIKE ?", "%"+params.ServerId+"%")).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	for _, e := range data {
 		u, err := GetUserOne(e.UserId)
 		if err == nil {

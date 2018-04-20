@@ -9,12 +9,14 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/chnzrb/myadmin/proto"
 	"time"
+	"fmt"
 )
 
 type MailController struct {
 	BaseController
 }
 
+// 获取邮件列表
 func (c *MailController) MailLogList() {
 	var params models.MailLogQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -25,15 +27,9 @@ func (c *MailController) MailLogList() {
 	result["total"] = total
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取邮件日志", result)
-	//v := [] string{
-	//	"d",
-	//	"1",
-	//	"2",
-	//	"d",
-	//}
-	//utils.RemoveDuplicateArray(v)
 }
 
+// 删除邮件
 func (c *MailController) DelMailLog() {
 	var idList []int
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &idList)
@@ -43,15 +39,12 @@ func (c *MailController) DelMailLog() {
 	c.CheckError(err, "删除邮件失败")
 	c.Result(enums.CodeSuccess, "成功删除邮件", idList)
 }
+
+//发送邮件
 func (c *MailController) SendMail() {
-	//type platformServer struct {
-	//	PlatformId   int
-	//	ServerIdList [] string
-	//}
 	var params struct {
-		PlatformId   int
-		ServerIdList [] string
-		//platformServerList [] *platformServer
+		PlatformId     int
+		NodeList       [] string `json:"serverIdList"`
 		PlayerNameList string
 		MailItemList   [] *gm.MSendMailTosProp
 		Title          string
@@ -60,19 +53,13 @@ func (c *MailController) SendMail() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("发送邮件:%+v", params)
-	logs.Info("发送邮件:%+v", params.MailItemList)
-	//platformId, err := c.GetInt("platformId")
-	//c.CheckError(err)
-	//serverId:= c.GetString("serverId")
-	//playerId, err := c.GetInt("playerId")
-	//c.CheckError
-	serverIdList, err := json.Marshal(params.ServerIdList)
+	NodeList, err := json.Marshal(params.NodeList)
 	c.CheckError(err)
 	itemList, err := json.Marshal(params.MailItemList)
 	c.CheckError(err)
 	mailLog := &models.MailLog{
 		PlatformId:     params.PlatformId,
-		ServerIdList:   string(serverIdList),
+		NodeList:       string(NodeList),
 		Title:          params.Title,
 		Content:        params.Content,
 		Time:           time.Now().Unix(),
@@ -83,8 +70,8 @@ func (c *MailController) SendMail() {
 	}
 	err = models.Db.Save(&mailLog).Error
 	c.CheckError(err, "写邮件日志失败")
-	for _, serverId := range params.ServerIdList {
-		conn, err := models.GetWsByPlatformIdAndSid(params.PlatformId, serverId)
+	for _, node := range params.NodeList {
+		conn, err := models.GetWsByNode(node)
 		c.CheckError(err)
 		defer conn.Close()
 		request := gm.MSendMailTos{
@@ -108,12 +95,10 @@ func (c *MailController) SendMail() {
 		c.CheckError(err)
 
 		if *respone.Result == gm.MSendMailToc_success {
-			logs.Info("发送邮件成功:%+v", request)
+			logs.Info("发送邮件成功:%+v, %+v", node, request)
 		} else {
-			c.Result(enums.CodeFail, "发送邮件失败", 0)
+			c.Result(enums.CodeFail, fmt.Sprintf("发送邮件失败:%+v, %+v", node, request), 0)
 		}
 	}
 	c.Result(enums.CodeSuccess, "发送邮件成功", 0)
-	//conn.Read()
 }
-

@@ -18,7 +18,7 @@ func (c *LogController) PlayerLoinLogList() {
 	utils.CheckError(err)
 	logs.Info("查询玩家详细信息:%+v", params)
 	if params.PlayerName != "" {
-		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
 		if player == nil || err != nil {
 			c.Result(enums.CodeFail, "玩家不存在", 0)
 		}
@@ -37,7 +37,7 @@ func (c *LogController) PlayerOnlineLogList() {
 	utils.CheckError(err)
 	logs.Info("查询在线日志:%+v", params)
 	if params.PlayerName != "" {
-		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
 		if player == nil || err != nil {
 			c.Result(enums.CodeFail, "玩家不存在", 0)
 		}
@@ -56,7 +56,7 @@ func (c *LogController) PlayerChallengeMissionLogList() {
 	utils.CheckError(err)
 	logs.Info("查询副本挑战日志:%+v", params)
 	if params.PlayerName != "" {
-		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
 		if player == nil || err != nil {
 			c.Result(enums.CodeFail, "玩家不存在", 0)
 		}
@@ -75,7 +75,7 @@ func (c *LogController) PlayerPropLogList() {
 	utils.CheckError(err)
 	logs.Info("查询道具日志:%+v", params)
 	if params.PlayerName != "" {
-		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
 		if player == nil || err != nil {
 			c.Result(enums.CodeFail, "玩家不存在", 0)
 		}
@@ -94,7 +94,7 @@ func (c *LogController) ChargeList() {
 	utils.CheckError(err)
 	logs.Info("查询充值记录日志:%+v", params)
 	if params.PlayerName != "" {
-		player, err := models.GetPlayerByPlatformIdAndSidAndNickname(params.PlatformId, params.ServerId, params.PlayerName)
+		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
 		if player == nil || err != nil {
 			c.Result(enums.CodeFail, "玩家不存在", 0)
 		}

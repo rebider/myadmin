@@ -20,7 +20,7 @@ type BackgroundChargeLog struct {
 type BackgroundChargeLogQueryParam struct {
 	BaseQueryParam
 	PlatformId int
-	ServerId   string
+	Node   string	`json:"serverId"`
 	PlayerName string
 	PlayerId   int
 	StartTime  int
@@ -41,11 +41,11 @@ func GetBackgroundChargeLogList(params *BackgroundChargeLogQueryParam) ([]*Backg
 		}
 		return db
 	}
+	serverIdList := GetGameServerIdListByNode(params.Node)
 	f(Db.Model(&BackgroundChargeLog{}).Where(&BackgroundChargeLog{
 		PlatformId: params.PlatformId,
-		ServerId:   params.ServerId,
 		PlayerId:   params.PlayerId,
-	})).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	}).Where("server_id in (?)", serverIdList)).Order(sortOrder).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
 	for _, e := range data {
 		u, err := GetUserOne(e.UserId)
 		if err == nil {

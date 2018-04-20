@@ -22,7 +22,8 @@ type RemainTotal struct {
 type TotalRemainQueryParam struct {
 	BaseQueryParam
 	PlatformId int
-	ServerId   string
+	//ServerId   string
+	Node string `json:"serverId"`
 	StartTime  int
 	EndTime    int
 }
@@ -30,15 +31,15 @@ type TotalRemainQueryParam struct {
 func GetRemainTotalList(params *TotalRemainQueryParam) ([]*RemainTotal, int64) {
 	data := make([]*RemainTotal, 0)
 	var count int64
-	gameServer, err := GetGameServerOne(params.PlatformId, params.ServerId)
-	utils.CheckError(err)
+	//gameServer, err := GetGameServerOne(params.PlatformId, params.ServerId)
+	//utils.CheckError(err)
 	f := func(db *gorm.DB) *gorm.DB {
 		if params.StartTime > 0 {
 			return db.Where("time between ? and ?", params.StartTime, params.EndTime)
 		}
 		return db
 	}
-	err = f(Db.Model(&RemainTotal{}).Where(&RemainTotal{Node: gameServer.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
+	err := f(Db.Model(&RemainTotal{}).Where(&RemainTotal{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
 	utils.CheckError(err)
 	for _, e := range data {
 		dailyRegisterStatistics, err := GetDailyRegisterStatisticsOne(e.Node, e.Time)
