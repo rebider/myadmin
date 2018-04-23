@@ -12,19 +12,7 @@ type StatisticsController struct {
 	BaseController
 }
 
-
-func (c *StatisticsController) ChargeStatisticsList() {
-	var params models.DailyChargeStatisticsQueryParam
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	utils.CheckError(err)
-	logs.Info("获取充值统计:%+v", params)
-	data, total := models.GetDailyChargeStatisticsList(&params)
-	result := make(map[string]interface{})
-	result["total"] = total
-	result["rows"] = data
-	c.Result(enums.CodeSuccess, "获取充值统计", result)
-}
-
+//在线统计
 func (c *StatisticsController) OnlineStatisticsList() {
 	var params models.DailyOnlineStatisticsQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -36,7 +24,7 @@ func (c *StatisticsController) OnlineStatisticsList() {
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取在线统计", result)
 }
-
+//注册统计
 func (c *StatisticsController) RegisterStatisticsList() {
 	var params models.DailyRegisterStatisticsQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -48,8 +36,8 @@ func (c *StatisticsController) RegisterStatisticsList() {
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取注册统计", result)
 }
-
-func (c *StatisticsController) ConsumeStatistics() {
+//消费分析
+func (c *StatisticsController) ConsumeAnalysis() {
 	var params models.PropConsumeStatisticsQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
@@ -68,16 +56,23 @@ func (c *StatisticsController) ConsumeStatistics() {
 	c.Result(enums.CodeSuccess, "消费分析统计", result)
 }
 
-
-func (c *StatisticsController) ChargeRankList() {
-	var params models.PlayerChargeDataQueryParam
+//服务器概况
+func (c *StatisticsController) GetServerGeneralize() {
+	var params models.ServerGeneralizeQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
-	logs.Info("查询充值排行:%+v", params)
-	data, total := models.GetPlayerChargeDataList(&params)
-	result := make(map[string]interface{})
-	result["total"] = total
-	result["rows"] = data
-	c.Result(enums.CodeSuccess, "查询充值排行", result)
+	logs.Info("查询服务器概况:%+v", params)
+	data, err := models.GetServerGeneralize(params.PlatformId, params.Node)
+	c.CheckError(err)
+	c.Result(enums.CodeSuccess, "获取服务器概况", data)
 }
 
+func (c *StatisticsController) GetRealTimeOnline() {
+	platformId, err := c.GetInt("platformId")
+	c.CheckError(err)
+	serverId := c.GetString("serverId")
+	c.CheckError(err)
+	serverOnlineStatistics, err := models.GetServerOnlineStatistics(platformId, serverId)
+	c.CheckError(err, "查询实时在线统计")
+	c.Result(enums.CodeSuccess, "查询实时在线统计成功", serverOnlineStatistics)
+}

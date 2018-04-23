@@ -6,8 +6,6 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 )
 
-//import "github.com/chnzrb/myadmin/utils"
-
 type DailyRegisterStatistics struct {
 	Node            string `json:"node" gorm:"primary_key"`
 	Time            int    `json:"time" gorm:"primary_key"`
@@ -54,9 +52,7 @@ func GetDailyRegisterStatisticsList(params *DailyRegisterStatisticsQueryParam) (
 
 func UpdateDailyRegisterStatistics(node string, timestamp int) error {
 	logs.Info("UpdateDailyRegisterStatistics:%v, %v", node, timestamp)
-	serverNode, err := GetServerNode(node)
-	utils.CheckError(err)
-	gameDb, err := GetGameDbByServerNode(serverNode)
+	gameDb, err := GetGameDbByNode(node)
 	defer gameDb.Close()
 	utils.CheckError(err)
 	m := &DailyRegisterStatistics{

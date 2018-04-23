@@ -87,6 +87,7 @@ func init() {
 	beego.Router("/tool/send_prop", &controllers.ToolController{}, "*:SendProp")
 	beego.Router("/tool/set_task", &controllers.ToolController{}, "*:SetTask")
 	beego.Router("/tool/active_function", &controllers.ToolController{}, "*:ActiveFunction")
+
 	//游戏服
 	beego.Router("/game_server/list", &controllers.GameServerController{}, "*:List")
 	beego.Router("/game_server/edit/?:id", &controllers.GameServerController{}, "*:Edit")
@@ -102,27 +103,20 @@ func init() {
 	beego.Router("/log/online_log/", &controllers.LogController{}, "*:PlayerOnlineLogList")
 	beego.Router("/log/challenge_mission_log/", &controllers.LogController{}, "*:PlayerChallengeMissionLogList")
 	beego.Router("/log/prop_log/", &controllers.LogController{}, "*:PlayerPropLogList")
-	beego.Router("/log/charge_list/", &controllers.LogController{}, "*:ChargeList")
+
 
 	//玩家
 	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
 	beego.Router("/player/one", &controllers.PlayerController{}, "*:One")
 	beego.Router("/player/detail/", &controllers.PlayerController{}, "*:Detail")
 
-	beego.Router("/player/get_server_generalize/", &controllers.PlayerController{}, "*:GetServerGeneralize")
-	//beego.Router("/player/daily_statistics/", &controllers.PlayerController{}, "*:GetDailyStatistics")
-	beego.Router("/player/get_remain_task/", &controllers.PlayerController{}, "*:GetRemainTask")
-	beego.Router("/player/get_remain_level/", &controllers.PlayerController{}, "*:GetRemainLevel")
-	beego.Router("/player/get_remain_time/", &controllers.PlayerController{}, "*:GetRemainTime")
-
-	beego.Router("/player/online_statistics/", &controllers.PlayerController{}, "*:GetServerOnlineStatistics")
 
 	//统计
 	beego.Router("/statistics/online_statistics/", &controllers.StatisticsController{}, "*:OnlineStatisticsList")
 	beego.Router("/statistics/register_statistics/", &controllers.StatisticsController{}, "*:RegisterStatisticsList")
-	beego.Router("/statistics/charge_statistics/", &controllers.StatisticsController{}, "*:ChargeStatisticsList")
-	beego.Router("/statistics/consume_statistics/", &controllers.StatisticsController{}, "*:ConsumeStatistics")
-	beego.Router("/statistics/charge_rank/", &controllers.StatisticsController{}, "*:ChargeRankList")
+	beego.Router("/statistics/consume_analysis/", &controllers.StatisticsController{}, "*:ConsumeAnalysis")
+	beego.Router("/statistics/get_server_generalize/", &controllers.StatisticsController{}, "*:GetServerGeneralize")
+	beego.Router("/statistics/real_time_online/", &controllers.StatisticsController{}, "*:GetRealTimeOnline")
 
 	//封禁
 	beego.Router("/forbid/set_forbid/", &controllers.ForbidController{}, "*:SetForbid")
@@ -139,6 +133,13 @@ func init() {
 	beego.Router("/mail/mail_log/", &controllers.MailController{}, "*:MailLogList")
 	beego.Router("/mail/del_mail_log/", &controllers.MailController{}, "*:DelMailLog")
 
+	// 充值
+	beego.Router("/charge/charge_list/", &controllers.ChargeController{}, "*:ChargeList")
+	beego.Router("/charge/charge_rank/", &controllers.ChargeController{}, "*:ChargeRankList")
+	beego.Router("/charge/charge_statistics/", &controllers.ChargeController{}, "*:ChargeStatisticsList")
+	beego.Router("/charge/charge_task_distribution/", &controllers.ChargeController{}, "*:ChargeTaskDistribution")
+	beego.Router("/charge/charge_money_distribution/", &controllers.ChargeController{}, "*:ChargeMoneyDistribution")
+	beego.Router("/charge/charge_level_distribution/", &controllers.ChargeController{}, "*:ChargeLevelDistribution")
 
 	//后台充值
 	beego.Router("/charge/background_charge/", &controllers.BackgroundController{}, "*:Charge")
@@ -146,6 +147,9 @@ func init() {
 
 	//留存
 	beego.Router("/remain/total_remain/", &controllers.RemainController{}, "*:GetTotalRemain")
+	beego.Router("/remain/task_remain/", &controllers.RemainController{}, "*:GetTaskRemain")
+	beego.Router("/remain/level_remain/", &controllers.RemainController{}, "*:GetLevelRemain")
+	beego.Router("/remain/time_remain/", &controllers.RemainController{}, "*:GetTimeRemain")
 
 	//主页
 	beego.Router("/", &controllers.MainController{})

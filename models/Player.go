@@ -4,7 +4,6 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
 	"errors"
-	//"github.com/astaxie/beego/logs"
 	"strings"
 	"github.com/jinzhu/gorm"
 )
@@ -68,7 +67,6 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		sortOrder = sortOrder + " desc"
 	}
 
-
 	whereArray := make([] string, 0)
 	if params.Account != "" {
 		whereArray = append(whereArray, fmt.Sprintf(" acc_id = '%s'", params.Account))
@@ -77,9 +75,9 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		whereArray = append(whereArray, fmt.Sprintf(" last_login_ip = %s", params.Ip))
 	}
 	if params.Nickname != "" {
-		serverId, playerName, err := SplitPlayerName(params.Nickname)
-		utils.CheckError(err)
-		whereArray = append(whereArray, fmt.Sprintf("server_id = '%s' and nickname LIKE '%%%s%%' ", serverId, playerName))
+		//serverId, playerName, err := SplitPlayerName(params.Nickname)
+		//utils.CheckError(err)
+		whereArray = append(whereArray, fmt.Sprintf("nickname LIKE '%%%s%%' ", params.Nickname))
 	}
 	if params.IsOnline != "" {
 		whereArray = append(whereArray, fmt.Sprintf(" is_online = %s", params.IsOnline))
@@ -99,7 +97,7 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		params.Offset,
 		params.Limit,
 	)
-	err = gameDb.Debug().Raw(sql).Scan(&data).Error
+	err = gameDb.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	err = gameDb.Model(&Player{}).Raw("select count(1) from player " + whereParam).Count(&count).Error
 	utils.CheckError(err)
@@ -215,30 +213,33 @@ type PlayerProp struct {
 	Num      int `json:"num"`
 }
 
-func GetPlayerPropList(node string, playerId int) ([]*PlayerProp, error) {
-	gameDb, err := GetGameDbByNode(node)
-	utils.CheckError(err)
-	defer gameDb.Close()
+func GetPlayerPropList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
 	playerPropList := make([]*PlayerProp, 0)
 	sql := fmt.Sprintf(
 		`SELECT * FROM player_prop WHERE player_id = ? `)
-	err = gameDb.Raw(sql, playerId).Scan(&playerPropList).Error
+	err := gameDb.Raw(sql, playerId).Scan(&playerPropList).Error
 
 	return playerPropList, err
 }
 
-func GetPlayerDetail(platformId int, node string, playerId int) (*PlayerDetail, error) {
-	gameDb, err := GetGameDbByNode(node)
+func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDetail, error) {
+	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
 	utils.CheckError(err)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("连接数据库失败:%v", serverId))
+	}
 	defer gameDb.Close()
 	playerDetail := &PlayerDetail{}
 
-	//m := make(map[interface{}]interface{}, 0)
 	sql := fmt.Sprintf(
 		`SELECT player.*, player_data.*, player_task.task_id, player_vip.level as vip_level FROM ((player LEFT JOIN player_data on player.id = player_data.player_id) LEFT JOIN player_task on player.id = player_task.player_id) LEFT JOIN player_vip on player_vip.player_id = player.id WHERE player.id = ? `)
 	err = gameDb.Raw(sql, playerId).Scan(&playerDetail).Error
-
-	playerDetail.PlayerPropList, err = GetPlayerPropList(node, playerId)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("查询玩家失败:%v, %v", serverId, playerId))
+	}
+	playerDetail.Player.Nickname = playerDetail.Player.ServerId + "." + playerDetail.Player.Nickname
+	playerDetail.PlayerPropList, err = GetPlayerPropList(gameDb, playerId)
+	utils.CheckError(err)
 	playerDetail.FactionName = GetPlayerFactionName(gameDb, playerId)
 	utils.CheckError(err)
 	return playerDetail, err
@@ -337,62 +338,4 @@ func GetServerOnlineStatistics(platformId int, node string) (*ServerOnlineStatis
 		AverageOnlineCount:          GetThatDayAverageOnlineCount(node, todayZeroTimestamp),
 	}
 	return serverOnlineStatistics, nil
-}
-
-type PropConsumeStatistics struct {
-	OpType int     `json:"opType"`
-	Count  int     `json:"count"`
-	Rate   float32 `json:"rate"`
-}
-type PropConsumeStatisticsQueryParam struct {
-	PlayerName string
-	PlayerId   int
-	PlatformId int
-	ServerId   string
-	StartTime  int
-	EndTime    int
-	PropType   int
-	PropId     int
-	Type       int
-}
-
-func GetPropConsumeStatistics(param *PropConsumeStatisticsQueryParam) ([]*PropConsumeStatistics, error) {
-	if param.PropType == 0 || param.PropId == 0 {
-		return nil, errors.New("请选择道具")
-	}
-	gameDb, err := GetGameDbByPlatformIdAndSid(param.PlatformId, param.ServerId)
-	defer gameDb.Close()
-	utils.CheckError(err)
-	list := make([]*PropConsumeStatistics, 0)
-	//if param.EndTime == 0 {
-	//	param.EndTime = 9999999999999
-	//}
-	var changeValue string
-	if param.Type == 0 {
-		changeValue = "change_value < 0"
-	} else {
-		changeValue = "change_value > 0"
-	}
-	var timeRange string
-	if param.StartTime > 0 {
-		timeRange = fmt.Sprintf("and op_time between %d and %d", param.StartTime, param.EndTime)
-	}
-
-	var selectPlayer string
-	if param.PlayerId > 0 {
-		timeRange = fmt.Sprintf("and player_id = %d", param.PlayerId)
-	}
-
-	sql := fmt.Sprintf(
-		` select op_type, sum(change_value) as count from player_prop_log where %s and prop_type = ? and prop_id = ? %s %s group by op_type; `, changeValue, timeRange, selectPlayer)
-	err = gameDb.Debug().Raw(sql, param.PropType, param.PropId).Scan(&list).Error
-	utils.CheckError(err)
-	var sum = 0
-	for _, e := range list {
-		sum += e.Count
-	}
-	for _, e := range list {
-		e.Rate = float32(e.Count) / float32(sum) * 100
-	}
-	return list, nil
 }

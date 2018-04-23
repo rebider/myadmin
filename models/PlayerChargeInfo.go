@@ -27,25 +27,29 @@ func GetPlayerChargeDataList(params *PlayerChargeDataQueryParam) ([]*PlayerCharg
 	data := make([]*PlayerChargeInfoRecord, 0)
 	var count int64
 	sortOrder := "total_money desc"
-	//if params.Order == "descending" {
-	//	sortOrder = sortOrder + " desc"
-	//}
 	if params.Node == "" {
-		DbCharge.Model(&PlayerChargeInfoRecord{}).Count(&count).Where(&PlayerChargeInfoRecord{
+		DbCharge.Model(&PlayerChargeInfoRecord{}).Where(&PlayerChargeInfoRecord{
 			PlatformId: params.PlatformId,
-		}).Where("charge_count > 0 ").Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+		}).Where("charge_count > 0 ").Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	} else {
-		DbCharge.Model(&PlayerChargeInfoRecord{}).Count(&count).Where(&PlayerChargeInfoRecord{
+		DbCharge.Model(&PlayerChargeInfoRecord{}).Where(&PlayerChargeInfoRecord{
 			PlatformId: params.PlatformId,
-		}).Where("charge_count > 0 ").Where("server_id in (?)", GetGameServerIdListByNode(params.Node)).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+		}).Where("charge_count > 0 ").Where("server_id in (?)", GetGameServerIdListByNode(params.Node)).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	}
 
 	for _, e := range data {
 		gameDb, err := GetGameDbByPlatformIdAndSid(e.PlatformId, e.ServerId)
 		utils.CheckError(err)
+		if err != nil {
+			continue
+		}
 		defer gameDb.Close()
 		player, err := GetPlayerByDb(gameDb, e.PlayerId)
-		e.PlayerName = player.Nickname
+		utils.CheckError(err)
+		if err != nil {
+			continue
+		}
+		e.PlayerName = player.ServerId + "." + player.Nickname
 		e.LastLoginTime = player.LastLoginTime
 		e.RegisterTime = player.RegTime
 	}

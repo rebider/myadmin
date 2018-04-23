@@ -6,7 +6,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"fmt"
 	"golang.org/x/net/websocket"
-	//"encoding/json"
 	"strings"
 	"github.com/astaxie/beego/logs"
 	"errors"
@@ -29,13 +28,15 @@ type BaseQueryParam struct {
 func GetGameDbByPlatformIdAndSid(platformId int, Sid string) (gameDb *gorm.DB, err error) {
 	gameServer, err := GetGameServerOne(platformId, Sid)
 	utils.CheckError(err)
+	if err != nil {
+		return nil, err
+	}
 	serverNode, err := GetServerNode(gameServer.Node)
 	utils.CheckError(err)
-	//logs.Debug(serverNode.Ip)
-	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/game?charset=utf8&parseTime=True&loc=Local"
-	gameDb, err = gorm.Open("mysql", dbArgs)
-	gameDb.SingularTable(true)
-	return gameDb, err
+	if err != nil {
+		return nil, err
+	}
+	return GetGameDbByNode(serverNode.Node)
 }
 
 // 通过node获取 gorm.DB 实例
@@ -45,21 +46,18 @@ func GetGameDbByNode(node string) (gameDb *gorm.DB, err error) {
 	}
 	serverNode, err := GetServerNode(node)
 	utils.CheckError(err)
-	//logs.Debug(serverNode.Ip)
+	if err != nil {
+		return nil, err
+	}
 	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/game?charset=utf8&parseTime=True&loc=Local"
 	gameDb, err = gorm.Open("mysql", dbArgs)
+	if err != nil {
+		return nil, err
+	}
 	gameDb.SingularTable(true)
 	return gameDb, err
 }
 
-// 通过ServerNode获取 gorm.DB 实例
-func GetGameDbByServerNode(serverNode *ServerNode) (gameDb *gorm.DB, err error) {
-	//logs.Debug(serverNode.Ip)
-	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/game?charset=utf8&parseTime=True&loc=Local"
-	gameDb, err = gorm.Open("mysql", dbArgs)
-	gameDb.SingularTable(true)
-	return gameDb, err
-}
 
 // 通过平台id和区服id 获取ip地址和端口
 func GetIpAndPortByPlatformIdAndSid(platformId int, Sid string) (string, int, error) {

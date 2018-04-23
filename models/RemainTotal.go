@@ -28,11 +28,10 @@ type TotalRemainQueryParam struct {
 	EndTime    int
 }
 
+// 获取总体留存
 func GetRemainTotalList(params *TotalRemainQueryParam) ([]*RemainTotal, int64) {
 	data := make([]*RemainTotal, 0)
 	var count int64
-	//gameServer, err := GetGameServerOne(params.PlatformId, params.ServerId)
-	//utils.CheckError(err)
 	f := func(db *gorm.DB) *gorm.DB {
 		if params.StartTime > 0 {
 			return db.Where("time between ? and ?", params.StartTime, params.EndTime)
@@ -57,7 +56,7 @@ func UpdateRemainTotal(node string, timestamp int) error {
 	if err != nil {
 		return err
 	}
-	gameDb, err := GetGameDbByServerNode(serverNode)
+	gameDb, err := GetGameDbByNode(node)
 	openDayZeroTimestamp := utils.GetThatZeroTimestamp(int64(serverNode.OpenTime))
 	defer gameDb.Close()
 	if err != nil {
@@ -71,9 +70,6 @@ func UpdateRemainTotal(node string, timestamp int) error {
 		}
 		createRolePlayerIdList := GetThatDayCreateRolePlayerIdList(gameDb, thatDayZeroTimestamp)
 		createRoleNum := len(createRolePlayerIdList)
-
-		logs.Info("createRolePlayerIdList:%v", createRolePlayerIdList)
-		logs.Info("createRoleNum:%v", createRoleNum)
 		rate := 0
 		if createRoleNum > 0 {
 			loginNum := 0
@@ -82,15 +78,8 @@ func UpdateRemainTotal(node string, timestamp int) error {
 					loginNum += 1
 				}
 			}
-			logs.Info("loginNum:%v", loginNum)
-			logs.Info("createRoleNum:%v", createRoleNum)
 			rate = int(float32(loginNum) / float32(createRoleNum) * 10000)
-			logs.Info("rate:%v", rate)
-			//logs.Info("rate:%v", float32(loginNum) / float32(createRoleNum) * 100)
-			//logs.Info("qqqqq:%v", 40 / 50)
-			//logs.Info("wwww:%v", 40.0 / 50.0)
 		}
-		//m := &RemainTotal{}
 		m := &RemainTotal{
 			Node:    node,
 			Time:    thatDayZeroTimestamp,
@@ -116,7 +105,6 @@ func UpdateRemainTotal(node string, timestamp int) error {
 		case 6:
 			err = Db.Debug().Model(&m).Update("Remain7", rate).Error
 		}
-		//err = Db.Debug().Save(&m).Error
 	}
 
 	return err
