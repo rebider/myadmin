@@ -14,7 +14,6 @@ func MenuTBName() string {
 	return TableName("menu")
 }
 
-
 type MenuQueryParam struct {
 	BaseQueryParam
 }
@@ -27,6 +26,7 @@ type Menu struct {
 	Parent      *Menu          `json:"-"`
 	ParentId    int            `json:"parentId"`
 	Seq         int            `json:"seq"`
+	IsShow      int            `json:"isShow"`
 	Children    []*Menu        `json:"children"`
 	Icon        string         `json:"icon"`
 	RoleMenuRel []*RoleMenuRel `json:"-"`
@@ -61,13 +61,13 @@ func GetMenuOne(id int) (*Menu, error) {
 	}
 	return menu, nil
 }
-func relateMenuListParent(menuList []*Menu){
-	for _, menu :=  range menuList{
+func relateMenuListParent(menuList []*Menu) {
+	for _, menu := range menuList {
 		relateMenuParent(menu)
 	}
 }
 
-func relateMenuParent(menu *Menu) (*Menu, error){
+func relateMenuParent(menu *Menu) (*Menu, error) {
 	if menu.ParentId > 0 {
 		p := &Menu{}
 		if err := Db.Model(&menu).Related(&p, "ParentId").Error; err != nil {
@@ -159,8 +159,8 @@ func GetMenuListByUserId(userId int) []*Menu {
 		rows, err := Db.Raw(sql, userId).Rows()
 		defer rows.Close()
 		utils.CheckError(err)
-		for rows.Next(){
-			var menu  Menu
+		for rows.Next() {
+			var menu Menu
 			Db.ScanRows(rows, &menu)
 			list = append(list, &menu)
 		}
@@ -169,11 +169,11 @@ func GetMenuListByUserId(userId int) []*Menu {
 	return list
 }
 
-func TranMenuList2MenuTree(menuList []*Menu) []*Menu {
+func TranMenuList2MenuTree(menuList []*Menu, isDealShow bool) []*Menu {
 	menuTree := make([]*Menu, 0)
 	for _, item := range menuList {
-		if item.Parent == nil || item.Parent.Id == 0 {
-			item = TranMenuList2MenuTree_(item, menuList)
+		if (item.Parent == nil || item.Parent.Id == 0) && (isDealShow == false || item.IsShow == 1) {
+			item = TranMenuList2MenuTree_(item, menuList, isDealShow)
 			menuTree = append(menuTree, item)
 		}
 	}
@@ -181,10 +181,10 @@ func TranMenuList2MenuTree(menuList []*Menu) []*Menu {
 	return menuTree
 }
 
-func TranMenuList2MenuTree_(cur *Menu, list []*Menu) *Menu {
+func TranMenuList2MenuTree_(cur *Menu, list []*Menu, isDealShow bool) *Menu {
 	for _, item := range list {
-		if item.Parent != nil && item.Parent.Id == cur.Id {
-			item = TranMenuList2MenuTree_(item, list)
+		if (item.Parent != nil && item.Parent.Id == cur.Id) && (isDealShow == false || item.IsShow == 1) {
+			item = TranMenuList2MenuTree_(item, list, isDealShow)
 			cur.Children = append(cur.Children, item)
 		}
 	}

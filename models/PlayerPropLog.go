@@ -36,6 +36,9 @@ type PlayerPropLogQueryParam struct {
 func GetPlayerPropLogList(params *PlayerPropLogQueryParam) ([]*PlayerPropLog, int64) {
 	gameDb, err := GetGameDbByNode(params.Node)
 	utils.CheckError(err)
+	if err != nil {
+		return nil, 0
+	}
 	defer gameDb.Close()
 	data := make([]*PlayerPropLog, 0)
 	var count int64

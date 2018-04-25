@@ -58,3 +58,20 @@ message m_send_notice_toc {
     }
     required ENUM result = 1;
 }
+
+//设置帐号类型
+message m_set_account_type_tos {
+    required string token = 1; //密钥
+    required int32 player_id = 2; //玩家id
+    required int32 type = 3; //玩家id
+}
+
+//设置帐号类型
+message m_set_account_type_toc {
+    enum ENUM {
+        success = 1; //成功
+        fail = 2; //失败
+    }
+    required ENUM result = 1;
+}
+

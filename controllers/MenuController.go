@@ -13,14 +13,14 @@ type MenuController struct {
 }
 //获取菜单列表
 func (c *MenuController) List() {
-	data := models.TranMenuList2MenuTree(models.GetMenuList())
+	data := models.TranMenuList2MenuTree(models.GetMenuList(), false)
 	result := make(map[string]interface{})
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取菜单列表成功", result)
 }
 
 func (c *MenuController) MenuTree() {
-	c.Result(enums.CodeSuccess, "获取菜单树成功", models.TranMenuList2MenuTree(models.GetMenuList()))
+	c.Result(enums.CodeSuccess, "获取菜单树成功", models.TranMenuList2MenuTree(models.GetMenuList(), false))
 }
 
 //获取可以成为某节点的父节点列表

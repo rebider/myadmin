@@ -53,8 +53,12 @@ func GetDailyRegisterStatisticsList(params *DailyRegisterStatisticsQueryParam) (
 func UpdateDailyRegisterStatistics(node string, timestamp int) error {
 	logs.Info("UpdateDailyRegisterStatistics:%v, %v", node, timestamp)
 	gameDb, err := GetGameDbByNode(node)
-	defer gameDb.Close()
 	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+	defer gameDb.Close()
+
 	m := &DailyRegisterStatistics{
 		Node:            node,
 		Time:            timestamp,

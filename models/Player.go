@@ -22,6 +22,7 @@ type Player struct {
 	TotalOnlineTime int    `json:"totalOnlineTime"`
 	LastLoginIp     string `json:"lastLoginIp"`
 	IsOnline        int    `json:"isOnline"`
+	Type            int    `json:"type"`
 	Level           int    `json:"level" gorm:"-"`
 	VipLevel        int    `json:"vipLevel" gorm:"-"`
 	Power           int    `json:"power" gorm:"-"`
@@ -36,6 +37,7 @@ type PlayerQueryParam struct {
 	Nickname   string
 	IsOnline   string
 	PlatformId int
+	Type       string
 	Node       string `json:"serverId"`
 }
 
@@ -47,6 +49,9 @@ func (a *Player) TableName() string {
 func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	gameDb, err := GetGameDbByNode(params.Node)
 	utils.CheckError(err)
+	if err != nil {
+		return nil, 0
+	}
 	defer gameDb.Close()
 	data := make([]*Player, 0)
 	var count int64
@@ -84,6 +89,9 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	}
 	if params.PlayerId != "" {
 		whereArray = append(whereArray, fmt.Sprintf(" id = %s", params.PlayerId))
+	}
+	if params.Type != "" {
+		whereArray = append(whereArray, fmt.Sprintf(" type = %s", params.Type))
 	}
 
 	whereParam := strings.Join(whereArray, " and ")
@@ -312,8 +320,12 @@ type ServerOnlineStatistics struct {
 
 func GetServerOnlineStatistics(platformId int, node string) (*ServerOnlineStatistics, error) {
 	gameDb, err := GetGameDbByNode(node)
-	defer gameDb.Close()
+
 	utils.CheckError(err)
+	if err != nil {
+		return nil, err
+	}
+	defer gameDb.Close()
 	//gameServer, err := GetGameServerOne(platformId, serverId)
 	//utils.CheckError(err)
 	//todayOnlineList := make([]string, 0)

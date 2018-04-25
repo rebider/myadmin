@@ -109,6 +109,7 @@ func init() {
 	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
 	beego.Router("/player/one", &controllers.PlayerController{}, "*:One")
 	beego.Router("/player/detail/", &controllers.PlayerController{}, "*:Detail")
+	beego.Router("/player/set_account_type/", &controllers.PlayerController{}, "*:SetAccountType")
 
 
 	//统计

@@ -57,11 +57,12 @@ func UpdateRemainTotal(node string, timestamp int) error {
 		return err
 	}
 	gameDb, err := GetGameDbByNode(node)
-	openDayZeroTimestamp := utils.GetThatZeroTimestamp(int64(serverNode.OpenTime))
-	defer gameDb.Close()
+	utils.CheckError(err)
 	if err != nil {
 		return err
 	}
+	defer gameDb.Close()
+	openDayZeroTimestamp := utils.GetThatZeroTimestamp(int64(serverNode.OpenTime))
 
 	for i := 1; i < 7; i++ {
 		thatDayZeroTimestamp := timestamp - i*86400

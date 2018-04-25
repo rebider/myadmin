@@ -28,6 +28,9 @@ type PlayerLoginLogQueryParam struct {
 func GetPlayerLoginLogList(params *PlayerLoginLogQueryParam) ([]*PlayerLoginLog, int64) {
 	gameDb, err := GetGameDbByNode(params.Node)
 	utils.CheckError(err)
+	if err != nil {
+		return nil, 0
+	}
 	defer gameDb.Close()
 	data := make([]*PlayerLoginLog, 0)
 	var count int64

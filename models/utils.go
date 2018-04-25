@@ -79,6 +79,10 @@ func GetMaxPlayerLevel(db *gorm.DB) int {
 func GetAvgOnlineTime(node string, zeroTimestamp int) int {
 	gameDb, err := GetGameDbByNode(node)
 	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	defer gameDb.Close()
 	var data struct {
 		Time float32
 	}
@@ -495,6 +499,9 @@ func GetPlayerName(db *gorm.DB, playerId int) string {
 func GetPlayerLastLoginTime(platformId int, serverId string, playerId int) int {
 	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
 	utils.CheckError(err)
+	if err != nil {
+		return  0
+	}
 	defer gameDb.Close()
 	var data struct {
 		Time int
@@ -510,6 +517,9 @@ func GetPlayerLastLoginTime(platformId int, serverId string, playerId int) int {
 func GetPlayerName_2(platformId int, serverId string, playerId int) string {
 	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
 	utils.CheckError(err)
+	if err != nil {
+		return ""
+	}
 	defer gameDb.Close()
 	var data struct {
 		ServerId string

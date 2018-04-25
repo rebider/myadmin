@@ -32,6 +32,9 @@ type PlayerChallengeMissionLogQueryParam struct {
 func GetPlayerChallengeMissionLogList(params *PlayerChallengeMissionLogQueryParam) ([]*PlayerChallengeMissionLog, int64) {
 	gameDb, err := GetGameDbByNode(params.Node)
 	utils.CheckError(err)
+	if err != nil {
+		return nil, 0
+	}
 	defer gameDb.Close()
 	data := make([]*PlayerChallengeMissionLog, 0)
 	var count int64

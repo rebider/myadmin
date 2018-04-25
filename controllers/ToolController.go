@@ -21,24 +21,23 @@ func (c *ToolController) GetJson() {
 	c.Result(enums.CodeSuccess, "获取平台列表成功", list)
 }
 
-
 func (c *ToolController) Action() {
 	var params struct {
-		Action string `json:"action"`
-		PlatformId int `json:"platformId"`
-		ServerId string `json:"serverId"`
+		Action     string `json:"action"`
+		PlatformId int    `json:"platformId"`
+		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
 	//node := getNode(params.ServerId)
-	gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
-	c.CheckError(err)
-	node := gameServer.Node
+	//gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
+	//c.CheckError(err)
+	//node := gameServer.Node
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		node,
+		params.Node,
 		"-setcookie",
 		"game",
 		"rpc",
@@ -54,7 +53,7 @@ func (c *ToolController) Action() {
 		out = strings.Replace(out, "\\n", "<br>", -1)
 		c.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
 	} else {
-		if params.Action == "build_table"{
+		if params.Action == "build_table" {
 			commandArgs = []string{
 				"ci",
 				"/opt/h5/trunk/client/client_enum",
@@ -70,24 +69,24 @@ func (c *ToolController) Action() {
 
 func (c *ToolController) SendProp() {
 	var params struct {
-		PlayerId int `json:"playerId"`
-		PropType int `json:"propType"`
-		PropId int `json:"propId"`
-		PropNum int `json:"propNum"`
-		PlatformId int `json:"platformId"`
-		ServerId string `json:"serverId"`
+		PlayerId   int    `json:"playerId"`
+		PropType   int    `json:"propType"`
+		PropId     int    `json:"propId"`
+		PropNum    int    `json:"propNum"`
+		PlatformId int    `json:"platformId"`
+		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
 	//node := getNode(params.ServerId)
-	gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
-	c.CheckError(err)
-	node := gameServer.Node
+	//gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
+	//c.CheckError(err)
+	//node := gameServer.Node
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		node,
+		params.Node,
 		"-setcookie",
 		"game",
 		"rpc",
@@ -110,24 +109,24 @@ func (c *ToolController) SendProp() {
 	}
 }
 
-func (c *ToolController)SetTask() {
+func (c *ToolController) SetTask() {
 	var params struct {
-		PlayerId int `json:"playerId"`
-		TaskId int `json:"taskId"`
-		PlatformId int `json:"platformId"`
-		ServerId string `json:"serverId"`
+		PlayerId   int    `json:"playerId"`
+		TaskId     int    `json:"taskId"`
+		PlatformId int    `json:"platformId"`
+		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
 	//node := getNode(params.ServerId)
-	gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
-	c.CheckError(err)
-	node := gameServer.Node
+	//gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
+	//c.CheckError(err)
+	//node := gameServer.Node
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		node,
+		params.Node,
 		"-setcookie",
 		"game",
 		"rpc",
@@ -148,26 +147,26 @@ func (c *ToolController)SetTask() {
 	}
 }
 
-func (c *ToolController)ActiveFunction() {
+func (c *ToolController) ActiveFunction() {
 	var params struct {
-		PlayerId int `json:"playerId"`
-		FunctionId int `json:"functionId"`
-		FunctionParam int `json:"functionParam"`
-		FunctionValue int `json:"functionValue"`
-		PlatformId int `json:"platformId"`
-		ServerId string `json:"serverId"`
+		PlayerId      int    `json:"playerId"`
+		FunctionId    int    `json:"functionId"`
+		FunctionParam int    `json:"functionParam"`
+		FunctionValue int    `json:"functionValue"`
+		PlatformId    int    `json:"platformId"`
+		Node          string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("Action:%+v", params)
 	//node := getNode(params.ServerId)
-	gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
-	c.CheckError(err)
-	node := gameServer.Node
+	//gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
+	//c.CheckError(err)
+	//node := gameServer.Node
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		node,
+		params.Node,
 		"-setcookie",
 		"game",
 		"rpc",

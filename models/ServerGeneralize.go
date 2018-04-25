@@ -33,8 +33,11 @@ type ServerGeneralizeQueryParam struct {
 
 func GetServerGeneralize(platformId int, node string) (*ServerGeneralize, error) {
 	gameDb, err := GetGameDbByNode(node)
-	defer gameDb.Close()
 	utils.CheckError(err)
+	if err != nil {
+		return nil, err
+	}
+	defer gameDb.Close()
 	serverNode, err := GetServerNode(node)
 	utils.CheckError(err)
 	serverGeneralize := &ServerGeneralize{

@@ -26,7 +26,7 @@ func (c *UserController) Info() {
 			GameServerList []*models.Server
 		}{
 			Name:           m.Name,
-			ResourceTree:   models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id)),
+			ResourceTree:   models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id), true),
 			PlatformList:   platformList,
 			GameServerList: gameServerList,
 		})
