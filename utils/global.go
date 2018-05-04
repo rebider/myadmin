@@ -8,9 +8,13 @@ import (
 	"github.com/astaxie/beego/logs"
 	"encoding/binary"
 	"time"
+	//"fmt"
+	"net/http"
+	"io/ioutil"
+	"encoding/json"
 )
 
-func CheckError(err error, msg... string) {
+func CheckError(err error, msg ... string) {
 	if err != nil {
 		//_, file, line, _ := runtime.Caller(1)
 		//fileBaseName := filepath.Base(file)
@@ -37,7 +41,6 @@ func Nodetool(arg ... string) (string, error) {
 	return out, err
 }
 
-
 func Cmd(commandName string, params []string) (string, error) {
 	cmd := exec.Command(commandName, params...)
 	var out bytes.Buffer
@@ -56,7 +59,7 @@ func Cmd(commandName string, params []string) (string, error) {
 func RemoveDuplicateArray(s [] interface{}) [] interface{} {
 	maps := make(map[interface{}]interface{}, len(s))
 	r := make([] interface{}, 0)
-	for _,v := range s {
+	for _, v := range s {
 		if _, ok := maps[v]; ok {
 			continue
 		}
@@ -81,23 +84,68 @@ func IntToBytes(n int) []byte {
 }
 
 //获取今日0点时间戳
-func GetTodayZeroTimestamp() int{
+func GetTodayZeroTimestamp() int {
 	t := time.Now()
 	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return int(tm1.Unix())
 }
 
 //获取昨日0点时间戳
-func GetYesterdayZeroTimestamp() int{
+func GetYesterdayZeroTimestamp() int {
 	t := time.Now()
 	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return int(tm1.Unix()) - 86400
 }
-func GetThatZeroTimestamp(timestamp int64) int{
+func GetThatZeroTimestamp(timestamp int64) int {
 	t := time.Unix(timestamp, 0)
-	t1:= time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	t1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return int(t1.Unix())
 }
-func GetTimestamp() int{
+func GetTimestamp() int {
 	return int(time.Now().Unix())
+}
+
+func GetGmURL() string {
+	url := beego.AppConfig.String("gm" + "::url")
+	return url
+}
+
+func GetChargeURL() string {
+	url := beego.AppConfig.String("charge_url" + "::url")
+	return url
+}
+
+func GetIpLocation(ip string) string {
+	url := "http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=" + ip
+	var result struct {
+		Ret      int
+		Country  string
+		Province string
+		City     string
+	}
+	resp, err := http.Get(url)
+	CheckError(err)
+	if err != nil {
+		return "未知"
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	CheckError(err)
+	if err != nil {
+		return "未知"
+	}
+	//logs.Info("result:%v", string(body))
+
+	err = json.Unmarshal(body, &result)
+	CheckError(err)
+	if err != nil {
+		return "未知"
+	}
+	if result.Ret == 1 {
+		if result.Country == "中国" {
+			return result.Province + "." + result.City
+		}
+		return result.Country + "." +result.Province + "." + result.City
+	}
+	return "未知"
 }

@@ -118,6 +118,7 @@ func init() {
 	beego.Router("/statistics/consume_analysis/", &controllers.StatisticsController{}, "*:ConsumeAnalysis")
 	beego.Router("/statistics/get_server_generalize/", &controllers.StatisticsController{}, "*:GetServerGeneralize")
 	beego.Router("/statistics/real_time_online/", &controllers.StatisticsController{}, "*:GetRealTimeOnline")
+	beego.Router("/statistics/get_active_statistics/", &controllers.StatisticsController{}, "*:ActiveStatisticsList")
 
 	//封禁
 	beego.Router("/forbid/set_forbid/", &controllers.ForbidController{}, "*:SetForbid")

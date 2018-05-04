@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/astaxie/beego/logs"
-	"github.com/jinzhu/gorm"
+	"github.com/chnzrb/myadmin/utils"
 )
 
 //import "github.com/chnzrb/myadmin/utils"
@@ -25,20 +25,43 @@ type DailyChargeStatisticsQueryParam struct {
 	EndTime   int
 }
 
-func GetDailyChargeStatisticsList(params *DailyChargeStatisticsQueryParam) ([]*DailyChargeStatistics, int64) {
+func GetDailyChargeStatisticsList(params *DailyChargeStatisticsQueryParam) []*DailyChargeStatistics {
+	//data := make([]*DailyChargeStatistics, 0)
+	//var count int64
+	//f := func(db *gorm.DB) *gorm.DB {
+	//	if params.StartTime > 0 {
+	//		return db.Where("time between ? and ?", params.StartTime, params.EndTime)
+	//	}
+	//	return db
+	//}
+	//f(Db.Model(&DailyChargeStatistics{}).Where(&DailyChargeStatistics{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
+	//for _, e := range data {
+	//	e.ARPU = CaclARPU(e.ChargeMoney, e.ChargePlayerCount)
+	//}
+	//return data, count
 	data := make([]*DailyChargeStatistics, 0)
-	var count int64
-	f := func(db *gorm.DB) *gorm.DB {
-		if params.StartTime > 0 {
-			return db.Where("time between ? and ?", params.StartTime, params.EndTime)
+	for i := params.StartTime; i <= params.EndTime; i = i + 86400 {
+		tmpData := make([]*DailyChargeStatistics, 0)
+		err := Db.Model(&DailyChargeStatistics{}).Where(&DailyChargeStatistics{Node: params.Node, Time: i}).Find(&tmpData).Error
+		utils.CheckError(err)
+		if len(tmpData) > 0 {
+			tmpE := &DailyChargeStatistics{
+				Node: params.Node,
+				Time: i,
+			}
+			for _, e := range tmpData {
+				tmpE.ChargeMoney += e.ChargeMoney
+				tmpE.ChargePlayerCount += e.ChargePlayerCount
+				tmpE.NewChargePlayerCount += e.NewChargePlayerCount
+				//tmpE.CreateRoleCount += e.CreateRoleCount
+			}
+			data = append(data, tmpE)
 		}
-		return db
 	}
-	f(Db.Model(&DailyChargeStatistics{}).Where(&DailyChargeStatistics{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
 	for _, e := range data {
 		e.ARPU = CaclARPU(e.ChargeMoney, e.ChargePlayerCount)
 	}
-	return data, count
+	return data
 }
 
 func UpdateDailyChargeStatistics(node string, timestamp int) error {
@@ -48,7 +71,7 @@ func UpdateDailyChargeStatistics(node string, timestamp int) error {
 		Time:                 timestamp,
 		ChargeMoney:          GetThatDayServerTotalChargeMoney(node, timestamp),
 		ChargePlayerCount:    GetThatDayServerChargePlayerCount(node, timestamp),
-		NewChargePlayerCount: GetThadDayServerSecondChargePlayerCount(node, timestamp),
+		NewChargePlayerCount: GetThadDayServerFirstChargePlayerCount(node, timestamp),
 	}
 	err := Db.Save(&m).Error
 	return err

@@ -35,7 +35,7 @@ func GetForbidLogList(params *ForbidLogQueryParam) ([]*ForbidLog, int64) {
 	serverIdList := GetGameServerIdListByNode(params.Node)
 	Db.Model(&ForbidLog{}).Where(&ForbidLog{
 		PlatformId: params.PlatformId,
-		PlayerName: params.PlayerName,
+		PlayerId: params.PlayerId,
 	}).Where("server_id in (?)", serverIdList).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	for _, e := range data {
 		u, err := GetUserOne(e.UserId)

@@ -44,11 +44,63 @@ func IsThatDayPlayerLogin(db *gorm.DB, zeroTimestamp int, playerId int) bool {
 	return true
 }
 
+// 获取该天登录次数
+func GetThatDayLoginTimes(db *gorm.DB, zeroTimestamp int) int {
+	var data struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`SELECT count(1) as count FROM player_login_log WHERE timestamp between ? and ?`)
+	err := db.Raw(sql,zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+
+// 获取该天登录的玩家数量
+func GetThatDayLoginPlayerCount(db *gorm.DB, zeroTimestamp int) int {
+	var data struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`SELECT count(1) as count FROM player WHERE last_login_time between ? and ?`)
+	err := db.Raw(sql,zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
+
+// 获取该天活跃玩家数量
+func GetThatDayActivePlayerCount(db *gorm.DB, zeroTimestamp int) int {
+	count := 0
+	data := make( [] *Player, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player WHERE last_login_time between ? and ?`)
+	err := db.Raw(sql,zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+	utils.CheckError(err)
+	for _, e := range data {
+		if e.LoginTimes >= (zeroTimestamp+86400 - e.RegTime) / 86400 {
+			count ++
+		}
+	}
+	return count
+}
+
 //获取当前在线人数
 func GetNowOnlineCount(db *gorm.DB) int {
 	var count int
 	db.Model(&Player{}).Where(&Player{IsOnline: 1}).Count(&count)
 	return count
+}
+
+//获取当前在线ip数
+func GetNowOnlineIpCount(db *gorm.DB) int {
+	var data struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`SELECT COUNT( DISTINCT last_login_ip ) as count FROM player where is_online = 1;`)
+	err := db.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
 }
 
 //获取最高在线人数
@@ -183,7 +235,6 @@ func GetRemainTask(node string) [] *RemainTask {
 				}
 			}
 		}
-
 	}
 
 	var keys [] int
@@ -566,7 +617,7 @@ func CaclARPU(totalChargeValueNum int, totalChargePlayerCount int) float32 {
 		return 0
 	}
 	if totalChargePlayerCount > 0 {
-		return float32(totalChargeValueNum) / float32(totalChargePlayerCount) / 100
+		return float32(totalChargeValueNum) / float32(totalChargePlayerCount)
 	}
 	return float32(0)
 }
@@ -606,12 +657,12 @@ func GetServerSecondChargePlayerCount(node string) int {
 }
 
 //获取区服首次付费人数
-func GetThadDayServerSecondChargePlayerCount(node string, time int) int {
+func GetThadDayServerFirstChargePlayerCount(node string, time int) int {
 	var data struct {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`select count(DISTINCT player_id) as count from charge_info_record where node = ? and is_first = 0 and charge_type = 99 and (record_time between ? and ?);`)
+		`select count(DISTINCT player_id) as count from charge_info_record where node = ? and is_first = 1 and charge_type = 99 and (record_time between ? and ?);`)
 	err := DbCharge.Raw(sql, node, time, time+86400).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count

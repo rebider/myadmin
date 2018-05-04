@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/astaxie/beego/logs"
-	"github.com/jinzhu/gorm"
+	//"github.com/jinzhu/gorm"
 	"github.com/chnzrb/myadmin/utils"
 )
 
@@ -32,22 +32,41 @@ func GetDailyRegisterStatisticsOne(node string, timestamp int) (*DailyRegisterSt
 	return data, err
 }
 
-func GetDailyRegisterStatisticsList(params *DailyRegisterStatisticsQueryParam) ([]*DailyRegisterStatistics, int64) {
-	data := make([]*DailyRegisterStatistics, 0)
-	var count int64
-	f := func(db *gorm.DB) *gorm.DB {
-		if params.StartTime > 0 {
-			return db.Where("time between ? and ?", params.StartTime, params.EndTime)
-		}
-		return db
-	}
-	//serverNode, err := GetGameServerOne(params.PlatformId, params.ServerId)
-	//if err != nil {
-	//	return nil, 0
+func GetDailyRegisterStatisticsList(params *DailyRegisterStatisticsQueryParam) []*DailyRegisterStatistics{
+	//data := make([]*DailyRegisterStatistics, 0)
+	//var count int64
+	//f := func(db *gorm.DB) *gorm.DB {
+	//	if params.StartTime > 0 {
+	//		return db.Where("time between ? and ?", params.StartTime, params.EndTime)
+	//	}
+	//	return db
 	//}
-	//params.Node = serverNode.Node
-	f(Db.Model(&DailyRegisterStatistics{}).Where(&DailyRegisterStatistics{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
-	return data, count
+	////serverNode, err := GetGameServerOne(params.PlatformId, params.ServerId)
+	////if err != nil {
+	////	return nil, 0
+	////}
+	////params.Node = serverNode.Node
+	//f(Db.Model(&DailyRegisterStatistics{}).Where(&DailyRegisterStatistics{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
+	//return data, count
+	data := make([]*DailyRegisterStatistics, 0)
+	for i := params.StartTime; i <= params.EndTime; i = i + 86400 {
+		tmpData := make([]*DailyRegisterStatistics, 0)
+		err := Db.Model(&DailyRegisterStatistics{}).Where(&DailyRegisterStatistics{Node: params.Node, Time: i}).Find(&tmpData).Error
+		utils.CheckError(err)
+		if len(tmpData) > 0 {
+			tmpE := &DailyRegisterStatistics{
+				Node: params.Node,
+				Time: i,
+			}
+			for _, e := range tmpData {
+				tmpE.RegisterCount += e.RegisterCount
+				tmpE.CreateRoleCount += e.CreateRoleCount
+				tmpE.ValidRoleCount += e.ValidRoleCount
+			}
+			data = append(data, tmpE)
+		}
+	}
+	return data
 }
 
 func UpdateDailyRegisterStatistics(node string, timestamp int) error {

@@ -32,7 +32,7 @@ func initDb() {
 	//数据库用户名
 	dbUser := beego.AppConfig.String("mysql" + "::db_user")
 	//数据库密码
-	dbPwd := beego.AppConfig.String("mysql" + "::db_pwd")
+	dbPwd := beego.AppConfig.String("mysql" + "::db_password")
 	//数据库IP
 	dbHost := beego.AppConfig.String("mysql" + "::db_host")
 	//数据库端口
@@ -50,7 +50,17 @@ func initDb() {
 }
 
 func initCenter() {
-	dsn := "root:game1234@tcp(192.168.31.100:3306)/center?charset=utf8&parseTime=True&loc=Local"
+	//数据库名称
+	dbName := beego.AppConfig.String("center_db" + "::db_name")
+	//数据库用户名
+	dbUser := beego.AppConfig.String("center_db" + "::db_user")
+	//数据库密码
+	dbPwd := beego.AppConfig.String("center_db" + "::db_password")
+	//数据库IP
+	dbHost := beego.AppConfig.String("center_db" + "::db_host")
+	//数据库端口
+	dbPort := beego.AppConfig.String("center_db" + "::db_port")
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", dbUser, dbPwd, dbHost, dbPort, dbName)
 	var err error
 	DbCenter, err = gorm.Open("mysql", dsn)
 	DbCenter.SingularTable(true)
@@ -63,7 +73,7 @@ func initCharge() {
 	//数据库用户名
 	dbUser := beego.AppConfig.String("charge_db" + "::db_user")
 	//数据库密码
-	dbPwd := beego.AppConfig.String("charge_db" + "::db_pwd")
+	dbPwd := beego.AppConfig.String("charge_db" + "::db_password")
 	//数据库IP
 	dbHost := beego.AppConfig.String("charge_db" + "::db_host")
 	//数据库端口

@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	"sort"
+	"errors"
 )
 
 func (a *User) TableName() string {
@@ -74,8 +75,11 @@ func GetUserOne(id int) (*User, error) {
 // 根据用户名密码获取单条
 func GetUserOneByAccount(account, password string) ( *User,  error) {
 	user := &User{}
-	err := Db.Where(&User{Account: account, Password: password}).First(&user).Error
-	return user, err
+	isNotFound := Db.Where(&User{Account: account, Password: password}).First(&user).RecordNotFound()
+	if isNotFound {
+		return nil, errors.New("用户名或者密码错误")
+	}
+	return user, nil
 }
 
 // 删除用户列表

@@ -42,7 +42,12 @@ func (c *BaseController) Prepare() {
 //检查错误, 失败直接终止当前请求
 func (c *BaseController) CheckError(err error, msg... string) {
 	if err != nil {
-		errMsg := fmt.Sprintf("%s %v", msg, err)
+		errMsg := ""
+		if len(msg) == 0 {
+			errMsg = fmt.Sprintf("%v", err)
+		} else {
+			errMsg = fmt.Sprintf("%s %v", msg, err)
+		}
 		logs.GetBeeLogger().Error(errMsg)
 		c.Result(enums.CodeFail, errMsg, nil)
 	}

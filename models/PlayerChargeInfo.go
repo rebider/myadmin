@@ -5,23 +5,35 @@ import (
 )
 
 type PlayerChargeInfoRecord struct {
-	PlayerId      int    `json:"playerId"`
-	PlayerName    string `json:"playerName" gorm:"-"`
-	PlatformId    int    `json:"platformId" gorm:"column:part_id"`
-	ServerId      string `json:"serverId"`
-	TotalMoney    int    `json:"totalMoney"`
-	ChargeCount   int    `json:"chargeCount"`
-	LastLoginTime int    `json:"lastLoginTime" gorm:"-"`
-	RegisterTime  int    `json:"registerTime" gorm:"-"`
+	PlayerId        int    `json:"playerId" gorm:"primary_key"`
+	PlayerName      string `json:"playerName" gorm:"-"`
+	Account         string `json:"account" gorm:"-"`
+	PlatformId      int    `json:"platformId" gorm:"column:part_id"`
+	ServerId        string `json:"serverId"`
+	TotalMoney      int    `json:"totalMoney"`
+	MaxMoney        int    `json:"maxMoney"`
+	MinMoney        int    `json:"minMoney"`
+	ChargeCount     int    `json:"chargeCount"`
+	LastLoginTime   int    `json:"lastLoginTime" gorm:"-"`
+	RegisterTime    int    `json:"registerTime" gorm:"-"`
 	LastChargeTime  int    `json:"lastChargeTime" gorm:"column:last_time"`
-	FirstChargeTime  int    `json:"firstChargeTime" gorm:"column:first_time"`
+	FirstChargeTime int    `json:"firstChargeTime" gorm:"column:first_time"`
 }
 
 type PlayerChargeDataQueryParam struct {
 	BaseQueryParam
 	PlatformId int
-	Node   string `json:"serverId"`
+	Node       string `json:"serverId"`
 }
+
+func GetPlayerChargeDataOne(playerId int) (*PlayerChargeInfoRecord, error) {
+	playerChargeInfo := &PlayerChargeInfoRecord{
+		PlayerId: playerId,
+	}
+	err := DbCharge.FirstOrInit(&playerChargeInfo).Error
+	return playerChargeInfo, err
+}
+
 
 func GetPlayerChargeDataList(params *PlayerChargeDataQueryParam) ([]*PlayerChargeInfoRecord, int64) {
 	data := make([]*PlayerChargeInfoRecord, 0)
@@ -50,6 +62,7 @@ func GetPlayerChargeDataList(params *PlayerChargeDataQueryParam) ([]*PlayerCharg
 			continue
 		}
 		e.PlayerName = player.ServerId + "." + player.Nickname
+		e.Account = player.AccId
 		e.LastLoginTime = player.LastLoginTime
 		e.RegisterTime = player.RegTime
 	}

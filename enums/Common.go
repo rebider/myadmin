@@ -22,3 +22,8 @@ const (
 	NoticeTypeClock  = 2 //定时发送
 	NoticeTypeLoop   = 3 //循环发送
 )
+
+// 盐值
+const (
+	GmSalt = "fretj9tnda3gr7t14terg4es5f4ds514f" //gm 盐值
+)

@@ -49,7 +49,12 @@ func GetGameDbByNode(node string) (gameDb *gorm.DB, err error) {
 	if err != nil {
 		return nil, err
 	}
-	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/game?charset=utf8&parseTime=True&loc=Local"
+	array := strings.Split(serverNode.Node, "@")
+	if len(array) != 2 {
+		return nil, errors.New("解析节点名字失败:" + serverNode.Node)
+	}
+	gameDbName := "game_" + array[0]
+	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/" + gameDbName +"?charset=utf8&parseTime=True&loc=Local"
 	gameDb, err = gorm.Open("mysql", dbArgs)
 	if err != nil {
 		return nil, err
@@ -123,4 +128,17 @@ func GetServerList() [] *Server {
 		}
 	}
 	return serverList
+}
+
+func TranPlayerNameSting2PlayerIdList(platformId int, playerName string) ([] int, error) {
+	playerIdList := make([] int, 0)
+	nameList := strings.Split(playerName, ",")
+	for _, name := range nameList {
+		player, err :=  GetPlayerByPlatformIdAndNickname(platformId, name)
+		if err != nil {
+			return nil, err
+		}
+		playerIdList = append(playerIdList, player.Id)
+	}
+	return playerIdList, nil
 }

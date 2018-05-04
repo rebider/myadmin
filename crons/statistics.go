@@ -20,6 +20,8 @@ func UpdateAllGameNodeDailyStatistics() {
 		utils.CheckError(err)
 		err = models.UpdateDailyRegisterStatistics(serverNode.Node, todayZeroTimestamp - 86400)
 		utils.CheckError(err)
+		err = models.UpdateDailyActiveStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		utils.CheckError(err)
 	}
 }
 

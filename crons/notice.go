@@ -4,14 +4,17 @@ import (
 	"github.com/astaxie/beego/logs"
 	"time"
 	"encoding/json"
-	"github.com/chnzrb/myadmin/proto"
+	//"github.com/chnzrb/myadmin/proto"
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/chnzrb/myadmin/models"
 	"github.com/chnzrb/myadmin/enums"
-	"github.com/golang/protobuf/proto"
-	"fmt"
+	//"github.com/golang/protobuf/proto"
+	//"fmt"
+	"encoding/base64"
+	"net/http"
+	"strings"
+	"io/ioutil"
 )
-
 
 func ClockDealAllNoticeLog() {
 	logs.Info("定时处理公告")
@@ -42,7 +45,7 @@ func DealNoticeLog(id int) {
 			}
 		} else if noticeLog.NoticeType == enums.NoticeTypeLoop {
 			// 循环发送
-			if (now - noticeLog.LastSendTime) / 60 > noticeLog.NoticeTime {
+			if (now-noticeLog.LastSendTime)/60 > noticeLog.NoticeTime {
 				isGo = true
 			}
 		}
@@ -61,52 +64,93 @@ func DealNoticeLog(id int) {
 			nodeList = models.GetAllGameNodeByPlatformId(noticeLog.PlatformId)
 		}
 
-		for _, node := range nodeList {
-			logs.Info("开始发送公告 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
-			conn, err := models.GetWsByNode(node)
-			utils.CheckError(err, fmt.Sprintf("连接游戏服websocket失败 PlatformId: %v, node: %v", noticeLog.PlatformId, node))
-			if err != nil {
-				continue
-			}
-			defer conn.Close()
-			request := gm.MSendNoticeTos{
-				Token:   proto.String(""),
-				Content: proto.String(noticeLog.Content),
-			}
-			mRequest, err := proto.Marshal(&request)
-			utils.CheckError(err, "发送公告协议失败")
-			if err != nil {
-				continue
-			}
-			_, err = conn.Write(utils.Packet(9905, mRequest))
-			utils.CheckError(err)
-			if err != nil {
-				continue
-			}
-			var receive = make([]byte, 100, 100)
-			n, err := conn.Read(receive)
-			utils.CheckError(err)
-			if err != nil {
-				continue
-			}
-			response := &gm.MSendNoticeToc{}
-			data := receive[5:n]
-			err = proto.Unmarshal(data, response)
-			utils.CheckError(err)
-			if err != nil {
-				continue
-			}
-			if *response.Result == gm.MSendNoticeToc_success {
-				logs.Info("发送公告成功 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
-			} else {
-				logs.Info("发送公告失败 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
-			}
+		var result struct {
+			ErrorCode int
 		}
-		if noticeLog.NoticeType != enums.NoticeTypeLoop {
-			noticeLog.Status = 1
+
+		var request struct {
+			NodeList [] string `json:"nodeList"`
+			Content  string    `json:"content"`
 		}
-		noticeLog.LastSendTime = now
-		err = models.Db.Save(&noticeLog).Error
-		utils.CheckError(err, "保存公告日志失败")
+		request.NodeList = nodeList
+		request.Content = noticeLog.Content
+
+		url := utils.GetGmURL() + "/send_notice"
+		data, err := json.Marshal(request)
+		utils.CheckError(err)
+		sign := utils.String2md5(string(data) + enums.GmSalt)
+		base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+		requestBody := "data=" + base64Data + "&sign=" + sign
+		resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
+		utils.CheckError(err)
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
+		responseBody, err := ioutil.ReadAll(resp.Body)
+		utils.CheckError(err)
+		if err != nil {
+			return
+		}
+		logs.Info("result:%v", string(responseBody))
+
+		err = json.Unmarshal(responseBody, &result)
+
+		utils.CheckError(err)
+		if err != nil {
+			return
+		}
+		if result.ErrorCode == 0 {
+			logs.Info("发送公告成功 PlatformId: %v, id: %v", noticeLog.PlatformId, noticeLog.Id)
+		} else {
+			logs.Info("发送公告失败 PlatformId: %v, id: %v", noticeLog.PlatformId, noticeLog.Id)
+		}
+
+		//for _, node := range nodeList {
+		//	logs.Info("开始发送公告 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
+		//	conn, err := models.GetWsByNode(node)
+		//	utils.CheckError(err, fmt.Sprintf("连接游戏服websocket失败 PlatformId: %v, node: %v", noticeLog.PlatformId, node))
+		//	if err != nil {
+		//		continue
+		//	}
+		//	defer conn.Close()
+		//	request := gm.MSendNoticeTos{
+		//		Token:   proto.String(""),
+		//		Content: proto.String(noticeLog.Content),
+		//	}
+		//	mRequest, err := proto.Marshal(&request)
+		//	utils.CheckError(err, "发送公告协议失败")
+		//	if err != nil {
+		//		continue
+		//	}
+		//	_, err = conn.Write(utils.Packet(9905, mRequest))
+		//	utils.CheckError(err)
+		//	if err != nil {
+		//		continue
+		//	}
+		//	var receive = make([]byte, 100, 100)
+		//	n, err := conn.Read(receive)
+		//	utils.CheckError(err)
+		//	if err != nil {
+		//		continue
+		//	}
+		//	response := &gm.MSendNoticeToc{}
+		//	data := receive[5:n]
+		//	err = proto.Unmarshal(data, response)
+		//	utils.CheckError(err)
+		//	if err != nil {
+		//		continue
+		//	}
+		//	if *response.Result == gm.MSendNoticeToc_success {
+		//		logs.Info("发送公告成功 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
+		//	} else {
+		//		logs.Info("发送公告失败 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
+		//	}
 	}
+	if noticeLog.NoticeType != enums.NoticeTypeLoop {
+		noticeLog.Status = 1
+	}
+	noticeLog.LastSendTime = now
+	err = models.Db.Save(&noticeLog).Error
+	utils.CheckError(err, "保存公告日志失败")
 }

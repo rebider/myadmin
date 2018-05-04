@@ -55,9 +55,9 @@ func (c *ChargeController) ChargeStatisticsList() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("获取充值统计:%+v", params)
-	data, total := models.GetDailyChargeStatisticsList(&params)
+	data:= models.GetDailyChargeStatisticsList(&params)
 	result := make(map[string]interface{})
-	result["total"] = total
+	//result["total"] = total
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取充值统计", result)
 }

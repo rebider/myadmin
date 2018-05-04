@@ -6,8 +6,12 @@ import (
 	"github.com/chnzrb/myadmin/models"
 	"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
-	"github.com/chnzrb/myadmin/proto"
-	"github.com/golang/protobuf/proto"
+	//"github.com/chnzrb/myadmin/proto"
+	//"github.com/golang/protobuf/proto"
+	"encoding/base64"
+	"net/http"
+	"strings"
+	"io/ioutil"
 )
 
 type PlayerController struct {
@@ -55,41 +59,67 @@ func (c *PlayerController) One() {
 // 设置帐号类型
 func (c *PlayerController) SetAccountType() {
 	var params struct {
-		PlatformId int
-		PlayerId   int
-		ServerId   string
-		Type int32
+		PlatformId int	`json:"platformId"`
+		PlayerId   int `json:"playerId"`
+		ServerId   string `json:"serverId"`
+		Type int32 `json:"type"`
+	}
+	var result struct {
+		ErrorCode int
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	utils.CheckError(err)
+	c.CheckError(err)
 	logs.Info("设置帐号类型:%+v", params)
 
-	//player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
-	//c.CheckError(err)
+	request, err := json.Marshal(params)
+	c.CheckError(err)
 
 	_, err = models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err)
-	//serverId := player.ServerId
-	request := gm.MSetAccountTypeTos{Token: proto.String(""), Type: proto.Int32(params.Type), PlayerId: proto.Int32(int32(params.PlayerId))}
-	mRequest, err := proto.Marshal(&request)
+
+
+	url := utils.GetGmURL() + "/set_account_type"
+	data := string(request)
+	sign := utils.String2md5(data + enums.GmSalt)
+	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+	requestBody := "data=" + base64Data+ "&sign=" + sign
+	resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
 	c.CheckError(err)
 
-	conn, err := models.GetWsByPlatformIdAndSid(params.PlatformId, params.ServerId)
-	c.CheckError(err)
-	defer conn.Close()
-	_, err = conn.Write(utils.Packet(9907, mRequest))
-	c.CheckError(err)
-	var receive = make([]byte, 100, 100)
-	n, err := conn.Read(receive)
-	c.CheckError(err)
-	response := &gm.MSetAccountTypeToc{}
-	data := receive[5:n]
-	err = proto.Unmarshal(data, response)
+	defer resp.Body.Close()
+	responseBody, err := ioutil.ReadAll(resp.Body)
 	c.CheckError(err)
 
-	if *response.Result == gm.MSetAccountTypeToc_success {
-		c.Result(enums.CodeSuccess, "设置帐号类型成功", 0)
-	} else {
+	logs.Info("result:%v", string(responseBody))
+
+	err = json.Unmarshal(responseBody, &result)
+
+	c.CheckError(err)
+	if result.ErrorCode != 0 {
 		c.Result(enums.CodeFail, "设置帐号类型失败", 0)
 	}
+	c.Result(enums.CodeSuccess, "设置帐号类型成功", 0)
+	//serverId := player.ServerId
+	//request := gm.MSetAccountTypeTos{Token: proto.String(""), Type: proto.Int32(params.Type), PlayerId: proto.Int32(int32(params.PlayerId))}
+	//mRequest, err := proto.Marshal(&request)
+	//c.CheckError(err)
+	//
+	//conn, err := models.GetWsByPlatformIdAndSid(params.PlatformId, params.ServerId)
+	//c.CheckError(err)
+	//defer conn.Close()
+	//_, err = conn.Write(utils.Packet(9907, mRequest))
+	//c.CheckError(err)
+	//var receive = make([]byte, 100, 100)
+	//n, err := conn.Read(receive)
+	//c.CheckError(err)
+	//response := &gm.MSetAccountTypeToc{}
+	//data := receive[5:n]
+	//err = proto.Unmarshal(data, response)
+	//c.CheckError(err)
+	//
+	//if *response.Result == gm.MSetAccountTypeToc_success {
+	//	c.Result(enums.CodeSuccess, "设置帐号类型成功", 0)
+	//} else {
+	//	c.Result(enums.CodeFail, "设置帐号类型失败", 0)
+	//}
 }

@@ -66,7 +66,8 @@ func (c *BackgroundController) Charge() {
 	)
 	sign := utils.String2md5(args + "fa9274fd68cf8991953b186507840e5e")
 	logs.Info("sign:%v", sign)
-	url := "http://192.168.31.100:9999/gm_charge?" + args + "&sign=" + sign
+
+	url := utils.GetChargeURL() + "/gm_charge?" + args + "&sign=" + sign
 
 	resp, err := http.Get(url)
 	c.CheckError(err)

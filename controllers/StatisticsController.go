@@ -18,9 +18,9 @@ func (c *StatisticsController) OnlineStatisticsList() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("获取在线统计:%+v", params)
-	data, total := models.GetDailyOnlineStatisticsList(&params)
+	data := models.GetDailyOnlineStatisticsList(&params)
 	result := make(map[string]interface{})
-	result["total"] = total
+	//result["total"] = total
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取在线统计", result)
 }
@@ -30,12 +30,26 @@ func (c *StatisticsController) RegisterStatisticsList() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("获取注册统计:%+v", params)
-	data, total := models.GetDailyRegisterStatisticsList(&params)
+	data:= models.GetDailyRegisterStatisticsList(&params)
 	result := make(map[string]interface{})
-	result["total"] = total
+	//result["total"] = total
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取注册统计", result)
 }
+
+//注册统计
+func (c *StatisticsController) ActiveStatisticsList() {
+	var params models.DailyActiveStatisticsQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("获取活跃统计:%+v", params)
+	data := models.GetDailyActiveStatisticsList(&params)
+	result := make(map[string]interface{})
+	//result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取活跃统计", result)
+}
+
 //消费分析
 func (c *StatisticsController) ConsumeAnalysis() {
 	var params models.PropConsumeStatisticsQueryParam

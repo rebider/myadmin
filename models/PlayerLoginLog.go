@@ -62,6 +62,7 @@ func GetPlayerLoginLogList(params *PlayerLoginLogQueryParam) ([]*PlayerLoginLog,
 	})).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	for _,e := range data {
 		e.PlayerName = GetPlayerName(gameDb, e.PlayerId)
+		e.Ip = e.Ip + "(" + utils.GetIpLocation(e.Ip) + ")"
 	}
 	return data, count
 }

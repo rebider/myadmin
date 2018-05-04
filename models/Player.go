@@ -9,24 +9,27 @@ import (
 )
 
 type Player struct {
-	Id              int    `json:"id"`
-	AccId           string `json:"accId"`
-	Nickname        string `json:"nickname"`
-	Sex             int    `json:"sex"`
-	ServerId        string `json:"serverId"`
-	ForbidType      int    `json:"forbidType"`
-	ForbidTime      int    `json:"forbidTime"`
-	RegTime         int    `json:"regTime"`
-	LastLoginTime   int    `json:"lastLoginTime"`
-	LastOfflineTime int    `json:"lastOfflineTime"`
-	TotalOnlineTime int    `json:"totalOnlineTime"`
-	LastLoginIp     string `json:"lastLoginIp"`
-	IsOnline        int    `json:"isOnline"`
-	Type            int    `json:"type"`
-	Level           int    `json:"level" gorm:"-"`
-	VipLevel        int    `json:"vipLevel" gorm:"-"`
-	Power           int    `json:"power" gorm:"-"`
-	FactionName     string `json:"factionName" gorm:"-"`
+	Id               int    `json:"id"`
+	AccId            string `json:"accId"`
+	Nickname         string `json:"nickname"`
+	Sex              int    `json:"sex"`
+	ServerId         string `json:"serverId"`
+	ForbidType       int    `json:"forbidType"`
+	ForbidTime       int    `json:"forbidTime"`
+	RegTime          int    `json:"regTime"`
+	LoginTimes       int    `json:"loginTimes"`
+	LastLoginTime    int    `json:"lastLoginTime"`
+	LastOfflineTime  int    `json:"lastOfflineTime"`
+	TotalOnlineTime  int    `json:"totalOnlineTime"`
+	LastLoginIp      string `json:"lastLoginIp"`
+	IsOnline         int    `json:"isOnline"`
+	Type             int    `json:"type"`
+	Level            int    `json:"level" gorm:"-"`
+	Ingot            int    `json:"ingot" gorm:"-"`
+	TotalChargeMoney int    `json:"totalChargeMoney" gorm:"-"`
+	VipLevel         int    `json:"vipLevel" gorm:"-"`
+	Power            int    `json:"power" gorm:"-"`
+	FactionName      string `json:"factionName" gorm:"-"`
 }
 
 type PlayerQueryParam struct {
@@ -67,6 +70,8 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		sortOrder = "vip_level"
 	case "power":
 		sortOrder = "power"
+	case "totalOnlineTime":
+		sortOrder = "total_online_time"
 	}
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
@@ -112,6 +117,11 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	for _, e := range data {
 		e.FactionName = GetPlayerFactionName(gameDb, e.Id)
 		e.Nickname = e.ServerId + "." + e.Nickname
+		e.Ingot = GetPlayerIngot(gameDb, e.Id)
+		playerChargeData, err := GetPlayerChargeDataOne(e.Id)
+		utils.CheckError(err)
+		e.TotalChargeMoney = playerChargeData.TotalMoney
+		e.LastLoginIp = e.LastLoginIp + "(" + utils.GetIpLocation(e.LastLoginIp) + ")"
 	}
 	return data, count
 }
@@ -202,8 +212,9 @@ type PlayerDetail struct {
 	Level    int `json:"level"`
 	TaskId   int `json:"taskId"`
 	//FactionId        int `json:"-"`
-	FactionName      string         `json:"factionName"`
-	TitleId          int
+	FactionName string `json:"factionName"`
+	TitleId     int
+	//TotalChargeMoney int            `json:"totalChargeMoney"`
 	Attack           int            `json:"attack"`
 	MaxHp            int            `json:"maxHp"`
 	Defense          int            `json:"defense"`
@@ -213,11 +224,13 @@ type PlayerDetail struct {
 	Power            int            `json:"power"`
 	LastWorldSceneId int            `json:"lastWorldSceneId"`
 	PlayerPropList   [] *PlayerProp `json:"playerPropList"`
+	EquipList        [] *PlayerProp `json:"equipList"`
 }
 
 type PlayerProp struct {
-	PropType int `json:"propType"`
-	PropId   int `json:"propId"`
+	PlayerId int `json:"playerId" gorm:"primary_key"`
+	PropType int `json:"propType" gorm:"primary_key"`
+	PropId   int `json:"propId" gorm:"primary_key"`
 	Num      int `json:"num"`
 }
 
@@ -225,6 +238,15 @@ func GetPlayerPropList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
 	playerPropList := make([]*PlayerProp, 0)
 	sql := fmt.Sprintf(
 		`SELECT * FROM player_prop WHERE player_id = ? `)
+	err := gameDb.Raw(sql, playerId).Scan(&playerPropList).Error
+
+	return playerPropList, err
+}
+
+func GetPlayerEquipList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
+	playerPropList := make([]*PlayerProp, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_equip_pos WHERE player_id = ? `)
 	err := gameDb.Raw(sql, playerId).Scan(&playerPropList).Error
 
 	return playerPropList, err
@@ -250,6 +272,10 @@ func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDeta
 	utils.CheckError(err)
 	playerDetail.FactionName = GetPlayerFactionName(gameDb, playerId)
 	utils.CheckError(err)
+	playerChargeData, err := GetPlayerChargeDataOne(playerId)
+	utils.CheckError(err)
+	playerDetail.TotalChargeMoney = playerChargeData.TotalMoney
+	playerDetail.LastLoginIp = playerDetail.LastLoginIp + "(" + utils.GetIpLocation(playerDetail.LastLoginIp) + ")"
 	return playerDetail, err
 }
 
@@ -273,6 +299,17 @@ func GetPlayerByPlatformIdAndNickname(platformId int, nickname string) (*Player,
 	}
 	player.Nickname = player.ServerId + "." + player.Nickname
 	return player, err
+}
+
+func GetPlayerIngot(gameDb *gorm.DB, playerId int) int {
+	playerProp := &PlayerProp{
+		PlayerId: playerId,
+		PropType: 1,
+		PropId:   2,
+	}
+	err := gameDb.FirstOrInit(&playerProp).Error
+	utils.CheckError(err)
+	return playerProp.Num
 }
 
 //func GetPlayerByNodeAndNickname(node string, serverId string, nickname string) (*Player, error) {
@@ -308,6 +345,7 @@ type ServerOnlineStatistics struct {
 	TodayCreateRole             int       `json:"todayCreateRole"`
 	TodayRegister               int       `json:"todayRegister"`
 	OnlineCount                 int       `json:"onlineCount"`
+	OnlineIpCount               int       `json:"onlineIpCount"`
 	MaxOnlineCount              int       `json:"maxOnlineCount"`
 	AverageOnlineCount          float32   `json:"averageOnlineCount"`
 	TodayOnlineList             [] string `json:"todayOnlineList"`
@@ -340,6 +378,7 @@ func GetServerOnlineStatistics(platformId int, node string) (*ServerOnlineStatis
 		TodayCreateRole:             GetTodayCreateRoleCount(gameDb),
 		TodayRegister:               GetTodayRegister(gameDb),
 		OnlineCount:                 GetNowOnlineCount(gameDb),
+		OnlineIpCount:               GetNowOnlineIpCount(gameDb),
 		MaxOnlineCount:              GetMaxOnlineCount(node),
 		TodayOnlineList:             get24hoursOnlineCount(node, todayZeroTimestamp),
 		YesterdayOnlineList:         get24hoursOnlineCount(node, yesterdayZeroTimestamp),
