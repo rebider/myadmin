@@ -8,22 +8,19 @@ import (
 	"github.com/astaxie/beego/logs"
 	"encoding/binary"
 	"time"
-	//"fmt"
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
 )
 
+// 检查是否有错误
 func CheckError(err error, msg ... string) {
 	if err != nil {
-		//_, file, line, _ := runtime.Caller(1)
-		//fileBaseName := filepath.Base(file)
 		logs.GetBeeLogger().Error("%s %v", msg, err)
-		//fmt.Printf("[ERROR]%s:%d %s %v", fileBaseName, line, msg, err)
 	}
 }
 
-func Nodetool(arg ... string) (string, error) {
+func NodeTool(arg ... string) (string, error) {
 	centerNode := beego.AppConfig.String("node::center")
 	cookie := beego.AppConfig.String("node::cookie")
 	commandArgs := []string{
@@ -49,7 +46,6 @@ func Cmd(commandName string, params []string) (string, error) {
 	err := cmd.Start()
 	if err != nil {
 		panic(err)
-		//log.Fatal(err)
 	}
 
 	err = cmd.Wait()
@@ -96,25 +92,29 @@ func GetYesterdayZeroTimestamp() int {
 	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return int(tm1.Unix()) - 86400
 }
+// 获取该日0点时间戳
 func GetThatZeroTimestamp(timestamp int64) int {
 	t := time.Unix(timestamp, 0)
 	t1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return int(t1.Unix())
 }
+// 获取当前时间戳
 func GetTimestamp() int {
 	return int(time.Now().Unix())
 }
 
+// 获取gm 地址
 func GetGmURL() string {
 	url := beego.AppConfig.String("gm" + "::url")
 	return url
 }
-
+// 获取充值地址
 func GetChargeURL() string {
 	url := beego.AppConfig.String("charge_url" + "::url")
 	return url
 }
 
+// 获取ip归属地
 func GetIpLocation(ip string) string {
 	url := "http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=" + ip
 	var result struct {

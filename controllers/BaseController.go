@@ -7,11 +7,13 @@ import (
 	"github.com/chnzrb/myadmin/models"
 	"github.com/astaxie/beego/logs"
 	"github.com/astaxie/beego"
+	"github.com/chnzrb/myadmin/utils"
+	"strconv"
 )
 
 type BaseController struct {
 	beego.Controller
-	curUser        models.User //当前用户信息
+	curUser models.User //当前用户信息
 }
 
 //func (c *BaseController) AllowCross() {
@@ -25,6 +27,8 @@ func (c *BaseController) Prepare() {
 	controllerName, actionName := c.GetControllerAndAction()
 
 	user := c.GetSession("user")
+	//c.SessionRegenerateID()
+	logs.Info("prepare:%s", c.CruSession.SessionID())
 	if user != nil {
 		c.curUser = user.(models.User)
 	}
@@ -39,8 +43,9 @@ func (c *BaseController) Prepare() {
 		c.checkAuthor()
 	}
 }
+
 //检查错误, 失败直接终止当前请求
-func (c *BaseController) CheckError(err error, msg... string) {
+func (c *BaseController) CheckError(err error, msg ... string) {
 	if err != nil {
 		errMsg := ""
 		if len(msg) == 0 {
@@ -58,21 +63,32 @@ func (c *BaseController) checkLogin() {
 	if c.IsLogin() == false {
 		c.Result(enums.CodeNoLogin, "未登录", "")
 	}
+	var sessionId string
+	utils.GetCache(strconv.Itoa(c.curUser.Id), &sessionId)
+	IsAllowMultipleLogin := beego.AppConfig.DefaultBool("is_allow_multiple_login", false)
+	if IsAllowMultipleLogin == false {
+		// 检测帐号 是否在多个地方登录
+		if sessionId != c.CruSession.SessionID() {
+			c.Result(enums.CodeLoginOther, "帐号在其他地方登录", "")
+		}
+	}
+
+	//logs.Info("checkLogin:%s, %s",sessionId, c.CruSession.SessionID())
 }
 
 //是否登录
-func (c *BaseController) IsLogin() bool{
+func (c *BaseController) IsLogin() bool {
 	return c.curUser.Id > 0
 }
 
 //是否帐号有效
-func (c *BaseController) IsAccountEnable() bool{
+func (c *BaseController) IsAccountEnable() bool {
 	return c.curUser.Status == enums.Enabled
 }
 
 //权限验证
 func (c *BaseController) checkAuthor() {
-	ignoreAuthorMap := map[string] [] string{
+	ignoreAuthorMap := map[string][] string{
 		"LoginController": {"*"},
 		"UserController":  {"ChangePassword", "Info"},
 	}
@@ -96,7 +112,7 @@ func (c *BaseController) checkAuthor() {
 
 // 判断某 Controller.Action 当前用户是否有权访问
 func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
-	if c.IsLogin() == false || c.IsAccountEnable() == false{
+	if c.IsLogin() == false || c.IsAccountEnable() == false {
 		return false
 	}
 	user := c.GetSession("user")
@@ -108,7 +124,7 @@ func (c *BaseController) checkActionAuthor(ctrlName, ActName string) bool {
 		}
 		//遍历用户有权限的资源列表
 		for _, v := range v.ResourceUrlForList {
-			if v == ctrlName+"."+ActName || v == ctrlName+".*"{
+			if v == ctrlName+"."+ActName || v == ctrlName+".*" {
 				return true
 			}
 		}
@@ -126,12 +142,14 @@ func (c *BaseController) setUser2Session(userId int) error {
 		m.ResourceUrlForList = append(m.ResourceUrlForList, strings.TrimSpace(item.UrlFor))
 	}
 	c.SetSession("user", *m)
+
+	utils.SetCache(strconv.Itoa(m.Id), c.CruSession.SessionID(), 100)
 	return nil
 }
 
 //请求返回json
 func (c *BaseController) Result(code enums.ResultCode, msg string, data interface{}) {
-	r := &models.Result{Code:code, Data:data, Msg:msg}
+	r := &models.Result{Code: code, Data: data, Msg: msg}
 	c.Data["json"] = r
 	c.ServeJSON()
 	c.StopRun()

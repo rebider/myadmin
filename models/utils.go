@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/chnzrb/myadmin/utils"
 	"strconv"
-	//"time"
 	"sort"
 	"strings"
 	"errors"
@@ -28,7 +27,7 @@ func GetThatDayCreateRolePlayerIdList(db *gorm.DB, zeroTimestamp int) [] int {
 	return idList
 }
 
-// 该玩家某天是否登录过
+// 是否该玩家某天登录过
 func IsThatDayPlayerLogin(db *gorm.DB, zeroTimestamp int, playerId int) bool {
 	var data struct {
 		Count int
@@ -37,7 +36,6 @@ func IsThatDayPlayerLogin(db *gorm.DB, zeroTimestamp int, playerId int) bool {
 		`SELECT count(1) as count FROM player_login_log WHERE player_id = ? and timestamp between ? and ?`)
 	err := db.Raw(sql, playerId, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
 	utils.CheckError(err)
-	//logs.Info("IsThatDayPlayerLogin:%v", data.Count)
 	if data.Count == 0 {
 		return false
 	}

@@ -7,7 +7,8 @@ const (
 	CodeFail         = 1     //前端 弹窗提示
 	CodeFail2        = 2     //前端 不主动弹窗提示
 	CodeUnauthorized = 401   //未授权访问
-	CodeNoLogin      = 50014 //未登录
+	CodeNoLogin      = 9 //未登录
+	CodeLoginOther      = 10 //在其他地方登录
 )
 
 const (

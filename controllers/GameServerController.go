@@ -33,7 +33,7 @@ func (c *GameServerController) Edit() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err, "编辑游戏服")
 	logs.Info("编辑游戏服:%+v", m)
-	out, err := utils.Nodetool(
+	out, err := utils.NodeTool(
 		"mod_server_mgr",
 		"add_game_server",
 		strconv.Itoa(m.PlatformId),
@@ -54,7 +54,7 @@ func (c *GameServerController) Delete() {
 
 	for _, id := range ids {
 
-		out, err := utils.Nodetool(
+		out, err := utils.NodeTool(
 			"mod_server_mgr",
 			"delete_game_server",
 			"1",

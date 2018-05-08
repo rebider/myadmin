@@ -14,6 +14,7 @@ import (
 // @TermsOfServiceUrl http://www.horizon.ai/
 // @License Apache 2.0
 // @LicenseUrl http://www.apache.org/licenses/LICENSE-2.0.html
+
 func init() {
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
 		//AllowAllOrigins:  true,
