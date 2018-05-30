@@ -62,11 +62,12 @@ func (c *ForbidController) SetForbid() {
 	c.CheckError(err)
 
 
-	data := fmt.Sprintf("platform_id=%d&server_id=%s&player_id=%d&type=%d&sec=%d", params.PlatformId, params.ServerId, params.PlayerId, params.Type, params.Sec)
+	data := fmt.Sprintf("player_id=%d&type=%d&sec=%d", params.PlayerId, params.Type, params.Sec)
 	sign := utils.String2md5(data + enums.GmSalt)
 	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-	url := utils.GetGmURL() + "/set_disable?" + "data=" + base64Data+ "&sign=" + sign
+	url := models.GetGameURLByPlatformIdAndSid(params.PlatformId, params.ServerId) + "/set_disable?" + "data=" + base64Data+ "&sign=" + sign
 
+	logs.Info("url:%s", url)
 	resp, err := http.Get(url)
 	c.CheckError(err)
 

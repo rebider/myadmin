@@ -33,6 +33,13 @@ func (c *GameServerController) Edit() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err, "编辑游戏服")
 	logs.Info("编辑游戏服:%+v", m)
+	if m.IsAdd == 1 && models.IsGameServerExists(m.PlatformId, m.Sid){
+		c.Result(enums.CodeFail, "游戏服已经存在", m.Node)
+	}
+	if m.IsAdd == 0 && models.IsGameServerExists(m.PlatformId, m.Sid) == false{
+		c.Result(enums.CodeFail, "游戏服不存在", m.Node)
+	}
+
 	out, err := utils.NodeTool(
 		"mod_server_mgr",
 		"add_game_server",

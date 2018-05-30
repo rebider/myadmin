@@ -26,7 +26,7 @@ func (c *LoginController) Login() {
 	if len(account) == 0 || len(password) == 0 {
 		c.Result(enums.CodeFail, "请输入用户名和密码", "")
 	}
-	password = utils.String2md5(password)
+	password = utils.String2md5(enums.PasswordSalt + password)
 	user, err := models.GetUserOneByAccount(account)
 	c.CheckError(err)
 	//c.CheckError(err)
@@ -50,13 +50,15 @@ func (c *LoginController) Login() {
 	if user.Status == enums.Disabled {
 		c.Result(enums.CodeFail, "用户被禁用，请联系管理员", "")
 	}
-	//保存用户信息到session
-	c.setUser2Session(user.Id)
-	logs.Info("登录成功:%v, %v, %v", user.Id, c.GetSession("user"), c.curUser.Id)
+
 
 	//更新用户登录时间
 	err = models.Db.Model(&user).Updates(&models.User{LastLoginIp: c.Ctx.Input.IP(), LastLoginTime: int(time.Now().Unix())}).Error
 	c.CheckError(err)
+
+	//保存用户信息到session
+	c.setUser2Session(user.Id)
+	logs.Info("登录成功:%v, %v, %v", user.Id, c.GetSession("user"), c.curUser.Id)
 
 	c.Result(enums.CodeSuccess, "登录成功",
 		struct {

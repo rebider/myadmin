@@ -15,7 +15,7 @@ type UserController struct {
 
 func (c *UserController) Info() {
 	m := c.curUser
-	platformList, err := models.GetPlatformList("data/json/Platform.json")
+	platformList, err := models.GetPlatformList()
 	utils.CheckError(err)
 	gameServerList := models.GetServerList()
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
@@ -60,7 +60,7 @@ func (c *UserController) Edit() {
 		m.RoleUserRel = append(m.RoleUserRel, &relation)
 	}
 	if m.Id == 0 {
-		m.Password = utils.String2md5(m.ModifyPassword)
+		m.Password = utils.String2md5(enums.PasswordSalt + m.ModifyPassword)
 		err = models.Db.Save(&m).Error
 		c.CheckError(err, "添加用户失败")
 	} else {
@@ -71,7 +71,7 @@ func (c *UserController) Edit() {
 			//密码为空则不修改
 			m.Password = oM.Password
 		} else {
-			m.Password = utils.String2md5(m.Password)
+			m.Password = utils.String2md5(enums.PasswordSalt + m.Password)
 		}
 		err = models.Db.Save(&m).Error
 		c.CheckError(err, "保存用户失败")
@@ -102,14 +102,14 @@ func (c *UserController) ChangePassword() {
 	Id := c.curUser.Id
 	user, err := models.GetUserOne(Id)
 	c.CheckError(err, "未找到该用户")
-	md5str := utils.String2md5(params.OldPwd)
+	md5str := utils.String2md5(enums.PasswordSalt +  params.OldPwd)
 	if user.Password != md5str {
 		c.Result(enums.CodeFail, "原密码错误", "")
 	}
 	if len(params.NewPwd) == 0 {
 		c.Result(enums.CodeFail, "请输入新密码", "")
 	}
-	user.Password = utils.String2md5(params.NewPwd)
+	user.Password = utils.String2md5(enums.PasswordSalt + params.NewPwd)
 	err = models.Db.Model(&user).Updates(models.User{Password: user.Password}).Error
 	c.CheckError(err, "保存失败")
 	c.setUser2Session(Id)

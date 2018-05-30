@@ -78,8 +78,9 @@ func (c *PlayerController) SetAccountType() {
 	c.CheckError(err)
 
 
-	url := utils.GetGmURL() + "/set_account_type"
+	url := models.GetGameURLByPlatformIdAndSid(params.PlatformId, params.ServerId) + "/set_account_type"
 	data := string(request)
+	logs.Info("url:%s", url)
 	sign := utils.String2md5(data + enums.GmSalt)
 	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
 	requestBody := "data=" + base64Data+ "&sign=" + sign

@@ -27,4 +27,5 @@ const (
 // 盐值
 const (
 	GmSalt = "fretj9tnda3gr7t14terg4es5f4ds514f" //gm 盐值
+	PasswordSalt = "fdsafafa4cw78c8qwcwce8v7rwc7"
 )

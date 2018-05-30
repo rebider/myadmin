@@ -32,7 +32,12 @@ func NodeTool(arg ... string) (string, error) {
 		"rpc",
 	}
 	for _, v := range arg {
-		commandArgs = append(commandArgs, v)
+		if v == "" {
+			commandArgs = append(commandArgs, "''")
+		} else {
+			commandArgs = append(commandArgs, v)
+		}
+
 	}
 	out, err := Cmd("escript", commandArgs)
 	return out, err

@@ -13,7 +13,8 @@ type Platform struct {
 }
 
 
-func GetPlatformList(filename string)([] *Platform, error) {
+func GetPlatformList()([] *Platform, error) {
+	filename := "views/static/json/Platform.json"
 	bytes, err := ioutil.ReadFile(filename)
 	list := make([] *Platform, 0)
 	if err != nil {

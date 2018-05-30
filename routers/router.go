@@ -3,8 +3,9 @@ package routers
 import (
 	"github.com/chnzrb/myadmin/controllers"
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/plugins/cors"
+	//"github.com/astaxie/beego/plugins/cors"
 	"github.com/astaxie/beego/context"
+	"github.com/astaxie/beego/plugins/cors"
 )
 
 // @APIVersion 1.0.0
@@ -16,39 +17,36 @@ import (
 // @LicenseUrl http://www.apache.org/licenses/LICENSE-2.0.html
 
 func init() {
-	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
-		//AllowAllOrigins:  true,
-		AllowOrigins:     []string{"http://localhost:9528"},
-		AllowMethods:     []string{"*"},
-		AllowHeaders:     []string{"*", "Origin", "Authorization", "Cookie", "Host", "Referer", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type", "x-token"},
-		ExposeHeaders:    []string{"*", "Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
-		AllowCredentials: true,
-	}))
+	if beego.BConfig.RunMode == "dev" {
+		beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+			//AllowAllOrigins:  true,
+			AllowOrigins:     []string{"http://localhost:9528"},
+			AllowMethods:     []string{"*"},
+			AllowHeaders:     []string{"*", "Origin", "Authorization", "Cookie", "Host", "Referer", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type", "x-token"},
+			ExposeHeaders:    []string{"*", "Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
+			AllowCredentials: true,
+		}))
+		beego.SetStaticPath("/swagger", "swagger")
+	}
+
 	var FilterNoCache = func(ctx *context.Context) {
 		ctx.Output.Header("Cache-Control", "no-cache, no-store")
 		ctx.Output.Header("Pragma", "no-cache")
 		ctx.Output.Header("Expires", "0")
 	}
 	beego.InsertFilter("*", beego.BeforeStatic, FilterNoCache)
-	beego.InsertFilter("*", beego.BeforeStatic, cors.Allow(&cors.Options{
-		//AllowAllOrigins:  true,
-		AllowOrigins:     []string{"http://localhost:9528"},
-		AllowMethods:     []string{"*"},
-		AllowHeaders:     []string{"*", "Origin", "Authorization", "Cookie", "Host", "Referer", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type", "x-token"},
-		ExposeHeaders:    []string{"*", "Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
-		AllowCredentials: true,
-	}))
-	beego.SetStaticPath("/static", "views/static")
-	beego.SetStaticPath("/swagger", "swagger")
 
-	ns := beego.NewNamespace("/v2",
-		beego.NSNamespace("/resource",
-			beego.NSInclude(
-				&controllers.ResourceController{},
-			),
-		),
-	)
-	beego.AddNamespace(ns)
+
+	beego.SetStaticPath("/static", "views/static")
+	beego.SetStaticPath("/", "views")
+	//ns := beego.NewNamespace("/v2",
+	//	beego.NSNamespace("/resource",
+	//		beego.NSInclude(
+	//			&controllers.ResourceController{},
+	//		),
+	//	),
+	//)
+	//beego.AddNamespace(ns)
 
 	//角色
 	beego.Router("/role/list", &controllers.RoleController{}, "*:List")

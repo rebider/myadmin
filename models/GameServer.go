@@ -17,6 +17,10 @@ type GameServer struct {
 	Sid        string `gorm:"primary_key" json:"serverId"`
 	Desc       string `json:"desc"`
 	Node       string `json:"node"`
+	State      int `gorm:"-" json:"state"`
+	OpenTime   int `gorm:"-" json:"openTime"`
+	ZoneNode   string `gorm:"-" json:"zoneNode"`
+	IsAdd   int `gorm:"-" json:"isAdd"`
 }
 
 func (t *GameServer) TableName() string {
@@ -50,6 +54,16 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 		Node:       params.Node,
 	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
 	utils.CheckError(err)
+	for _, e := range data {
+		serverNode, err := GetServerNode(e.Node)
+		utils.CheckError(err)
+		if err == nil {
+			e.State = serverNode.State
+			e.OpenTime = serverNode.OpenTime
+			e.ZoneNode = serverNode.ZoneNode
+		}
+
+	}
 	return data, count
 }
 
@@ -62,27 +76,37 @@ func GetGameServerOne(platformId int, id string) (*GameServer, error) {
 	err := DbCenter.First(&gameServer).Error
 	return gameServer, err
 }
+
+func IsGameServerExists(platformId int, id string) bool {
+	gameServer := &GameServer{
+		Sid:        id,
+		PlatformId: platformId,
+	}
+	return ! DbCenter.First(&gameServer).RecordNotFound()
+}
+
+
 // 获取该节点关联的所有游戏服
 func GetGameServerByNode(node string) [] *GameServer {
 	data := make([]*GameServer, 0)
 	err := DbCenter.Model(&GameServer{}).Where(&GameServer{
-		Node:node,
+		Node: node,
 	}).Find(&data).Error
 	utils.CheckError(err)
 	return data
 }
-func GetGameServerIdListStringByNode(node string)  string {
+func GetGameServerIdListStringByNode(node string) string {
 	serverIdList := GetGameServerIdListByNode(node)
-	return "'" +strings.Join(serverIdList, "','") + "'"
+	return "'" + strings.Join(serverIdList, "','") + "'"
 }
 func GetGameServerIdListByNode(node string) [] string {
 	data := make([]*GameServer, 0)
 	serverIdList := make([]string, 0)
 	err := DbCenter.Model(&GameServer{}).Where(&GameServer{
-		Node:node,
+		Node: node,
 	}).Find(&data).Error
 	utils.CheckError(err)
-	for _, e := range data{
+	for _, e := range data {
 		serverIdList = append(serverIdList, e.Sid)
 	}
 	return serverIdList

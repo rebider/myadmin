@@ -15,10 +15,10 @@ type ToolController struct {
 }
 
 func (c *ToolController) GetJson() {
-	list, err := models.GetPlatformList("data/json/Platform.json")
+	list, err := models.GetPlatformList()
 	utils.CheckError(err)
 	logs.Info("platformList:%v", list)
-	c.Result(enums.CodeSuccess, "获取平台列表成功", list)
+	c.Result(enums.CodeSuccess, "获取平台列表成功 ", list)
 }
 
 func (c *ToolController) Action() {
@@ -53,16 +53,16 @@ func (c *ToolController) Action() {
 		out = strings.Replace(out, "\\n", "<br>", -1)
 		c.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
 	} else {
-		if params.Action == "build_table" {
-			commandArgs = []string{
-				"ci",
-				"/opt/h5/trunk/client/client_enum",
-				"-m",
-				"web_submit",
-			}
-			_, err = utils.Cmd("svn", commandArgs)
-			c.CheckError(err, "提交客户端枚举")
-		}
+		//if params.Action == "build_table" {
+		//	commandArgs = []string{
+		//		"ci",
+		//		"/opt/h5/trunk/client/client_enum",
+		//		"-m",
+		//		"web_submit",
+		//	}
+		//	_, err = utils.Cmd("svn", commandArgs)
+		//	c.CheckError(err, "提交客户端枚举")
+		//}
 		c.Result(enums.CodeSuccess, "成功!", 0)
 	}
 }

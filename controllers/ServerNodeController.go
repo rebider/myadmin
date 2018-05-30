@@ -34,15 +34,25 @@ func (c *ServerNodeController) Edit() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	logs.Debug("编辑 节点:%v",m )
 	utils.CheckError(err, "编辑节点")
+	if m.IsAdd == 1 && models.IsServerNodeExists(m.Node){
+		c.Result(enums.CodeFail, "节点已经存在", m.Node)
+	}
+	if m.IsAdd == 0 && models.IsServerNodeExists(m.Node) == false{
+		c.Result(enums.CodeFail, "节点不存在", m.Node)
+	}
+
 	out, err := utils.NodeTool(
 		"mod_server_mgr",
 		"add_server_node",
 		m.Node,
+		m.Ip,
 		strconv.Itoa(m.Port),
+		strconv.Itoa(m.WebPort),
 		strconv.Itoa(m.Type),
 		strconv.Itoa(m.OpenTime),
 		strconv.Itoa(m.PlatformId),
-		"null",
+		m.ZoneNode,
+		strconv.Itoa(m.State),
 	)
 	c.CheckError(err, "保存节点失败:"+ out)
 	c.Result(enums.CodeSuccess, "保存成功", m.Node)

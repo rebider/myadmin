@@ -28,7 +28,7 @@ func (c *BaseController) Prepare() {
 
 	user := c.GetSession("user")
 	//c.SessionRegenerateID()
-	logs.Info("prepare:%s", c.CruSession.SessionID())
+	//logs.Info("prepare:%s", c.CruSession.SessionID())
 	if user != nil {
 		c.curUser = user.(models.User)
 	}
@@ -66,6 +66,7 @@ func (c *BaseController) checkLogin() {
 	var sessionId string
 	utils.GetCache(strconv.Itoa(c.curUser.Id), &sessionId)
 	IsAllowMultipleLogin := beego.AppConfig.DefaultBool("is_allow_multiple_login", false)
+	//logs.Info("checkLogin:%s, %s",sessionId, c.CruSession.SessionID())
 	if IsAllowMultipleLogin == false {
 		// 检测帐号 是否在多个地方登录
 		if sessionId != c.CruSession.SessionID() {
@@ -73,7 +74,7 @@ func (c *BaseController) checkLogin() {
 		}
 	}
 
-	//logs.Info("checkLogin:%s, %s",sessionId, c.CruSession.SessionID())
+
 }
 
 //是否登录
@@ -102,12 +103,12 @@ func (c *BaseController) checkAuthor() {
 			}
 		}
 	}
-	isHasAuthor := c.checkActionAuthor(controllerName, actionName)
-	if !isHasAuthor {
-		//没有权限
-		logs.Error(fmt.Sprintf("无权访问!!! 路径: %s.%s, 用户: %v.", controllerName, actionName, c.curUser.Id))
-		c.Result(enums.CodeUnauthorized, fmt.Sprintf("无权访问: %v.%v", controllerName, actionName), "")
-	}
+	//isHasAuthor := c.checkActionAuthor(controllerName, actionName)
+	//if !isHasAuthor {
+	//	//没有权限
+	//	logs.Error(fmt.Sprintf("无权访问!!! 路径: %s.%s, 用户: %v.", controllerName, actionName, c.curUser.Id))
+	//	c.Result(enums.CodeUnauthorized, fmt.Sprintf("无权访问: %v.%v", controllerName, actionName), "")
+	//}
 }
 
 // 判断某 Controller.Action 当前用户是否有权访问
@@ -143,7 +144,7 @@ func (c *BaseController) setUser2Session(userId int) error {
 	}
 	c.SetSession("user", *m)
 
-	utils.SetCache(strconv.Itoa(m.Id), c.CruSession.SessionID(), 100)
+	utils.SetCache(strconv.Itoa(m.Id), c.CruSession.SessionID(), 0)
 	return nil
 }
 

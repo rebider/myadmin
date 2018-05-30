@@ -39,6 +39,35 @@ func GetGameDbByPlatformIdAndSid(platformId int, Sid string) (gameDb *gorm.DB, e
 	return GetGameDbByNode(serverNode.Node)
 }
 
+// 通过平台id和区服id获取 gorm.DB 实例
+func GetGameURLByNode(node string) string {
+	serverNode, err := GetServerNode(node)
+	utils.CheckError(err)
+	if err != nil {
+		return ""
+	}
+	url := fmt.Sprintf("http://%s:%d", serverNode.Ip, serverNode.WebPort)
+	return url
+}
+
+
+// 通过平台id和区服id获取 gorm.DB 实例
+func GetGameURLByPlatformIdAndSid(platformId int, Sid string) string {
+	gameServer, err := GetGameServerOne(platformId, Sid)
+	utils.CheckError(err)
+	if err != nil {
+		return ""
+	}
+	serverNode, err := GetServerNode(gameServer.Node)
+	utils.CheckError(err)
+	if err != nil {
+		return ""
+	}
+	url := fmt.Sprintf("http://%s:%d", serverNode.Ip, serverNode.WebPort)
+	return url
+}
+
+
 // 通过node获取 gorm.DB 实例
 func GetGameDbByNode(node string) (gameDb *gorm.DB, err error) {
 	if node == "" {
@@ -53,7 +82,8 @@ func GetGameDbByNode(node string) (gameDb *gorm.DB, err error) {
 	if len(array) != 2 {
 		return nil, errors.New("解析节点名字失败:" + serverNode.Node)
 	}
-	gameDbName := "game_" + array[0]
+	//gameDbName := "game_" + array[0]
+	gameDbName := "game_weixin"
 	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/" + gameDbName +"?charset=utf8&parseTime=True&loc=Local"
 	gameDb, err = gorm.Open("mysql", dbArgs)
 	if err != nil {

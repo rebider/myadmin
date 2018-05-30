@@ -75,36 +75,39 @@ func DealNoticeLog(id int) {
 		request.NodeList = nodeList
 		request.Content = noticeLog.Content
 
-		url := utils.GetGmURL() + "/send_notice"
-		data, err := json.Marshal(request)
-		utils.CheckError(err)
-		sign := utils.String2md5(string(data) + enums.GmSalt)
-		base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-		requestBody := "data=" + base64Data + "&sign=" + sign
-		resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
-		utils.CheckError(err)
-		if err != nil {
-			return
-		}
-		defer resp.Body.Close()
-		responseBody, err := ioutil.ReadAll(resp.Body)
-		utils.CheckError(err)
-		if err != nil {
-			return
-		}
-		logs.Info("result:%v", string(responseBody))
+		for _, node :=range nodeList {
+			url := models.GetGameURLByNode(node) + "/send_notice"
+			data, err := json.Marshal(request)
+			utils.CheckError(err)
+			sign := utils.String2md5(string(data) + enums.GmSalt)
+			base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+			requestBody := "data=" + base64Data + "&sign=" + sign
+			resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
+			utils.CheckError(err)
+			if err != nil {
+				continue
+			}
+			defer resp.Body.Close()
+			responseBody, err := ioutil.ReadAll(resp.Body)
+			utils.CheckError(err)
+			if err != nil {
+				continue
+			}
+			logs.Info("result:%v", string(responseBody))
 
-		err = json.Unmarshal(responseBody, &result)
+			err = json.Unmarshal(responseBody, &result)
 
-		utils.CheckError(err)
-		if err != nil {
-			return
+			utils.CheckError(err)
+			if err != nil {
+				continue
+			}
+			if result.ErrorCode == 0 {
+				logs.Info("发送公告成功 PlatformId: %v, id: %v", node, noticeLog.Id)
+			} else {
+				logs.Info("发送公告失败 PlatformId: %v, id: %v", node, noticeLog.Id)
+			}
 		}
-		if result.ErrorCode == 0 {
-			logs.Info("发送公告成功 PlatformId: %v, id: %v", noticeLog.PlatformId, noticeLog.Id)
-		} else {
-			logs.Info("发送公告失败 PlatformId: %v, id: %v", noticeLog.PlatformId, noticeLog.Id)
-		}
+
 
 		//for _, node := range nodeList {
 		//	logs.Info("开始发送公告 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
