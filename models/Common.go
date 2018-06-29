@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/chnzrb/myadmin/enums"
 	"github.com/chnzrb/myadmin/utils"
+	"github.com/astaxie/beego"
 	"github.com/jinzhu/gorm"
 	"fmt"
 	"golang.org/x/net/websocket"
@@ -25,7 +26,7 @@ type BaseQueryParam struct {
 }
 
 // 通过平台id和区服id获取 gorm.DB 实例
-func GetGameDbByPlatformIdAndSid(platformId int, Sid string) (gameDb *gorm.DB, err error) {
+func GetGameDbByPlatformIdAndSid(platformId string, Sid string) (gameDb *gorm.DB, err error) {
 	gameServer, err := GetGameServerOne(platformId, Sid)
 	utils.CheckError(err)
 	if err != nil {
@@ -52,7 +53,7 @@ func GetGameURLByNode(node string) string {
 
 
 // 通过平台id和区服id获取 gorm.DB 实例
-func GetGameURLByPlatformIdAndSid(platformId int, Sid string) string {
+func GetGameURLByPlatformIdAndSid(platformId string, Sid string) string {
 	gameServer, err := GetGameServerOne(platformId, Sid)
 	utils.CheckError(err)
 	if err != nil {
@@ -83,10 +84,15 @@ func GetGameDbByNode(node string) (gameDb *gorm.DB, err error) {
 		return nil, errors.New("解析节点名字失败:" + serverNode.Node)
 	}
 	//gameDbName := "game_" + array[0]
-	gameDbName := "game_weixin"
-	dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/" + gameDbName +"?charset=utf8&parseTime=True&loc=Local"
+	gameDbName := serverNode.DbName
+	gameDbHost := serverNode.DbHost
+	gameDbPort := serverNode.DbPort
+	gameDbPwd := beego.AppConfig.String( "game_db_password")
+	dbArgs := fmt.Sprintf("root:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local", gameDbPwd, gameDbHost, gameDbPort, gameDbName)
+	//dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/" + gameDbName +"?charset=utf8&parseTime=True&loc=Local"
 	gameDb, err = gorm.Open("mysql", dbArgs)
 	if err != nil {
+		logs.Error("连接节点(%v)数据库失败:%v", node, dbArgs)
 		return nil, err
 	}
 	gameDb.SingularTable(true)
@@ -95,7 +101,7 @@ func GetGameDbByNode(node string) (gameDb *gorm.DB, err error) {
 
 
 // 通过平台id和区服id 获取ip地址和端口
-func GetIpAndPortByPlatformIdAndSid(platformId int, Sid string) (string, int, error) {
+func GetIpAndPortByPlatformIdAndSid(platformId string, Sid string) (string, int, error) {
 	gameServer, err := GetGameServerOne(platformId, Sid)
 	utils.CheckError(err)
 	serverNode, err := GetServerNode(gameServer.Node)
@@ -103,7 +109,7 @@ func GetIpAndPortByPlatformIdAndSid(platformId int, Sid string) (string, int, er
 	return serverNode.Ip, serverNode.Port, err
 }
 
-func GetWsByPlatformIdAndSid(platformId int, Sid string) (*websocket.Conn, error) {
+func GetWsByPlatformIdAndSid(platformId string, Sid string) (*websocket.Conn, error) {
 	ip, port, err := GetIpAndPortByPlatformIdAndSid(platformId, Sid)
 	if err != nil {
 		return nil, err
@@ -125,7 +131,7 @@ func GetWsByNode(node string) (*websocket.Conn, error) {
 
 
 type Server struct {
-	PlatformId int    `json:"platformId"`
+	PlatformId string    `json:"platformId"`
 	Sid        string `json:"serverId"`
 	Desc       string `json:"desc"`
 	//Node       string `json:"node"`
@@ -160,7 +166,7 @@ func GetServerList() [] *Server {
 	return serverList
 }
 
-func TranPlayerNameSting2PlayerIdList(platformId int, playerName string) ([] int, error) {
+func TranPlayerNameSting2PlayerIdList(platformId string, playerName string) ([] int, error) {
 	playerIdList := make([] int, 0)
 	nameList := strings.Split(playerName, ",")
 	for _, name := range nameList {

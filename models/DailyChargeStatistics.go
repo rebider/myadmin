@@ -5,24 +5,23 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 )
 
-//import "github.com/chnzrb/myadmin/utils"
-
 type DailyChargeStatistics struct {
 	Node                 string  `json:"node"`
 	Time                 int     `json:"time"`
 	ChargeMoney          int     `json:"chargeMoney"`
 	ChargePlayerCount    int     `json:"chargePlayerCount"`
 	ARPU                 float32 `json:"arpu" gorm:"-"`
+	Active_ARPU          float32 `json:"activeArpu" gorm:"-"`
+	AcriveChargeRate     int     `json:"activeChargeRate" gorm:"-"`
 	NewChargePlayerCount int     `json:"newChargePlayerCount"`
 }
 
 type DailyChargeStatisticsQueryParam struct {
 	BaseQueryParam
-	PlatformId int
-	//ServerId   string
-	Node      string `json:"serverId"`
-	StartTime int
-	EndTime   int
+	PlatformId string
+	Node       string `json:"serverId"`
+	StartTime  int
+	EndTime    int
 }
 
 func GetDailyChargeStatisticsList(params *DailyChargeStatisticsQueryParam) []*DailyChargeStatistics {

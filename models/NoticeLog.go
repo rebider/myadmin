@@ -4,7 +4,7 @@ import ()
 
 type NoticeLog struct {
 	Id           int    `json:"id"`
-	PlatformId   int    `json:"platformId"`
+	PlatformId   string    `json:"platformId"`
 	NodeList     string `json:"serverIdList"`
 	Content      string `json:"content"`
 	NoticeType   int    `json:"noticeType"`
@@ -19,7 +19,7 @@ type NoticeLog struct {
 
 type NoticeLogQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	StartTime  int
 	EndTime    int
 	UserId     int

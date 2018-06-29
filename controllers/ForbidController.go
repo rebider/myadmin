@@ -45,7 +45,7 @@ func (c *ForbidController) ForbidLogList() {
 // 封禁
 func (c *ForbidController) SetForbid() {
 	var params struct {
-		PlatformId int
+		PlatformId string
 		PlayerId   int
 		ServerId   string
 		Type       int32

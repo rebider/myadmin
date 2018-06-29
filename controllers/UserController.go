@@ -69,11 +69,15 @@ func (c *UserController) Edit() {
 		m.Password = strings.TrimSpace(m.ModifyPassword)
 		if len(m.Password) == 0 {
 			//密码为空则不修改
-			m.Password = oM.Password
+			//m.Password = oM.Password
 		} else {
-			m.Password = utils.String2md5(enums.PasswordSalt + m.Password)
+			oM.Password = utils.String2md5(enums.PasswordSalt + m.Password)
 		}
-		err = models.Db.Save(&m).Error
+		oM.Name = m.Name
+		oM.IsSuper = m.IsSuper
+		oM.Status = m.Status
+		oM.RoleUserRel = m.RoleUserRel
+		err = models.Db.Save(&oM).Error
 		c.CheckError(err, "保存用户失败")
 	}
 	c.Result(enums.CodeSuccess, "保存成功", m.Id)

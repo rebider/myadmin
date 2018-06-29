@@ -5,7 +5,7 @@ import (
 )
 
 type ServerGeneralize struct {
-	PlatformId              int     `json:"platformId"`
+	PlatformId              string     `json:"platformId"`
 	ServerId                string  `json:"serverId"`
 	OpenTime                int     `json:"openTime"`
 	Version                 string  `json:"version"`
@@ -27,11 +27,11 @@ type ServerGeneralize struct {
 }
 
 type ServerGeneralizeQueryParam struct {
-	PlatformId int
+	PlatformId string
 	Node   string `json:"serverId"`
 }
 
-func GetServerGeneralize(platformId int, node string) (*ServerGeneralize, error) {
+func GetServerGeneralize(platformId string, node string) (*ServerGeneralize, error) {
 	gameDb, err := GetGameDbByNode(node)
 	utils.CheckError(err)
 	if err != nil {
@@ -44,7 +44,7 @@ func GetServerGeneralize(platformId int, node string) (*ServerGeneralize, error)
 		PlatformId:platformId,
 		ServerId: GetGameServerIdListStringByNode(node),
 		OpenTime: serverNode.OpenTime,
-		Version: serverNode.ServerVersion,
+		Version: GetNodeVersion(node),
 		Status : serverNode.State,
 		TotalRegister: GetTotalRegister(gameDb),
 		TotalCreateRole: GetTotalCreateRoleCount(gameDb),

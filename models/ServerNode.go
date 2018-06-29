@@ -10,7 +10,7 @@ type ServerNodeQueryParam struct {
 	BaseQueryParam
 	Type       int
 	Node       string
-	PlatformId int `json:"platformId"`
+	PlatformId string `json:"platformId"`
 }
 
 type ServerNode struct {
@@ -18,16 +18,20 @@ type ServerNode struct {
 	Ip            string `json:"ip"`
 	Port          int    `json:"port"`
 	WebPort       int    `json:"webPort"`
+	DbHost        string `json:"dbHost"`
+	DbPort        int    `json:"dbPort"`
+	DbName        string `json:"dbName"`
 	Type          int    `json:"type"`
 	ZoneNode      string `json:"zoneNode"`
 	ServerVersion string `json:"serverVersion" gorm:"-"`
-	IsAdd int `json:"isAdd" gorm:"-"`
+	IsAdd         int    `json:"isAdd" gorm:"-"`
 	//ClientVersion string `json:"clientVersion"`
 	OpenTime int `json:"openTime"`
+	StartTime int `json:"startTime" gorm:"-"`
 	//IsTest        int    `json:"isTest"`
-	PlatformId int `json:"platformId"`
-	State      int `json:"state"`
-	RunState   int `json:"runState"`
+	PlatformId string `json:"platformId"`
+	State      int    `json:"state"`
+	RunState   int    `json:"runState"`
 }
 
 func (t *ServerNode) TableName() string {
@@ -56,6 +60,7 @@ func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 	if err == nil {
 		for _, e := range data {
 			e.ServerVersion = GetNodeVersion(e.Node)
+			e.StartTime = GetNodeStartTime(e.Node)
 		}
 	}
 	return data, count
@@ -98,18 +103,41 @@ func GetNodeVersion(node string) string {
 	return data.Version
 }
 
+func GetNodeStartTime(node string) int {
+	//return "nullddd"
+	gameDb, err := GetGameDbByNode(node)
+	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	defer gameDb.Close()
+	var data struct {
+		Time int
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT int_data as time FROM server_data where id = 3 `)
+	err = gameDb.Raw(sql).Scan(&data).Error
+	utils.CheckError(err, "获取节点启动时间")
+	if err != nil {
+		return 0
+	}
+	return data.Time
+}
+
+
 // 获取所有游戏节点
 func GetAllGameServerNode() []*ServerNode {
 	data := make([]*ServerNode, 0)
 	err := DbCenter.Model(&ServerNode{}).Where(&ServerNode{
 		Type: 1,
 	}).Find(&data).Error
-	utils.CheckError(err)
+	utils.CheckError(err, "查询所有游戏节点失败")
 	return data
 }
 
 // 获取所有游戏节点
-func GetAllGameServerNodeByPlatformId(platformId int) []*ServerNode {
+func GetAllGameServerNodeByPlatformId(platformId string) []*ServerNode {
 	data := make([]*ServerNode, 0)
 	err := DbCenter.Model(&ServerNode{}).Where(&ServerNode{
 		Type:       1,
@@ -120,11 +148,20 @@ func GetAllGameServerNodeByPlatformId(platformId int) []*ServerNode {
 }
 
 // 获取所有游戏节点
-func GetAllGameNodeByPlatformId(platformId int) []string {
+func GetAllGameNodeByPlatformId(platformId string) []string {
 	data := make([]string, 0)
 	serverNodeList := GetAllGameServerNodeByPlatformId(platformId)
 	for _, e := range serverNodeList {
 		data = append(data, e.Node)
 	}
 	return data
+}
+
+// 获取登录节点
+func GetLoginServerNode() (*ServerNode, error) {
+	serverNode := &ServerNode{}
+	err := DbCenter.Where(&ServerNode{
+		Type: 4,
+	}).First(&serverNode).Error
+	return serverNode, err
 }

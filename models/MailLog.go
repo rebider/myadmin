@@ -7,7 +7,7 @@ import (
 
 type MailLog struct {
 	Id             int    `json:"id"`
-	PlatformId     int    `json:"platformId"`
+	PlatformId     string    `json:"platformId"`
 	NodeList   string `json:"serverIdList"`
 	PlayerNameList string `json:"playerNameList"`
 	Title          string `json:"title"`
@@ -21,7 +21,7 @@ type MailLog struct {
 
 type MailLogQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	ServerId   string
 	StartTime  int
 	EndTime    int

@@ -23,13 +23,26 @@ func (c *RemainController) GetTotalRemain() {
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
-	c.Result(enums.CodeSuccess, "查询在线统计成功", result)
+	c.Result(enums.CodeSuccess, "查询总体留存成功", result)
+}
+
+// 活跃留存
+func (c *RemainController) GetActiveRemain() {
+	var params models.ActiveRemainQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询活跃留存:+", params)
+	data, total := models.GetRemainActiveList(&params)
+	result := make(map[string]interface{})
+	result["total"] = total
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "查询活跃留存成功", result)
 }
 
 // 任务留存
 func (c *RemainController) GetTaskRemain() {
 	var params struct {
-		PlatformId int    `json:"platformId"`
+		PlatformId string    `json:"platformId"`
 		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -44,7 +57,7 @@ func (c *RemainController) GetTaskRemain() {
 // 等级留存
 func (c *RemainController) GetLevelRemain() {
 	var params struct {
-		PlatformId int    `json:"platformId"`
+		PlatformId string    `json:"platformId"`
 		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -59,7 +72,7 @@ func (c *RemainController) GetLevelRemain() {
 //时长留存
 func (c *RemainController) GetTimeRemain() {
 	var params struct {
-		PlatformId int    `json:"platformId"`
+		PlatformId string    `json:"platformId"`
 		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)

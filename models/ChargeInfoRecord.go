@@ -9,7 +9,7 @@ type ChargeInfoRecord struct {
 	OrderId       string `json:"orderId"`
 	ChargeType    int    `json:"chargeType"`
 	Ip            string `json:"ip"`
-	PartId        int    `json:"platformId"`
+	PartId        string    `json:"platformId"`
 	ServerId      string `json:"serverId"`
 	AccId         string `json:"accId"`
 	IsFirst       int    `json:"isFirst"`
@@ -28,7 +28,7 @@ type ChargeInfoRecord struct {
 
 type ChargeInfoRecordQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node       string `json:"serverId"`
 	PlayerId   int
 	PlayerName string
@@ -43,6 +43,10 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 	var count int64
 	sortOrder := "record_time"
 	if params.Order == "descending" {
+		sortOrder = sortOrder + " desc"
+	} else if params.Order == "ascending"{
+		sortOrder = sortOrder + " asc"
+	} else {
 		sortOrder = sortOrder + " desc"
 	}
 	f := func(db *gorm.DB) *gorm.DB {

@@ -8,7 +8,7 @@ type PlayerChargeInfoRecord struct {
 	PlayerId        int    `json:"playerId" gorm:"primary_key"`
 	PlayerName      string `json:"playerName" gorm:"-"`
 	Account         string `json:"account" gorm:"-"`
-	PlatformId      int    `json:"platformId" gorm:"column:part_id"`
+	PlatformId      string    `json:"platformId" gorm:"column:part_id"`
 	ServerId        string `json:"serverId"`
 	TotalMoney      int    `json:"totalMoney"`
 	MaxMoney        int    `json:"maxMoney"`
@@ -22,7 +22,7 @@ type PlayerChargeInfoRecord struct {
 
 type PlayerChargeDataQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node       string `json:"serverId"`
 }
 

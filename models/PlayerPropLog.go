@@ -20,7 +20,7 @@ type PlayerPropLog struct {
 
 type PlayerPropLogQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node   string `json:"serverId"`
 	Ip         string
 	PlayerId   int

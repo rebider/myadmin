@@ -6,7 +6,7 @@ import (
 
 type BackgroundChargeLog struct {
 	Id          int    `json:"id"`
-	PlatformId  int    `json:"platformId"`
+	PlatformId  string    `json:"platformId"`
 	ServerId    string `json:"serverId"`
 	PlayerName  string `json:"playerName" gorm:"-"`
 	PlayerId    int    `json:"playerId"`
@@ -19,7 +19,7 @@ type BackgroundChargeLog struct {
 
 type BackgroundChargeLogQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node   string	`json:"serverId"`
 	PlayerName string
 	PlayerId   int

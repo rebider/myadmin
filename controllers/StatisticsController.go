@@ -82,10 +82,8 @@ func (c *StatisticsController) GetServerGeneralize() {
 }
 
 func (c *StatisticsController) GetRealTimeOnline() {
-	platformId, err := c.GetInt("platformId")
-	c.CheckError(err)
+	platformId := c.GetString("platformId")
 	serverId := c.GetString("serverId")
-	c.CheckError(err)
 	serverOnlineStatistics, err := models.GetServerOnlineStatistics(platformId, serverId)
 	c.CheckError(err, "查询实时在线统计")
 	c.Result(enums.CodeSuccess, "查询实时在线统计成功", serverOnlineStatistics)

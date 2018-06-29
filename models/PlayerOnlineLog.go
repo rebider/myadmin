@@ -16,7 +16,7 @@ type PlayerOnlineLog struct {
 
 type PlayerOnlineLogQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node        string `json:"serverId"`
 	PlayerId   int
 	PlayerName string

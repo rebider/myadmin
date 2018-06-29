@@ -34,6 +34,7 @@ func DealNoticeLog(id int) {
 	}
 	isGo := false
 	now := int(time.Now().Unix())
+	logs.Debug(id, now, noticeLog.Status, noticeLog.NoticeTime, noticeLog.LastSendTime)
 	if noticeLog.Status == 0 {
 		if noticeLog.NoticeType == enums.NoticeTypeMoment {
 			// 立即发送
@@ -45,7 +46,7 @@ func DealNoticeLog(id int) {
 			}
 		} else if noticeLog.NoticeType == enums.NoticeTypeLoop {
 			// 循环发送
-			if (now-noticeLog.LastSendTime)/60 > noticeLog.NoticeTime {
+			if (now-noticeLog.LastSendTime)/60 >= noticeLog.NoticeTime {
 				isGo = true
 			}
 		}

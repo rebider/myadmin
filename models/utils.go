@@ -42,6 +42,16 @@ func IsThatDayPlayerLogin(db *gorm.DB, zeroTimestamp int, playerId int) bool {
 	return true
 }
 
+// 是否该玩家连续登录过
+func IsPlayerContinueLogin(db *gorm.DB, zeroTimestamp int, continueDay int, playerId int) bool {
+	for i := 0; i <= continueDay; i ++ {
+		if IsThatDayPlayerLogin(db, zeroTimestamp + 86400 * i, playerId ) == false {
+			return false
+		}
+	}
+	return true
+}
+
 // 获取该天登录次数
 func GetThatDayLoginTimes(db *gorm.DB, zeroTimestamp int) int {
 	var data struct {
@@ -49,7 +59,7 @@ func GetThatDayLoginTimes(db *gorm.DB, zeroTimestamp int) int {
 	}
 	sql := fmt.Sprintf(
 		`SELECT count(1) as count FROM player_login_log WHERE timestamp between ? and ?`)
-	err := db.Raw(sql,zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -61,7 +71,7 @@ func GetThatDayLoginPlayerCount(db *gorm.DB, zeroTimestamp int) int {
 	}
 	sql := fmt.Sprintf(
 		`SELECT count(1) as count FROM player WHERE last_login_time between ? and ?`)
-	err := db.Raw(sql,zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -69,13 +79,13 @@ func GetThatDayLoginPlayerCount(db *gorm.DB, zeroTimestamp int) int {
 // 获取该天活跃玩家数量
 func GetThatDayActivePlayerCount(db *gorm.DB, zeroTimestamp int) int {
 	count := 0
-	data := make( [] *Player, 0)
+	data := make([] *Player, 0)
 	sql := fmt.Sprintf(
 		`SELECT * FROM player WHERE last_login_time between ? and ?`)
-	err := db.Raw(sql,zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
 	utils.CheckError(err)
 	for _, e := range data {
-		if e.LoginTimes >= (zeroTimestamp+86400 - e.RegTime) / 86400 {
+		if e.LoginTimes >= (zeroTimestamp+86400-e.RegTime)/86400 {
 			count ++
 		}
 	}
@@ -545,11 +555,11 @@ func GetPlayerName(db *gorm.DB, playerId int) string {
 }
 
 //获取玩家最近登录时间
-func GetPlayerLastLoginTime(platformId int, serverId string, playerId int) int {
+func GetPlayerLastLoginTime(platformId string, serverId string, playerId int) int {
 	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
 	utils.CheckError(err)
 	if err != nil {
-		return  0
+		return 0
 	}
 	defer gameDb.Close()
 	var data struct {
@@ -563,7 +573,7 @@ func GetPlayerLastLoginTime(platformId int, serverId string, playerId int) int {
 }
 
 //获取玩家名字
-func GetPlayerName_2(platformId int, serverId string, playerId int) string {
+func GetPlayerName_2(platformId string, serverId string, playerId int) string {
 	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
 	utils.CheckError(err)
 	if err != nil {
@@ -717,7 +727,7 @@ type ChargeTaskDistribution struct {
 }
 type ChargeTaskDistributionQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node       string `json:"serverId"`
 	StartTime  int
 	EndTime    int
@@ -729,7 +739,7 @@ func GetChargeTaskDistribution(params ChargeTaskDistributionQueryParam) [] *Char
 	data := make([] *ChargeTaskDistribution, 0)
 	whereArray := make([] string, 0)
 	whereArray = append(whereArray, fmt.Sprintf("charge_type = 99"))
-	whereArray = append(whereArray, fmt.Sprintf(" part_id = %d", params.PlatformId))
+	whereArray = append(whereArray, fmt.Sprintf(" part_id = '%s'", params.PlatformId))
 	if params.IsFirst == 1 {
 		whereArray = append(whereArray, fmt.Sprintf("is_first = 1"))
 	}
@@ -781,7 +791,7 @@ type ChargeMoneyDistribution struct {
 }
 type ChargeMoneyDistributionQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node       string `json:"serverId"`
 	StartTime  int
 	EndTime    int
@@ -874,9 +884,9 @@ func GetChargeMoneyDistribution(params ChargeMoneyDistributionQueryParam) [] *Ch
 	maxCount := 0
 	for _, e := range data {
 		whereArray := make([] string, 0)
-		whereArray = append(whereArray, fmt.Sprintf(" part_id = %d", params.PlatformId))
-		whereArray = append(whereArray, fmt.Sprintf(" total_money > %d", e.Min*100))
-		whereArray = append(whereArray, fmt.Sprintf(" total_money <= %d", e.Max*100))
+		whereArray = append(whereArray, fmt.Sprintf(" part_id = '%s'", params.PlatformId))
+		whereArray = append(whereArray, fmt.Sprintf(" total_money > %d", e.Min))
+		whereArray = append(whereArray, fmt.Sprintf(" total_money <= %d", e.Max))
 		if params.Node != "" {
 			whereArray = append(whereArray, fmt.Sprintf("server_id in (%s)", GetGameServerIdListStringByNode(params.Node)))
 		}
@@ -910,7 +920,7 @@ type ChargeLevelDistribution struct {
 }
 type ChargeLevelDistributionQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node       string `json:"serverId"`
 	StartTime  int
 	EndTime    int
@@ -1056,7 +1066,7 @@ func GetChargeLevelDistribution(params ChargeLevelDistributionQueryParam) [] *Ch
 		whereArray = append(whereArray, fmt.Sprintf(" curr_level >= %d", e.Min))
 		whereArray = append(whereArray, fmt.Sprintf(" curr_level <= %d", e.Max))
 		whereArray = append(whereArray, fmt.Sprintf("charge_type = 99"))
-		whereArray = append(whereArray, fmt.Sprintf(" part_id = %d", params.PlatformId))
+		whereArray = append(whereArray, fmt.Sprintf(" part_id = '%s'", params.PlatformId))
 		if params.IsFirst == 1 {
 			whereArray = append(whereArray, fmt.Sprintf("is_first = 1"))
 		}

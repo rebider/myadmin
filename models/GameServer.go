@@ -7,20 +7,23 @@ import (
 
 type GameServerQueryParam struct {
 	BaseQueryParam
-	PlatformId int    `json:"platformId"`
+	PlatformId string    `json:"platformId"`
 	ServerId   string `json:"serverId"`
 	Node       string `json:"node"`
 }
 
 type GameServer struct {
-	PlatformId int    `gorm:"primary_key" json:"platformId"`
+	PlatformId string    `gorm:"primary_key" json:"platformId"`
 	Sid        string `gorm:"primary_key" json:"serverId"`
 	Desc       string `json:"desc"`
 	Node       string `json:"node"`
 	State      int `gorm:"-" json:"state"`
+	IsShow      int `json:"isShow"`
 	OpenTime   int `gorm:"-" json:"openTime"`
 	ZoneNode   string `gorm:"-" json:"zoneNode"`
 	IsAdd   int `gorm:"-" json:"isAdd"`
+	RunState   int    `json:"runState" gorm:"-"`
+	StartTime   int    `json:"startTime" gorm:"-"`
 }
 
 func (t *GameServer) TableName() string {
@@ -61,6 +64,8 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 			e.State = serverNode.State
 			e.OpenTime = serverNode.OpenTime
 			e.ZoneNode = serverNode.ZoneNode
+			e.RunState = serverNode.RunState
+			e.StartTime = GetNodeStartTime(e.Node)
 		}
 
 	}
@@ -68,7 +73,7 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 }
 
 // 获取单个游戏服
-func GetGameServerOne(platformId int, id string) (*GameServer, error) {
+func GetGameServerOne(platformId string, id string) (*GameServer, error) {
 	gameServer := &GameServer{
 		Sid:        id,
 		PlatformId: platformId,
@@ -77,7 +82,7 @@ func GetGameServerOne(platformId int, id string) (*GameServer, error) {
 	return gameServer, err
 }
 
-func IsGameServerExists(platformId int, id string) bool {
+func IsGameServerExists(platformId string, id string) bool {
 	gameServer := &GameServer{
 		Sid:        id,
 		PlatformId: platformId,

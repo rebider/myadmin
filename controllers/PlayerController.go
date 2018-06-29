@@ -32,7 +32,7 @@ func (c *PlayerController) List() {
 
 func (c *PlayerController) Detail() {
 	var params struct {
-		PlatformId int    `json:"platformId"`
+		PlatformId string    `json:"platformId"`
 		ServerId       string `json:"serverId"`
 		PlayerId   int    `json:"playerId"`
 	}
@@ -45,11 +45,9 @@ func (c *PlayerController) Detail() {
 }
 
 func (c *PlayerController) One() {
-	platformId, err := c.GetInt("platformId")
-	c.CheckError(err)
+	platformId := c.GetString("platformId")
 	//serverId := c.GetString("serverId")
 	playerName := c.GetString("playerName")
-	c.CheckError(err)
 	player, err := models.GetPlayerByPlatformIdAndNickname(platformId, playerName)
 	c.CheckError(err, "查询玩家失败")
 	c.Result(enums.CodeSuccess, "获取玩家成功", player)
@@ -59,7 +57,7 @@ func (c *PlayerController) One() {
 // 设置帐号类型
 func (c *PlayerController) SetAccountType() {
 	var params struct {
-		PlatformId int	`json:"platformId"`
+		PlatformId string	`json:"platformId"`
 		PlayerId   int `json:"playerId"`
 		ServerId   string `json:"serverId"`
 		Type int32 `json:"type"`

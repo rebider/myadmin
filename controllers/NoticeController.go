@@ -19,7 +19,7 @@ type NoticeController struct {
 func (c *NoticeController) SendNotice() {
 	var params struct {
 		Id           int
-		PlatformId   int
+		PlatformId   string
 		NodeList [] string `json:"serverIdList"`
 		IsAllServer int
 		Content    string

@@ -26,6 +26,14 @@ func init() {
 			ExposeHeaders:    []string{"*", "Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
 			AllowCredentials: true,
 		}))
+		beego.InsertFilter("*", beego.BeforeStatic, cors.Allow(&cors.Options{
+			//AllowAllOrigins:  true,
+			AllowOrigins:     []string{"http://localhost:9528"},
+			AllowMethods:     []string{"*"},
+			AllowHeaders:     []string{"*", "Origin", "Authorization", "Cookie", "Host", "Referer", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type", "x-token"},
+			ExposeHeaders:    []string{"*", "Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
+			AllowCredentials: true,
+		}))
 		beego.SetStaticPath("/swagger", "swagger")
 	}
 
@@ -86,16 +94,21 @@ func init() {
 	beego.Router("/tool/send_prop", &controllers.ToolController{}, "*:SendProp")
 	beego.Router("/tool/set_task", &controllers.ToolController{}, "*:SetTask")
 	beego.Router("/tool/active_function", &controllers.ToolController{}, "*:ActiveFunction")
+	beego.Router("/tool/get_ip_origin", &controllers.ToolController{}, "*:GetIpOrigin")
 
 	//游戏服
 	beego.Router("/game_server/list", &controllers.GameServerController{}, "*:List")
 	beego.Router("/game_server/edit/?:id", &controllers.GameServerController{}, "*:Edit")
 	beego.Router("/game_server/delete", &controllers.GameServerController{}, "*:Delete")
-
+	beego.Router("/game_server/refresh", &controllers.GameServerController{}, "*:Refresh")
+	beego.Router("/game_server/batch_update_state", &controllers.GameServerController{}, "*:BatchUpdateState")
 	//节点
 	beego.Router("/server_node/list", &controllers.ServerNodeController{}, "*:List")
 	beego.Router("/server_node/edit/?:node", &controllers.ServerNodeController{}, "*:Edit")
 	beego.Router("/server_node/delete", &controllers.ServerNodeController{}, "*:Delete")
+	//beego.Router("/server_node/start", &controllers.ServerNodeController{}, "*:Start")
+	//beego.Router("/server_node/stop", &controllers.ServerNodeController{}, "*:Stop")
+	beego.Router("/server_node/action", &controllers.ServerNodeController{}, "*:Action")
 
 	//日志
 	beego.Router("/log/login_log/", &controllers.LogController{}, "*:PlayerLoinLogList")
@@ -148,6 +161,7 @@ func init() {
 
 	//留存
 	beego.Router("/remain/total_remain/", &controllers.RemainController{}, "*:GetTotalRemain")
+	beego.Router("/remain/active_remain/", &controllers.RemainController{}, "*:GetActiveRemain")
 	beego.Router("/remain/task_remain/", &controllers.RemainController{}, "*:GetTaskRemain")
 	beego.Router("/remain/level_remain/", &controllers.RemainController{}, "*:GetLevelRemain")
 	beego.Router("/remain/time_remain/", &controllers.RemainController{}, "*:GetTimeRemain")

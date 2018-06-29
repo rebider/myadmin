@@ -7,25 +7,25 @@ import (
 )
 
 type RemainTotal struct {
-	Node         string `json:"node" gorm:"primary_key"`
-	Time         int    `json:"time" gorm:"primary_key"`
-	RegisterRole int    `json:"registerRole" gorm:"-"`
-	CreateRole   int    `json:"createRole" gorm:"-"`
-	Remain2      int    `json:"remain2"`
-	Remain3      int    `json:"remain3"`
-	Remain4      int    `json:"remain4"`
-	Remain5      int    `json:"remain5"`
-	Remain6      int    `json:"remain6"`
-	Remain7      int    `json:"remain7"`
+	Node          string `json:"node" gorm:"primary_key"`
+	Time          int    `json:"time" gorm:"primary_key"`
+	RegisterRole  int    `json:"registerRole" gorm:"-"`
+	CreateRole    int    `json:"createRole" gorm:"-"`
+	Remain2       int    `json:"remain2"`
+	Remain3       int    `json:"remain3"`
+	Remain4       int    `json:"remain4"`
+	Remain5       int    `json:"remain5"`
+	Remain6       int    `json:"remain6"`
+	Remain7       int    `json:"remain7"`
 }
 
 type TotalRemainQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	//ServerId   string
-	Node string `json:"serverId"`
-	StartTime  int
-	EndTime    int
+	Node      string `json:"serverId"`
+	StartTime int
+	EndTime   int
 }
 
 // 获取总体留存
@@ -92,6 +92,9 @@ func UpdateRemainTotal(node string, timestamp int) error {
 			Remain7: -1,
 		}
 		err = Db.Debug().FirstOrCreate(&m).Error
+		if err != nil {
+			return err
+		}
 		switch i {
 		case 1:
 			err = Db.Debug().Model(&m).Update("Remain2", rate).Error

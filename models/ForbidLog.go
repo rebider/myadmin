@@ -3,7 +3,7 @@ package models
 import ()
 
 type ForbidLog struct {
-	PlatformId int    `json:"platformId" gorm:"primary_key"`
+	PlatformId string    `json:"platformId" gorm:"primary_key"`
 	ServerId   string `json:"serverId" gorm:"primary_key"`
 	PlayerId int `json:"playerId" gorm:"primary_key"`
 	ForbidType int32  `json:"forbidType"`
@@ -16,7 +16,7 @@ type ForbidLog struct {
 
 type ForbidLogQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	Node       string `json:"serverId"`
 	PlayerName string
 	PlayerId  int

@@ -24,7 +24,7 @@ func (c *ToolController) GetJson() {
 func (c *ToolController) Action() {
 	var params struct {
 		Action     string `json:"action"`
-		PlatformId int    `json:"platformId"`
+		PlatformId string    `json:"platformId"`
 		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -73,7 +73,7 @@ func (c *ToolController) SendProp() {
 		PropType   int    `json:"propType"`
 		PropId     int    `json:"propId"`
 		PropNum    int    `json:"propNum"`
-		PlatformId int    `json:"platformId"`
+		PlatformId string    `json:"platformId"`
 		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -113,7 +113,7 @@ func (c *ToolController) SetTask() {
 	var params struct {
 		PlayerId   int    `json:"playerId"`
 		TaskId     int    `json:"taskId"`
-		PlatformId int    `json:"platformId"`
+		PlatformId string    `json:"platformId"`
 		Node       string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -153,7 +153,7 @@ func (c *ToolController) ActiveFunction() {
 		FunctionId    int    `json:"functionId"`
 		FunctionParam int    `json:"functionParam"`
 		FunctionValue int    `json:"functionValue"`
-		PlatformId    int    `json:"platformId"`
+		PlatformId    string    `json:"platformId"`
 		Node          string `json:"serverId"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -186,5 +186,21 @@ func (c *ToolController) ActiveFunction() {
 		c.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
 	} else {
 		c.Result(enums.CodeSuccess, "成功!", 0)
+	}
+}
+
+
+func (c *ToolController) GetIpOrigin() {
+	var params struct {
+		Ip string    `json:"Ip"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	c.CheckError(err)
+	o := utils.GetIpLocation(params.Ip)
+	//logs.Debug("ip origin:%v %v", params.Ip, o)
+	if err != nil {
+		c.Result(enums.CodeFail2, "失败:", "")
+	} else {
+		c.Result(enums.CodeSuccess, "成功!", o)
 	}
 }

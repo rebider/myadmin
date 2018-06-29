@@ -40,13 +40,14 @@ func (c *BackgroundController) Charge() {
 		Account     string
 		Ip          string
 		PlayerId    int
-		PlatformId  int
+		PlatformId  string
 		ChargeValue int
 		ServerId    string
 		ChargeType  string
 	}
 	var result struct {
-		ErrorCode int
+		Code int
+		Message string
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	logs.Info("后台充值:%v", params)
@@ -55,20 +56,20 @@ func (c *BackgroundController) Charge() {
 	player, err := models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err)
 
-	args := fmt.Sprintf("sid=%s&uid=%s&game_charge_id=0&gold=%d&partid=%d&ftime=%d&charge_type=%s&gm_id=%s",
-		player.ServerId,
-		player.AccId,
+	args := fmt.Sprintf("player_id=%d&game_charge_id=0&charge_item_id=0&item_count=%d&partid=%s&charge_type=%s&gm_id=%s",
+		player.Id,
 		params.ChargeValue,
 		params.PlatformId,
-		utils.GetTimestamp(),
 		params.ChargeType,
-		c.curUser.Name,
+		c.curUser.Account,
 	)
 	sign := utils.String2md5(args + "fa9274fd68cf8991953b186507840e5e")
 	logs.Info("sign:%v", sign)
 
-	url := utils.GetChargeURL() + "/gm_charge?" + args + "&sign=" + sign
-
+	gameServer, err :=  models.GetGameServerOne(params.PlatformId, params.ServerId)
+	c.CheckError(err)
+	url :=  models.GetGameURLByNode(gameServer.Node) +  "/gm_charge?" + args + "&sign=" + sign
+	logs.Info("url:%v", url)
 	resp, err := http.Get(url)
 	c.CheckError(err)
 
@@ -80,7 +81,7 @@ func (c *BackgroundController) Charge() {
 	logs.Info("result:%v", string(body))
 	c.CheckError(err)
 	logs.Info("后台充值结果:%v", result)
-	if result.ErrorCode == 1 {
+	if result.Code == 0 {
 		backgroundChargeLog := &models.BackgroundChargeLog{
 			PlatformId:  params.PlatformId,
 			ServerId:    string(player.ServerId),
@@ -94,5 +95,5 @@ func (c *BackgroundController) Charge() {
 		c.CheckError(err, "写后台充值日志失败")
 		c.Result(enums.CodeSuccess, "后台充值成功", 0)
 	}
-	c.Result(enums.CodeFail, fmt.Sprintf("后台充值失败: ErrorCode: %v", result.ErrorCode), result.ErrorCode)
+	c.Result(enums.CodeFail, fmt.Sprintf("后台充值失败: ErrorCode: %v Messsage", result.Code, result.Message), result.Code)
 }

@@ -11,6 +11,9 @@ import (
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
+	"path/filepath"
+	"log"
+	"strings"
 )
 
 // 检查是否有错误
@@ -97,12 +100,14 @@ func GetYesterdayZeroTimestamp() int {
 	tm1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return int(tm1.Unix()) - 86400
 }
+
 // 获取该日0点时间戳
 func GetThatZeroTimestamp(timestamp int64) int {
 	t := time.Unix(timestamp, 0)
 	t1 := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	return int(t1.Unix())
 }
+
 // 获取当前时间戳
 func GetTimestamp() int {
 	return int(time.Now().Unix())
@@ -113,6 +118,13 @@ func GetGmURL() string {
 	url := beego.AppConfig.String("gm" + "::url")
 	return url
 }
+
+// 获取gm 地址
+func GetToolDir() string {
+	url := beego.AppConfig.String("tool_path")
+	return url
+}
+
 // 获取充值地址
 func GetChargeURL() string {
 	url := beego.AppConfig.String("charge_url" + "::url")
@@ -121,12 +133,15 @@ func GetChargeURL() string {
 
 // 获取ip归属地
 func GetIpLocation(ip string) string {
-	url := "http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=" + ip
+	url := "http://ip.taobao.com/service/getIpInfo.php?ip=" + ip
 	var result struct {
-		Ret      int
-		Country  string
-		Province string
-		City     string
+		Code int
+		Data struct {
+			Country string
+			Region  string
+			City    string
+			Isp     string
+		}
 	}
 	resp, err := http.Get(url)
 	CheckError(err)
@@ -146,11 +161,55 @@ func GetIpLocation(ip string) string {
 	if err != nil {
 		return "未知"
 	}
-	if result.Ret == 1 {
-		if result.Country == "中国" {
-			return result.Province + "." + result.City
+	if result.Code == 0 {
+		if result.Data.Country == "中国" {
+			return result.Data.Region + "." + result.Data.City + " " + result.Data.Isp
 		}
-		return result.Country + "." +result.Province + "." + result.City
+		return result.Data.Country + "." + result.Data.Region + "." + result.Data.City + " " + result.Data.Isp
 	}
 	return "未知"
+}
+
+//// 获取ip归属地
+//func GetIpLocation(ip string) string {
+//	url := "http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=" + ip
+//	var result struct {
+//		Ret      int
+//		Country  string
+//		Province string
+//		City     string
+//	}
+//	resp, err := http.Get(url)
+//	CheckError(err)
+//	if err != nil {
+//		return "未知"
+//	}
+//	defer resp.Body.Close()
+//	body, err := ioutil.ReadAll(resp.Body)
+//	CheckError(err)
+//	if err != nil {
+//		return "未知"
+//	}
+//	//logs.Info("result:%v", string(body))
+//
+//	err = json.Unmarshal(body, &result)
+//	CheckError(err)
+//	if err != nil {
+//		return "未知"
+//	}
+//	if result.Ret == 1 {
+//		if result.Country == "中国" {
+//			return result.Province + "." + result.City
+//		}
+//		return result.Country + "." +result.Province + "." + result.City
+//	}
+//	return "未知"
+//}
+
+func GetCurrentDirectory() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return strings.Replace(dir, "\\", "/", -1)
 }

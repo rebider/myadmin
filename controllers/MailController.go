@@ -47,7 +47,7 @@ func (c *MailController) DelMailLog() {
 //发送邮件
 func (c *MailController) SendMail() {
 	var params struct {
-		PlatformId     int `json:"platformId"`
+		PlatformId     string `json:"platformId"`
 		NodeList       [] string `json:"serverIdList"`
 		PlayerNameList string `json:"playerNameList"`
 		MailItemList   [] *gm.MSendMailTosProp `json:"mailItemList"`

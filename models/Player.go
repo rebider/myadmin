@@ -23,8 +23,8 @@ type Player struct {
 	TotalOnlineTime  int    `json:"totalOnlineTime"`
 	LastLoginIp      string `json:"lastLoginIp"`
 	IsOnline         int    `json:"isOnline"`
-	Type             int    `json:"type"`
-	Level            int    `json:"level" gorm:"-"`
+	Type             int    `json:"type" gorm:"-"`
+	Level            int    `json:"level" gorm:"-" `
 	Ingot            int    `json:"ingot" gorm:"-"`
 	TotalChargeMoney int    `json:"totalChargeMoney" gorm:"-"`
 	VipLevel         int    `json:"vipLevel" gorm:"-"`
@@ -39,7 +39,7 @@ type PlayerQueryParam struct {
 	PlayerId   string
 	Nickname   string
 	IsOnline   string
-	PlatformId int
+	PlatformId string
 	Type       string
 	Node       string `json:"serverId"`
 }
@@ -95,9 +95,9 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	if params.PlayerId != "" {
 		whereArray = append(whereArray, fmt.Sprintf(" id = %s", params.PlayerId))
 	}
-	if params.Type != "" {
-		whereArray = append(whereArray, fmt.Sprintf(" type = %s", params.Type))
-	}
+	//if params.Type != "" {
+	//	whereArray = append(whereArray, fmt.Sprintf(" type = %s", params.Type))
+	//}
 
 	whereParam := strings.Join(whereArray, " and ")
 	if whereParam != "" {
@@ -121,9 +121,21 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		playerChargeData, err := GetPlayerChargeDataOne(e.Id)
 		utils.CheckError(err)
 		e.TotalChargeMoney = playerChargeData.TotalMoney
-		e.LastLoginIp = e.LastLoginIp + "(" + utils.GetIpLocation(e.LastLoginIp) + ")"
+		e.Type = GetAccountType(params.PlatformId, e.AccId)
+		//e.LastLoginIp = e.LastLoginIp + "(" + utils.GetIpLocation(e.LastLoginIp) + ")"
 	}
 	return data, count
+}
+
+func GetAccountType(platfromId string, accId string) int {
+	var data struct {
+		Type int
+	}
+	sql := fmt.Sprintf(
+		`SELECT type FROM global_account WHERE platform_id = '%s' and account = '%s'`, platfromId, accId)
+	err := DbLoginServer.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Type
 }
 
 func GetPlayerFactionName(gameDb *gorm.DB, playerId int) string {
@@ -169,7 +181,7 @@ func GetPlayerOneByNode(node string, id int) (*Player, error) {
 }
 
 // 获取单个玩家
-func GetPlayerOne(platformId int, serverId string, id int) (*Player, error) {
+func GetPlayerOne(platformId string, serverId string, id int) (*Player, error) {
 	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
 	if err != nil {
 		return nil, err
@@ -179,6 +191,9 @@ func GetPlayerOne(platformId int, serverId string, id int) (*Player, error) {
 		Id: id,
 	}
 	err = gameDb.First(&player).Error
+	if err == nil {
+		player.Type = GetAccountType(platformId, player.AccId)
+	}
 	return player, err
 }
 
@@ -252,7 +267,7 @@ func GetPlayerEquipList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
 	return playerPropList, err
 }
 
-func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDetail, error) {
+func GetPlayerDetail(platformId string, serverId string, playerId int) (*PlayerDetail, error) {
 	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
 	utils.CheckError(err)
 	if err != nil {
@@ -275,11 +290,12 @@ func GetPlayerDetail(platformId int, serverId string, playerId int) (*PlayerDeta
 	playerChargeData, err := GetPlayerChargeDataOne(playerId)
 	utils.CheckError(err)
 	playerDetail.TotalChargeMoney = playerChargeData.TotalMoney
-	playerDetail.LastLoginIp = playerDetail.LastLoginIp + "(" + utils.GetIpLocation(playerDetail.LastLoginIp) + ")"
+	playerDetail.Player.Type = GetAccountType(platformId, playerDetail.Player.AccId)
+	//playerDetail.LastLoginIp = playerDetail.LastLoginIp + "(" + utils.GetIpLocation(playerDetail.LastLoginIp) + ")"
 	return playerDetail, err
 }
 
-func GetPlayerByPlatformIdAndNickname(platformId int, nickname string) (*Player, error) {
+func GetPlayerByPlatformIdAndNickname(platformId string, nickname string) (*Player, error) {
 	if nickname == "" {
 		return nil, errors.New("角色名字不能为空!")
 	}
@@ -298,6 +314,8 @@ func GetPlayerByPlatformIdAndNickname(platformId int, nickname string) (*Player,
 		return nil, errors.New(fmt.Sprintf("角色不存在:%s", nickname))
 	}
 	player.Nickname = player.ServerId + "." + player.Nickname
+	player.Type = GetAccountType(platformId, player.AccId)
+	player.Ingot = GetPlayerIngot(gameDb, player.Id)
 	return player, err
 }
 
@@ -340,7 +358,7 @@ type CTenMinuteStatics struct {
 }
 
 type ServerOnlineStatistics struct {
-	PlatformId int `json:"platformId"`
+	PlatformId string `json:"platformId"`
 	//ServerId                    string    `json:"serverId"`
 	TodayCreateRole             int       `json:"todayCreateRole"`
 	TodayRegister               int       `json:"todayRegister"`
@@ -356,7 +374,7 @@ type ServerOnlineStatistics struct {
 	BeforeYesterdayRegisterList [] string `json:"beforeYesterdayRegisterList"`
 }
 
-func GetServerOnlineStatistics(platformId int, node string) (*ServerOnlineStatistics, error) {
+func GetServerOnlineStatistics(platformId string, node string) (*ServerOnlineStatistics, error) {
 	gameDb, err := GetGameDbByNode(node)
 
 	utils.CheckError(err)

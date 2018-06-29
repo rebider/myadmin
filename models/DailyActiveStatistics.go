@@ -20,7 +20,7 @@ type DailyActiveStatistics struct {
 
 type DailyActiveStatisticsQueryParam struct {
 	BaseQueryParam
-	PlatformId int
+	PlatformId string
 	//ServerId   string
 	Node      string `json:"serverId"`
 	StartTime int
