@@ -11,8 +11,6 @@ type DailyChargeStatistics struct {
 	ChargeMoney          int     `json:"chargeMoney"`
 	ChargePlayerCount    int     `json:"chargePlayerCount"`
 	ARPU                 float32 `json:"arpu" gorm:"-"`
-	Active_ARPU          float32 `json:"activeArpu" gorm:"-"`
-	AcriveChargeRate     int     `json:"activeChargeRate" gorm:"-"`
 	NewChargePlayerCount int     `json:"newChargePlayerCount"`
 }
 

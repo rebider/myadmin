@@ -1,0 +1,119 @@
+package models
+
+import (
+	"github.com/astaxie/beego/logs"
+	"github.com/chnzrb/myadmin/utils"
+)
+
+type DailyStatistics struct {
+	Node                 string  `json:"node"`
+	Time                 int     `json:"time"`
+
+	// 充值
+	ChargeMoney          int     `json:"chargeMoney"`
+	ChargePlayerCount    int     `json:"chargePlayerCount"`
+	ARPU                 float32 `json:"arpu" gorm:"-"`
+	NewChargePlayerCount int     `json:"newChargePlayerCount"`
+
+	// 注册
+	RegisterCount   int    `json:"registerCount"`
+	CreateRoleCount int    `json:"createRoleCount"`
+	ValidRoleCount  int    `json:"validRoleCount"`
+
+	// 在线
+	MaxOnlineCount int    `json:"maxOnline"`
+	MinOnlineCount int    `json:"minOnline"`
+	AvgOnlineCount int    `json:"avgOnline"`
+	AvgOnlineTime  int    `json:"avgOnlineTime"`
+
+	// 活跃
+	LoginTimes       int    `json:"loginTimes"`
+	LoginPlayerCount int    `json:"loginPlayerCount"`
+}
+
+type DailyStatisticsQueryParam struct {
+	BaseQueryParam
+	PlatformId string
+	Node       string `json:"serverId"`
+	StartTime  int
+	EndTime    int
+}
+
+func GetDailyStatisticsOne(node string, timestamp int) (*DailyStatistics, error) {
+	data := &DailyStatistics{
+		Node: node,
+		Time: timestamp,
+	}
+	err := Db.Model(&DailyStatistics{}).First(&data).Error
+	return data, err
+}
+
+
+func GetDailyStatisticsList(params *DailyStatisticsQueryParam) []*DailyStatistics {
+	data := make([]*DailyStatistics, 0)
+	for i := params.StartTime; i <= params.EndTime; i = i + 86400 {
+		tmpData := make([]*DailyStatistics, 0)
+		err := Db.Model(&DailyStatistics{}).Where(&DailyStatistics{Node: params.Node, Time: i}).Find(&tmpData).Error
+		utils.CheckError(err)
+		if len(tmpData) > 0 {
+			tmpE := &DailyStatistics{
+				Node: params.Node,
+				Time: i,
+			}
+			for _, e := range tmpData {
+				tmpE.ChargeMoney += e.ChargeMoney
+				tmpE.ChargePlayerCount += e.ChargePlayerCount
+				tmpE.NewChargePlayerCount += e.NewChargePlayerCount
+
+
+				tmpE.RegisterCount += e.RegisterCount
+				tmpE.CreateRoleCount += e.CreateRoleCount
+				tmpE.ValidRoleCount += e.ValidRoleCount
+
+
+				tmpE.MaxOnlineCount += e.MaxOnlineCount
+				tmpE.MinOnlineCount += e.MinOnlineCount
+				tmpE.AvgOnlineCount += e.AvgOnlineCount
+				tmpE.AvgOnlineTime += e.AvgOnlineTime
+				//tmpE.CreateRoleCount += e.CreateRoleCount
+			}
+			data = append(data, tmpE)
+		}
+	}
+	for _, e := range data {
+		e.ARPU = CaclARPU(e.ChargeMoney, e.ChargePlayerCount)
+	}
+	return data
+}
+
+func UpdateDailyStatistics(node string, timestamp int) error {
+	logs.Info("更新DailyStatistics:%v, %v", node, timestamp)
+
+	gameDb, err := GetGameDbByNode(node)
+	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+	defer gameDb.Close()
+
+	m := &DailyStatistics{
+		Node:                 node,
+		Time:                 timestamp,
+
+		ChargeMoney:          GetThatDayServerTotalChargeMoney(node, timestamp),
+		ChargePlayerCount:    GetThatDayServerChargePlayerCount(node, timestamp),
+		NewChargePlayerCount: GetThadDayServerFirstChargePlayerCount(node, timestamp),
+
+		RegisterCount:   GetThatDayRegister(gameDb, timestamp),
+		CreateRoleCount: GetThatDayCreateRoleCount(gameDb, timestamp),
+		ValidRoleCount:  GetThatDayValidCreateRoleCount(gameDb, timestamp),
+
+		MaxOnlineCount: GetThatDayMaxOnlineCount(node, timestamp),
+		MinOnlineCount: GetThatDayMinOnlineCount(node, timestamp),
+		AvgOnlineCount: int(GetThatDayAverageOnlineCount(node, timestamp)),
+		AvgOnlineTime:  GetAvgOnlineTime(node, timestamp),
+
+	}
+	err = Db.Save(&m).Error
+	return err
+}
