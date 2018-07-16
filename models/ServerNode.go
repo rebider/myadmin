@@ -23,7 +23,7 @@ type ServerNode struct {
 	DbName        string `json:"dbName"`
 	Type          int    `json:"type"`
 	ZoneNode      string `json:"zoneNode"`
-	ServerVersion string `json:"serverVersion" gorm:"-"`
+	ServerVersion int `json:"serverVersion" gorm:"-"`
 	IsAdd         int    `json:"isAdd" gorm:"-"`
 	//ClientVersion string `json:"clientVersion"`
 	OpenTime int `json:"openTime"`
@@ -81,24 +81,24 @@ func IsServerNodeExists(node string) bool {
 	return ! DbCenter.First(&serverNode).RecordNotFound()
 }
 
-func GetNodeVersion(node string) string {
+func GetNodeVersion(node string) int {
 	//return "nullddd"
 	gameDb, err := GetGameDbByNode(node)
 	utils.CheckError(err)
 	if err != nil {
-		return "null"
+		return 0
 	}
 	defer gameDb.Close()
 	var data struct {
-		Version string
+		Version int
 	}
 
 	sql := fmt.Sprintf(
-		`SELECT str_data as version FROM server_data where id = 0 `)
+		`SELECT int_data as version FROM server_data where id = 0 `)
 	err = gameDb.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	if err != nil {
-		return "null"
+		return 0
 	}
 	return data.Version
 }

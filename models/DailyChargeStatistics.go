@@ -12,6 +12,8 @@ type DailyChargeStatistics struct {
 	ChargePlayerCount    int     `json:"chargePlayerCount"`
 	ARPU                 float32 `json:"arpu" gorm:"-"`
 	NewChargePlayerCount int     `json:"newChargePlayerCount"`
+	ActivePlayerCount    int `json:"activePlayerCount" gorm:"-"`
+	ActiveChargeRate     float32 `json:"activeChargeRate" gorm:"-"`
 }
 
 type DailyChargeStatisticsQueryParam struct {
@@ -50,6 +52,9 @@ func GetDailyChargeStatisticsList(params *DailyChargeStatisticsQueryParam) []*Da
 				tmpE.ChargeMoney += e.ChargeMoney
 				tmpE.ChargePlayerCount += e.ChargePlayerCount
 				tmpE.NewChargePlayerCount += e.NewChargePlayerCount
+				dailyActiveStatistics, err := GetDailyActiveStatisticsOne(e.Node, e.Time)
+				utils.CheckError(err)
+				tmpE.ActivePlayerCount += dailyActiveStatistics.ActivePlayerCount
 				//tmpE.CreateRoleCount += e.CreateRoleCount
 			}
 			data = append(data, tmpE)
@@ -57,6 +62,7 @@ func GetDailyChargeStatisticsList(params *DailyChargeStatisticsQueryParam) []*Da
 	}
 	for _, e := range data {
 		e.ARPU = CaclARPU(e.ChargeMoney, e.ChargePlayerCount)
+		e.ActiveChargeRate = CaclARPU(e.ChargePlayerCount, e.ActivePlayerCount)
 	}
 	return data
 }

@@ -69,8 +69,17 @@ func GetThatDayCreateRoleCount(db *gorm.DB, zeroTimestamp int) int {
 	return data.Count
 }
 
-
-
+//获取当前全服资源总数
+func GetTotalProp(db *gorm.DB, propType int, propId int) int {
+	var data struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`SELECT sum(num) as count FROM player_prop WHERE prop_type = '%d' and prop_id = '%d'`, propType, propId)
+	err := db.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
+}
 
 //获取总有效角色人数
 func GetTotalValidCreateRoleCount(db *gorm.DB) int {
@@ -97,4 +106,3 @@ func GetThatDayValidCreateRoleCount(db *gorm.DB, zeroTimestamp int) int {
 	utils.CheckError(err)
 	return data.Count
 }
-

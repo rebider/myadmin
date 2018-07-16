@@ -7,8 +7,8 @@ import (
 )
 
 type DailyActiveStatistics struct {
-	Node             string `json:"node"`
-	Time             int    `json:"time"`
+	Node             string `json:"node" gorm:"primary_key"`
+	Time             int    `json:"time" gorm:"primary_key"`
 	LoginTimes       int    `json:"loginTimes"`
 	LoginPlayerCount int    `json:"loginPlayerCount"`
 	//AvgLoginCount     int    `json:"avgLoginCount" gorm:"-"`
@@ -25,6 +25,15 @@ type DailyActiveStatisticsQueryParam struct {
 	Node      string `json:"serverId"`
 	StartTime int
 	EndTime   int
+}
+
+func GetDailyActiveStatisticsOne(node string, timestamp int) (*DailyActiveStatistics, error) {
+	data := &DailyActiveStatistics{
+		Node: node,
+		Time: timestamp,
+	}
+	err := Db.Model(&DailyActiveStatistics{}).First(&data).Error
+	return data, err
 }
 
 func GetDailyActiveStatisticsList(params *DailyActiveStatisticsQueryParam) []*DailyActiveStatistics {

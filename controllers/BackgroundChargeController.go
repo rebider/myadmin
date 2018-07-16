@@ -44,6 +44,7 @@ func (c *BackgroundController) Charge() {
 		ChargeValue int
 		ServerId    string
 		ChargeType  string
+		ItemId	    int
 	}
 	var result struct {
 		Code int
@@ -56,8 +57,9 @@ func (c *BackgroundController) Charge() {
 	player, err := models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err)
 
-	args := fmt.Sprintf("player_id=%d&game_charge_id=0&charge_item_id=0&item_count=%d&partid=%s&charge_type=%s&gm_id=%s",
+	args := fmt.Sprintf("player_id=%d&game_charge_id=0&charge_item_id=%d&item_count=%d&partid=%s&charge_type=%s&gm_id=%s",
 		player.Id,
+		params.ItemId,
 		params.ChargeValue,
 		params.PlatformId,
 		params.ChargeType,

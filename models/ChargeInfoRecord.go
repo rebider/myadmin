@@ -3,13 +3,14 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/jinzhu/gorm"
+	"fmt"
 )
 
 type ChargeInfoRecord struct {
 	OrderId       string `json:"orderId"`
 	ChargeType    int    `json:"chargeType"`
 	Ip            string `json:"ip"`
-	PartId        string    `json:"platformId"`
+	PartId        string `json:"platformId"`
 	ServerId      string `json:"serverId"`
 	AccId         string `json:"accId"`
 	IsFirst       int    `json:"isFirst"`
@@ -24,6 +25,7 @@ type ChargeInfoRecord struct {
 	Money         int    `json:"money"`
 	Ingot         int    `json:"ingot"`
 	RecordTime    int    `json:"recordTime"`
+	ChargeItemId  int    `json:"chargeItemId"`
 }
 
 type ChargeInfoRecordQueryParam struct {
@@ -44,7 +46,7 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 	sortOrder := "record_time"
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
-	} else if params.Order == "ascending"{
+	} else if params.Order == "ascending" {
 		sortOrder = sortOrder + " asc"
 	} else {
 		sortOrder = sortOrder + " desc"
@@ -78,6 +80,25 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 	for _, e := range data {
 		e.PlayerName = GetPlayerName_2(e.PartId, e.ServerId, e.PlayerId)
 		e.LastLoginTime = GetPlayerLastLoginTime(e.PartId, e.ServerId, e.PlayerId)
+		e.ChargeItemId = GetChargeItemId(e.OrderId, e.PartId, e.ServerId)
 	}
 	return data, count
+}
+
+//获取玩家最近登录时间
+func GetChargeItemId(orderId string, platformId string, serverId string) int {
+	gameDb, err := GetGameDbByPlatformIdAndSid(platformId, serverId)
+	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	defer gameDb.Close()
+	var data struct {
+		ChargeItemId int
+	}
+	sql := fmt.Sprintf(
+		`SELECT charge_item_id FROM player_charge_record where order_id = ? `)
+	err = gameDb.Raw(sql, orderId).Scan(&data).Error
+	utils.CheckError(err)
+	return data.ChargeItemId
 }

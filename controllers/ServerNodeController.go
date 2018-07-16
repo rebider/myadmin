@@ -25,20 +25,19 @@ func (c *ServerNodeController) List() {
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
-	c.Result(enums.CodeSuccess, "获取节点列表成功",result)
+	c.Result(enums.CodeSuccess, "获取节点列表成功", result)
 }
-
 
 //  添加 编辑 节点
 func (c *ServerNodeController) Edit() {
 	m := models.ServerNode{}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
-	logs.Debug("编辑 节点:%v",m )
+	logs.Debug("编辑 节点:%v", m)
 	utils.CheckError(err, "编辑节点")
-	if m.IsAdd == 1 && models.IsServerNodeExists(m.Node){
+	if m.IsAdd == 1 && models.IsServerNodeExists(m.Node) {
 		c.Result(enums.CodeFail, "节点已经存在", m.Node)
 	}
-	if m.IsAdd == 0 && models.IsServerNodeExists(m.Node) == false{
+	if m.IsAdd == 0 && models.IsServerNodeExists(m.Node) == false {
 		c.Result(enums.CodeFail, "节点不存在", m.Node)
 	}
 
@@ -58,7 +57,7 @@ func (c *ServerNodeController) Edit() {
 		strconv.Itoa(m.DbPort),
 		m.DbName,
 	)
-	c.CheckError(err, "保存节点失败:"+ out)
+	c.CheckError(err, "保存节点失败:"+out)
 	c.Result(enums.CodeSuccess, "保存成功", m.Node)
 }
 
@@ -74,11 +73,10 @@ func (c *ServerNodeController) Delete() {
 			"delete_server_node",
 			str,
 		)
-		c.CheckError(err, "删除节点失败:"+ out)
+		c.CheckError(err, "删除节点失败:"+out)
 	}
 	c.Result(enums.CodeSuccess, fmt.Sprintf("成功删除 %d 项", len(ids)), 0)
 }
-
 
 ////  启动 节点
 //func (c *ServerNodeController) Start() {
@@ -129,23 +127,33 @@ func (c *ServerNodeController) Delete() {
 
 func (c *ServerNodeController) Action() {
 	var params struct {
-		Node     string
+		Nodes  [] string `json:"nodes"`
 		Action string
 	}
-	logs.Debug("节点操作:%v",params )
+
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	logs.Debug("节点操作666:%v", params)
 	c.CheckError(err)
 	curDir := utils.GetCurrentDirectory()
 	defer os.Chdir(curDir)
 	toolDir := utils.GetToolDir()
 	err = os.Chdir(toolDir)
 	c.CheckError(err)
-	commandArgs := []string{
-		"node_tool.sh",
-		params.Node,
-		params.Action,
+	var commandArgs []string
+	for _, node := range params.Nodes {
+		switch params.Action {
+		case "start":
+			commandArgs = []string{"node_tool.sh", node, params.Action,}
+		case "stop":
+			commandArgs = []string{"node_tool.sh", node, params.Action,}
+		case "hot_reload":
+			commandArgs = []string{"node_hot_reload.sh", node, "server",}
+		case "cold_reload":
+			commandArgs = []string{"node_cold_reload.sh", node, "server",}
+		}
+		out, err := utils.Cmd("sh", commandArgs)
+		c.CheckError(err, fmt.Sprintf("操作节点失败:%v %v", params, out))
 	}
-	out, err := utils.Cmd("sh", commandArgs)
-	c.CheckError(err, fmt.Sprintf("操作节点失败:%v %v", params, out))
-	c.Result(enums.CodeSuccess, "操作节点成功", params.Node)
+
+	c.Result(enums.CodeSuccess, "操作节点成功", "")
 }

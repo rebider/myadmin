@@ -3,14 +3,15 @@ package crons
 import (
 	"time"
 	"github.com/astaxie/beego/logs"
-	"github.com/chnzrb/myadmin/utils"
+	//"github.com/chnzrb/myadmin/utils"
 	"github.com/chnzrb/myadmin/models"
-	"net/http"
+	/*"net/http"
 	"io/ioutil"
 	"regexp"
 	"strconv"
 	"syscall"
-	"unsafe"
+	"unsafe"*/
+	//"github.com/chnzrb/myadmin/utils"
 )
 
 //初始化
@@ -25,7 +26,20 @@ func init() {
 	// 每小时定时器
 	go everyHourClockCron()
 
-	//go TmpUpdateAllGameNodeRemainTotal(1529856000 + 86400)
+	//go TmpUpdateAllGameNodeRemainTotal(1530720000)
+	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400)
+	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400*2)
+	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400*3)
+	//
+	//
+	//todayZeroTime := utils.GetTodayZeroTimestamp()
+	//for i := 1529856000; i <= todayZeroTime; i += 86400 {
+	//	go TmpUpdateAllGameNodeRemainActive(i)
+	//}
+	//go TmpUpdateAllGameNodeRemainActive(1530720000)
+	//go TmpUpdateAllGameNodeRemainActive(1530720000 - 86400)
+	//go TmpUpdateAllGameNodeRemainActive(1530720000 - 86400*2)
+	//go TmpUpdateAllGameNodeRemainActive(1530720000 - 86400*3)
 	//go TmpUpdateAllGameNodeRemainTotal(1529942400 + 86400)
 	//go TmpUpdateAllGameNodeRemainTotal(1530028800 + 86400)
 	//go test()
@@ -54,69 +68,69 @@ func tenSecondCron() {
 		select {
 		case <-timer1.C:
 			// 业务
-			go test()
+			//go test()
 		}
 	}
 }
 
 var cacheNum = 0
 
-func test() {
-	//resp, err := http.Get("https://www.feixiaohao.com/#USD")
-	resp, err := http.Get("https://www.feixiaohao.com/#USD")
-
-	utils.CheckError(err)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	utils.CheckError(err)
-	//logs.Info("all:%v", string(body))
-	//reg := regexp.MustCompile(`<tr id="bitcoin">.*class="price" data-usd="(\d+)".*</tr>`)
-	//reg := regexp.MustCompile(`class=price data-usd=(\d+)`)
-	reg := regexp.MustCompile(`href=/currencies/bitcoin/#markets target=_blank class=price data-usd=(\d+)`)
-
-	//for i, e := range reg.FindAllStringSubmatch(string(body), -1) {
-	//	logs.Info("ggg:%v:%v", i, e)
-	//}
-	n, err := strconv.Atoi(reg.FindAllStringSubmatch(string(body), -1)[0][1])
-	logs.Debug("[P]:%v", n)
-	utils.CheckError(err)
-	diff := cacheNum - n
-
-	if diff >= 10 || diff <= -10 {
-		logs.Warning("%v -> %v", cacheNum, n)
-		go winSound()
-	}
-	cacheNum = n
-	//exec.Command("cmd", "bee.bat")
-
-}
-
-func winSound() {
-	funInDllFile, err := syscall.LoadLibrary("Winmm.dll") // 调用的dll文件
-	if err != nil {
-		print("cant not call : syscall.LoadLibrary , errorInfo :" + err.Error())
-	}
-	defer syscall.FreeLibrary(funInDllFile)
-
-	// 调用的dll里面的函数是：
-	funName := "PlaySound"
-	// 注册一长串调用代码，简化为 _win32Fun 变量.
-	win32Fun, err := syscall.GetProcAddress(syscall.Handle(funInDllFile), funName)
-	// 通过syscall.Syscall6()去调用win32的xxx函数，因为xxx函数有3个参数,故需取Syscall6才能放得下. 最后的3个参数,设置为0即可
-	_, _, err = syscall.Syscall6(
-		uintptr(win32Fun),                                          // 调用的函数名
-		3,                                                          // 指明该函数的参数数量
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("alert"))), // 该函数的参数1. 可通过msdn查找函数名 查参数含义
-		// SystemStart
-		uintptr(0), // 该函数的参数2.
-		uintptr(0), // 该函数的参数3.
-		0,
-		0,
-		0)
-}
+//func test() {
+//	//resp, err := http.Get("https://www.feixiaohao.com/#USD")
+//	resp, err := http.Get("https://www.feixiaohao.com/#USD")
+//
+//	utils.CheckError(err)
+//	if err != nil {
+//		return
+//	}
+//	defer resp.Body.Close()
+//	body, err := ioutil.ReadAll(resp.Body)
+//	utils.CheckError(err)
+//	//logs.Info("all:%v", string(body))
+//	//reg := regexp.MustCompile(`<tr id="bitcoin">.*class="price" data-usd="(\d+)".*</tr>`)
+//	//reg := regexp.MustCompile(`class=price data-usd=(\d+)`)
+//	reg := regexp.MustCompile(`href=/currencies/bitcoin/#markets target=_blank class=price data-usd=(\d+)`)
+//
+//	//for i, e := range reg.FindAllStringSubmatch(string(body), -1) {
+//	//	logs.Info("ggg:%v:%v", i, e)
+//	//}
+//	n, err := strconv.Atoi(reg.FindAllStringSubmatch(string(body), -1)[0][1])
+//	logs.Debug("[P]:%v", n)
+//	utils.CheckError(err)
+//	diff := cacheNum - n
+//
+//	if diff >= 10 || diff <= -10 {
+//		logs.Warning("%v -> %v", cacheNum, n)
+//		go winSound()
+//	}
+//	cacheNum = n
+//	//exec.Command("cmd", "bee.bat")
+//
+//}
+//
+//func winSound() {
+//	funInDllFile, err := syscall.LoadLibrary("Winmm.dll") // 调用的dll文件
+//	if err != nil {
+//		print("cant not call : syscall.LoadLibrary , errorInfo :" + err.Error())
+//	}
+//	defer syscall.FreeLibrary(funInDllFile)
+//
+//	// 调用的dll里面的函数是：
+//	funName := "PlaySound"
+//	// 注册一长串调用代码，简化为 _win32Fun 变量.
+//	win32Fun, err := syscall.GetProcAddress(syscall.Handle(funInDllFile), funName)
+//	// 通过syscall.Syscall6()去调用win32的xxx函数，因为xxx函数有3个参数,故需取Syscall6才能放得下. 最后的3个参数,设置为0即可
+//	_, _, err = syscall.Syscall6(
+//		uintptr(win32Fun),                                          // 调用的函数名
+//		3,                                                          // 指明该函数的参数数量
+//		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("alert"))), // 该函数的参数1. 可通过msdn查找函数名 查参数含义
+//		// SystemStart
+//		uintptr(0), // 该函数的参数2.
+//		uintptr(0), // 该函数的参数3.
+//		0,
+//		0,
+//		0)
+//}
 
 //每天0天执行
 func dailyZeroClockCron() {

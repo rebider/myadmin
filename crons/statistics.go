@@ -26,13 +26,13 @@ func UpdateAllGameNodeDailyStatistics() {
 	for _, serverNode := range gameServerNodeList {
 		//err := models.UpdateDailyStatistics(serverNode.Node, todayZeroTimestamp - 86400)
 		//utils.CheckError(err)
-		err := models.UpdateDailyChargeStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		err := models.UpdateDailyChargeStatistics(serverNode.Node, todayZeroTimestamp-86400)
 		utils.CheckError(err)
-		err = models.UpdateDailyOnlineStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		err = models.UpdateDailyOnlineStatistics(serverNode.Node, todayZeroTimestamp-86400)
 		utils.CheckError(err)
-		err = models.UpdateDailyRegisterStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		err = models.UpdateDailyRegisterStatistics(serverNode.Node, todayZeroTimestamp-86400)
 		utils.CheckError(err)
-		err = models.UpdateDailyActiveStatistics(serverNode.Node, todayZeroTimestamp - 86400)
+		err = models.UpdateDailyActiveStatistics(serverNode.Node, todayZeroTimestamp-86400)
 		utils.CheckError(err)
 	}
 }
@@ -45,7 +45,7 @@ func UpdateAllGameNodeRemainTotal() {
 	gameServerNodeList := models.GetAllGameServerNode()
 	for _, serverNode := range gameServerNodeList {
 		if now >= serverNode.OpenTime {
-			err := models.UpdateRemainTotal(serverNode.Node, todayZeroTimestamp - 86400)
+			err := models.UpdateRemainTotal(serverNode.Node, todayZeroTimestamp-86400)
 			utils.CheckError(err)
 		}
 
@@ -60,7 +60,7 @@ func UpdateAllGameNodeRemainActive() {
 	gameServerNodeList := models.GetAllGameServerNode()
 	for _, serverNode := range gameServerNodeList {
 		if now >= serverNode.OpenTime {
-			err := models.UpdateRemainActive(serverNode.Node, todayZeroTimestamp - 86400)
+			err := models.UpdateRemainActive(serverNode.Node, todayZeroTimestamp-86400)
 			utils.CheckError(err)
 		}
 
@@ -73,7 +73,20 @@ func TmpUpdateAllGameNodeRemainTotal(time int) {
 	gameServerNodeList := models.GetAllGameServerNode()
 	for _, serverNode := range gameServerNodeList {
 		if now >= serverNode.OpenTime {
-			err := models.UpdateRemainActive(serverNode.Node, time)
+			err := models.UpdateRemainTotal(serverNode.Node, time)
+			utils.CheckError(err)
+		}
+
+	}
+}
+
+func TmpUpdateAllGameNodeRemainActive(time int) {
+	now := utils.GetTimestamp()
+	logs.Info("更新所有活跃留存:%v", time)
+	gameServerNodeList := models.GetAllGameServerNode()
+	for _, serverNode := range gameServerNodeList {
+		if now >= serverNode.OpenTime {
+			err := models.UpdateRemainActive(serverNode.Node, time-86400)
 			utils.CheckError(err)
 		}
 

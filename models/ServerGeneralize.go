@@ -5,10 +5,10 @@ import (
 )
 
 type ServerGeneralize struct {
-	PlatformId              string     `json:"platformId"`
+	PlatformId              string  `json:"platformId"`
 	ServerId                string  `json:"serverId"`
 	OpenTime                int     `json:"openTime"`
-	Version                 string  `json:"version"`
+	Version                 int     `json:"version"`
 	TotalRegister           int     `json:"totalRegister"`
 	TotalCreateRole         int     `json:"totalCreateRole"`
 	TodayCreateRole         int     `json:"todayCreateRole"`
@@ -24,11 +24,13 @@ type ServerGeneralize struct {
 	SecondChargeRate        float32 `json:"secondChargeRate"`
 	MaxLevel                int     `json:"maxLevel"`
 	MaxOnlineCount          int     `json:"maxOnlineCount"`
+	TotalIngot              int     `json:"totalIngot"`
+	TotalCoin               int     `json:"totalCoin"`
 }
 
 type ServerGeneralizeQueryParam struct {
 	PlatformId string
-	Node   string `json:"serverId"`
+	Node       string `json:"serverId"`
 }
 
 func GetServerGeneralize(platformId string, node string) (*ServerGeneralize, error) {
@@ -41,22 +43,24 @@ func GetServerGeneralize(platformId string, node string) (*ServerGeneralize, err
 	serverNode, err := GetServerNode(node)
 	utils.CheckError(err)
 	serverGeneralize := &ServerGeneralize{
-		PlatformId:platformId,
-		ServerId: GetGameServerIdListStringByNode(node),
-		OpenTime: serverNode.OpenTime,
-		Version: GetNodeVersion(node),
-		Status : serverNode.State,
-		TotalRegister: GetTotalRegister(gameDb),
-		TotalCreateRole: GetTotalCreateRoleCount(gameDb),
-		OnlineCount:GetNowOnlineCount(gameDb),
-		MaxLevel: GetMaxPlayerLevel(gameDb),
-		TodayCreateRole:GetTodayCreateRoleCount(gameDb),
-		TodayRegister:GetTodayRegister(gameDb),
-		MaxOnlineCount:GetMaxOnlineCount(node),
-		TotalChargeIngot:GetServerTotalChargeIngot(node),
-		TotalChargeMoney:GetServerTotalChargeMoney(node),
-		TotalChargePlayerCount:GetServerChargePlayerCount(node),
-		SecondChargePlayerCount:GetServerSecondChargePlayerCount(node),
+		PlatformId:              platformId,
+		ServerId:                GetGameServerIdListStringByNode(node),
+		OpenTime:                serverNode.OpenTime,
+		Version:                 GetNodeVersion(node),
+		Status:                  serverNode.State,
+		TotalRegister:           GetTotalRegister(gameDb),
+		TotalCreateRole:         GetTotalCreateRoleCount(gameDb),
+		OnlineCount:             GetNowOnlineCount(gameDb),
+		MaxLevel:                GetMaxPlayerLevel(gameDb),
+		TodayCreateRole:         GetTodayCreateRoleCount(gameDb),
+		TodayRegister:           GetTodayRegister(gameDb),
+		MaxOnlineCount:          GetMaxOnlineCount(node),
+		TotalChargeIngot:        GetServerTotalChargeIngot(node),
+		TotalChargeMoney:        GetServerTotalChargeMoney(node),
+		TotalChargePlayerCount:  GetServerChargePlayerCount(node),
+		SecondChargePlayerCount: GetServerSecondChargePlayerCount(node),
+		TotalIngot:              GetTotalProp(gameDb, 1, 2),
+		TotalCoin:               GetTotalProp(gameDb, 1, 1),
 	}
 
 	serverGeneralize.ARPU = CaclARPU(serverGeneralize.TotalChargeMoney, serverGeneralize.TotalChargePlayerCount)

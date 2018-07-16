@@ -17,7 +17,7 @@ import (
 )
 
 func ClockDealAllNoticeLog() {
-	logs.Info("定时处理公告")
+	//logs.Info("定时处理公告")
 	noticeLogList := models.GetAllNoticeLog()
 	for _, noticeLog := range noticeLogList {
 		if noticeLog.Status == 0 {
@@ -150,11 +150,11 @@ func DealNoticeLog(id int) {
 		//	} else {
 		//		logs.Info("发送公告失败 PlatformId: %v, node: %v", noticeLog.PlatformId, node)
 		//	}
+		if noticeLog.NoticeType != enums.NoticeTypeLoop {
+			noticeLog.Status = 1
+		}
+		noticeLog.LastSendTime = now
+		err = models.Db.Save(&noticeLog).Error
+		utils.CheckError(err, "保存公告日志失败")
 	}
-	if noticeLog.NoticeType != enums.NoticeTypeLoop {
-		noticeLog.Status = 1
-	}
-	noticeLog.LastSendTime = now
-	err = models.Db.Save(&noticeLog).Error
-	utils.CheckError(err, "保存公告日志失败")
 }
