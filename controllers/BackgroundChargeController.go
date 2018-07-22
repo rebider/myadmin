@@ -57,6 +57,12 @@ func (c *BackgroundController) Charge() {
 	player, err := models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err)
 
+	accountType := models.GetAccountType(params.PlatformId, player.AccId)
+
+	if accountType != 1 {
+		c.Result(enums.CodeFail, fmt.Sprintf("后台充值失败: %s.%s 不是内部帐号", params.ServerId, player.Nickname), 0)
+	}
+
 	args := fmt.Sprintf("player_id=%d&game_charge_id=0&charge_item_id=%d&item_count=%d&partid=%s&charge_type=%s&gm_id=%s",
 		player.Id,
 		params.ItemId,

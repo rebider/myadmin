@@ -7,23 +7,24 @@ import (
 
 type GameServerQueryParam struct {
 	BaseQueryParam
-	PlatformId string    `json:"platformId"`
+	PlatformId string `json:"platformId"`
 	ServerId   string `json:"serverId"`
 	Node       string `json:"node"`
 }
 
 type GameServer struct {
-	PlatformId string    `gorm:"primary_key" json:"platformId"`
+	PlatformId string `gorm:"primary_key" json:"platformId"`
 	Sid        string `gorm:"primary_key" json:"serverId"`
 	Desc       string `json:"desc"`
 	Node       string `json:"node"`
-	State      int `gorm:"-" json:"state"`
-	IsShow      int `json:"isShow"`
-	OpenTime   int `gorm:"-" json:"openTime"`
+	State      int    `gorm:"-" json:"state"`
+	IsShow     int    `json:"isShow"`
+	OpenTime   int    `gorm:"-" json:"openTime"`
 	ZoneNode   string `gorm:"-" json:"zoneNode"`
-	IsAdd   int `gorm:"-" json:"isAdd"`
+	IsAdd      int    `gorm:"-" json:"isAdd"`
+	DbVersion     int    `json:"dbVersion" gorm:"-"`
 	RunState   int    `json:"runState" gorm:"-"`
-	StartTime   int    `json:"startTime" gorm:"-"`
+	StartTime  int    `json:"startTime" gorm:"-"`
 }
 
 func (t *GameServer) TableName() string {
@@ -59,6 +60,7 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	utils.CheckError(err)
 	for _, e := range data {
 		serverNode, err := GetServerNode(e.Node)
+		e.DbVersion = GetDbVersion(e.Node)
 		utils.CheckError(err)
 		if err == nil {
 			e.State = serverNode.State
@@ -89,7 +91,6 @@ func IsGameServerExists(platformId string, id string) bool {
 	}
 	return ! DbCenter.First(&gameServer).RecordNotFound()
 }
-
 
 // 获取该节点关联的所有游戏服
 func GetGameServerByNode(node string) [] *GameServer {

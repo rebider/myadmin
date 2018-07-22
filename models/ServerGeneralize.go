@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/chnzrb/myadmin/utils"
+	//"github.com/astaxie/beego/logs"
 )
 
 type ServerGeneralize struct {
@@ -17,6 +18,10 @@ type ServerGeneralize struct {
 	TotalChargeMoney        int     `json:"totalChargeMoney"`
 	TotalChargePlayerCount  int     `json:"totalChargePlayerCount"`
 	SecondChargePlayerCount int     `json:"secondChargePlayerCount"`
+	ChargeCount2Rate        float32 `json:"chargeCount2Rate"`
+	ChargeCount3Rate        float32 `json:"chargeCount3Rate"`
+	ChargeCount5Rate        float32 `json:"chargeCount5Rate"`
+	//ChargeCountMore         int     `json:"chargeCountMore"`
 	OnlineCount             int     `json:"onlineCount"`
 	Status                  int     `json:"status"`
 	ARPU                    float32 `json:"arpu"`
@@ -42,6 +47,26 @@ func GetServerGeneralize(platformId string, node string) (*ServerGeneralize, err
 	defer gameDb.Close()
 	serverNode, err := GetServerNode(node)
 	utils.CheckError(err)
+	chargeTimesList := GetServerChargeCountList(node)
+	//logs.Debug("chargeTimesList:%+v", chargeTimesList)
+	chargeCount2 := 0
+	chargeCount3 := 0
+	chargeCount5 := 0
+	//chargeCountMore := 0
+	for _, e := range chargeTimesList {
+		if e >= 2 {
+			chargeCount2++
+		}
+		if e >= 3 {
+			chargeCount3++
+		}
+		if e >= 5 {
+			chargeCount5++
+		}
+		//if e >= 6 {
+		//	chargeCountMore++
+		//}
+	}
 	serverGeneralize := &ServerGeneralize{
 		PlatformId:              platformId,
 		ServerId:                GetGameServerIdListStringByNode(node),
@@ -59,13 +84,17 @@ func GetServerGeneralize(platformId string, node string) (*ServerGeneralize, err
 		TotalChargeMoney:        GetServerTotalChargeMoney(node),
 		TotalChargePlayerCount:  GetServerChargePlayerCount(node),
 		SecondChargePlayerCount: GetServerSecondChargePlayerCount(node),
+		//ChargeCountMore:         chargeCountMore,
 		TotalIngot:              GetTotalProp(gameDb, 1, 2),
 		TotalCoin:               GetTotalProp(gameDb, 1, 1),
 	}
 
 	serverGeneralize.ARPU = CaclARPU(serverGeneralize.TotalChargeMoney, serverGeneralize.TotalChargePlayerCount)
 	serverGeneralize.ChargeRate = CaclChargeRate(serverGeneralize.TotalChargePlayerCount, serverGeneralize.TotalCreateRole)
-	serverGeneralize.SecondChargeRate = CaclSceondChargeRate(serverGeneralize.SecondChargePlayerCount, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.SecondChargeRate = CaclChargeRate(serverGeneralize.SecondChargePlayerCount, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.ChargeCount2Rate = CaclChargeRate(chargeCount2, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.ChargeCount3Rate = CaclChargeRate(chargeCount3, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.ChargeCount5Rate = CaclChargeRate(chargeCount5, serverGeneralize.TotalChargePlayerCount)
 
 	return serverGeneralize, err
 }

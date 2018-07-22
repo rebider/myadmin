@@ -157,3 +157,42 @@ func (c *ServerNodeController) Action() {
 
 	c.Result(enums.CodeSuccess, "操作节点成功", "")
 }
+
+func (c *ServerNodeController) Install() {
+	var params struct {
+		Node string `json:"node"`
+	}
+
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	logs.Info("部署节点:%v", params)
+	c.CheckError(err)
+	//curDir := utils.GetCurrentDirectory()
+	//defer os.Chdir(curDir)
+	//toolDir := utils.GetToolDir()
+	//err = os.Chdir(toolDir)
+	//c.CheckError(err)
+	var commandArgs []string
+	serverNode, err := models.GetServerNode(params.Node)
+	c.CheckError(err, "节点不存在:"+params.Node)
+	app := ""
+	switch serverNode.Type {
+	case 0:
+		app = "center"
+	case 1:
+		app = "game"
+	case 2:
+		app = "zone"
+	case 4:
+		app = "login_server"
+	case 5:
+		app = "unique_id"
+	case 6:
+		app = "charge"
+	}
+
+	commandArgs = []string{"/data/tool/ansible/do-install.sh", serverNode.Node, app,serverNode.DbName, serverNode.DbHost, strconv.Itoa(serverNode.DbPort), "root"}
+	out, err := utils.Cmd("sh", commandArgs)
+	c.CheckError(err, fmt.Sprintf("操作节点失败:%v %v", params, out))
+	logs.Info("部署节点成功:%v", params)
+	c.Result(enums.CodeSuccess, "部署节点成功", params.Node)
+}

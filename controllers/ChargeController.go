@@ -25,10 +25,12 @@ func (c *ChargeController) ChargeList() {
 		}
 		params.PlayerId = player.Id
 	}
-	data, total := models.GetChargeInfoRecordList(&params)
+	data, total, playerCount, moneyCount := models.GetChargeInfoRecordList(&params)
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data
+	result["playerCount"] = playerCount
+	result["moneyCount"] = moneyCount
 	c.Result(enums.CodeSuccess, "获取充值记录日志", result)
 }
 
@@ -73,6 +75,20 @@ func (c *ChargeController) ChargeTaskDistribution() {
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取充充值任务分布", result)
 }
+
+// 充值活动分布
+func (c *ChargeController) ChargeActivityDistribution() {
+	var params models.ChargeActivityDistributionQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("获取充值获得统计:%+v", params)
+	data := models.GetChargeActivityDistribution(params)
+	result := make(map[string]interface{})
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取充值活动分布", result)
+}
+
+
 // 充值金额分布
 func (c *ChargeController) ChargeMoneyDistribution() {
 	var params models.ChargeMoneyDistributionQueryParam

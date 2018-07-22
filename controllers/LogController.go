@@ -88,24 +88,24 @@ func (c *LogController) PlayerPropLogList() {
 	c.Result(enums.CodeSuccess, "获取道具日志", result)
 }
 
-func (c *LogController) ChargeList() {
-	var params models.ChargeInfoRecordQueryParam
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	utils.CheckError(err)
-	logs.Info("查询充值记录日志:%+v", params)
-	if params.PlayerName != "" {
-		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
-		if player == nil || err != nil {
-			c.Result(enums.CodeFail, "玩家不存在", 0)
-		}
-		params.PlayerId = player.Id
-	}
-	data, total := models.GetChargeInfoRecordList(&params)
-	result := make(map[string]interface{})
-	result["total"] = total
-	result["rows"] = data
-	c.Result(enums.CodeSuccess, "获取充值记录日志", result)
-}
-
-
+//func (c *LogController) ChargeList() {
+//	var params models.ChargeInfoRecordQueryParam
+//	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+//	utils.CheckError(err)
+//	logs.Info("查询充值记录日志:%+v", params)
+//	if params.PlayerName != "" {
+//		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
+//		if player == nil || err != nil {
+//			c.Result(enums.CodeFail, "玩家不存在", 0)
+//		}
+//		params.PlayerId = player.Id
+//	}
+//	data, total := models.GetChargeInfoRecordList(&params)
+//	result := make(map[string]interface{})
+//	result["total"] = total
+//	result["rows"] = data
+//	c.Result(enums.CodeSuccess, "获取充值记录日志", result)
+//}
+//
+//
 

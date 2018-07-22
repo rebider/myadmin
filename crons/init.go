@@ -26,6 +26,7 @@ func init() {
 	// 每小时定时器
 	go everyHourClockCron()
 
+	//go models.Repair()
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000)
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400)
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400*2)

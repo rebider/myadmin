@@ -4,10 +4,13 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/jinzhu/gorm"
 	"fmt"
+	//"os/user"
+	"github.com/astaxie/beego/logs"
+	"strings"
 )
 
 type ChargeInfoRecord struct {
-	OrderId       string `json:"orderId"`
+	OrderId       string `json:"orderId" gorm:"primary_key"`
 	ChargeType    int    `json:"chargeType"`
 	Ip            string `json:"ip"`
 	PartId        string `json:"platformId"`
@@ -40,7 +43,7 @@ type ChargeInfoRecordQueryParam struct {
 	EndTime    int
 }
 
-func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoRecord, int64) {
+func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoRecord, int64, int64, int64) {
 	data := make([]*ChargeInfoRecord, 0)
 	var count int64
 	sortOrder := "record_time"
@@ -57,6 +60,28 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 		}
 		return db
 	}
+
+	var sumData struct {
+		MoneyCount int64
+		PlayerCount int64
+	}
+	whereArray := make([] string, 0)
+	whereArray = append(whereArray, " charge_type = 99 ")
+	if params.Node != "" {
+		whereArray = append(whereArray, fmt.Sprintf(" server_id in (%s) ", GetGameServerIdListStringByNode(params.Node)))
+	}
+	if params.StartTime > 0 {
+		whereArray = append(whereArray, fmt.Sprintf(" record_time between %d and %d ", params.StartTime, params.EndTime))
+	}
+	whereParam := strings.Join(whereArray, " and ")
+	if whereParam != "" {
+		whereParam = " where " + whereParam
+	}
+	sql := fmt.Sprintf(
+		`select sum(money) as money_count, count(DISTINCT player_id) as player_count  from charge_info_record  %s;`, whereParam)
+	err := DbCharge.Debug().Raw(sql).Scan(&sumData).Error
+	utils.CheckError(err)
+
 	if params.Node == "" {
 		err := f(DbCharge.Model(&ChargeInfoRecord{}).Where(&ChargeInfoRecord{
 			PartId:     params.PlatformId,
@@ -77,12 +102,38 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 		utils.CheckError(err)
 	}
 
+
 	for _, e := range data {
 		e.PlayerName = GetPlayerName_2(e.PartId, e.ServerId, e.PlayerId)
 		e.LastLoginTime = GetPlayerLastLoginTime(e.PartId, e.ServerId, e.PlayerId)
-		e.ChargeItemId = GetChargeItemId(e.OrderId, e.PartId, e.ServerId)
+		//e.ChargeItemId = GetChargeItemId(e.OrderId, e.PartId, e.ServerId)
 	}
-	return data, count
+	return data, count, sumData.PlayerCount, sumData.MoneyCount
+}
+
+func Repair() {
+	logs.Info("开始修复充值数据")
+	data := make([]*ChargeInfoRecord, 0)
+	//var count int64
+	err := DbCharge.Model(&ChargeInfoRecord{}).Where(&ChargeInfoRecord{
+		ChargeType: 99,
+	}).Find(&data).Error
+	utils.CheckError(err)
+	if err != nil {
+		return
+	}
+	for _, e := range data {
+		value := GetChargeItemId(e.OrderId, e.PartId, e.ServerId)
+		logs.Debug("value:%v, %v", e.OrderId, value)
+		if value > 0 {
+			err = DbCharge.Model(&e).Update("charge_item_id", value).Error
+			utils.CheckError(err)
+			if err != nil {
+				return
+			}
+		}
+	}
+	logs.Info("修复充值数据成功")
 }
 
 //获取玩家最近登录时间

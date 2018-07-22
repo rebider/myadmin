@@ -109,6 +109,8 @@ func init() {
 	//beego.Router("/server_node/start", &controllers.ServerNodeController{}, "*:Start")
 	//beego.Router("/server_node/stop", &controllers.ServerNodeController{}, "*:Stop")
 	beego.Router("/server_node/action", &controllers.ServerNodeController{}, "*:Action")
+	beego.Router("/server_node/install", &controllers.ServerNodeController{}, "*:Install")
+
 
 	//日志
 	beego.Router("/log/login_log/", &controllers.LogController{}, "*:PlayerLoinLogList")
@@ -152,6 +154,7 @@ func init() {
 	beego.Router("/charge/charge_rank/", &controllers.ChargeController{}, "*:ChargeRankList")
 	beego.Router("/charge/charge_statistics/", &controllers.ChargeController{}, "*:ChargeStatisticsList")
 	beego.Router("/charge/charge_task_distribution/", &controllers.ChargeController{}, "*:ChargeTaskDistribution")
+	beego.Router("/charge/charge_activity_distribution/", &controllers.ChargeController{}, "*:ChargeActivityDistribution")
 	beego.Router("/charge/charge_money_distribution/", &controllers.ChargeController{}, "*:ChargeMoneyDistribution")
 	beego.Router("/charge/charge_level_distribution/", &controllers.ChargeController{}, "*:ChargeLevelDistribution")
 
@@ -165,6 +168,15 @@ func init() {
 	beego.Router("/remain/task_remain/", &controllers.RemainController{}, "*:GetTaskRemain")
 	beego.Router("/remain/level_remain/", &controllers.RemainController{}, "*:GetLevelRemain")
 	beego.Router("/remain/time_remain/", &controllers.RemainController{}, "*:GetTimeRemain")
+
+	//资产
+	beego.Router("/inventory/server_list", &controllers.InventoryServerController{}, "*:ServerList")
+	beego.Router("/inventory/edit_server/?:id", &controllers.InventoryServerController{}, "*:EditServer")
+	beego.Router("/inventory/delete_server", &controllers.InventoryServerController{}, "*:DeleteServer")
+
+	beego.Router("/inventory/database_list", &controllers.InventoryDatabaseController{}, "*:DatabaseList")
+	beego.Router("/inventory/edit_database/?:id", &controllers.InventoryDatabaseController{}, "*:EditDatabase")
+	beego.Router("/inventory/delete_database", &controllers.InventoryDatabaseController{}, "*:DeleteDatabase")
 
 	//主页
 	beego.Router("/", &controllers.MainController{})

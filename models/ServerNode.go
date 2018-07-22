@@ -23,10 +23,11 @@ type ServerNode struct {
 	DbName        string `json:"dbName"`
 	Type          int    `json:"type"`
 	ZoneNode      string `json:"zoneNode"`
-	ServerVersion int `json:"serverVersion" gorm:"-"`
+	ServerVersion int    `json:"serverVersion" gorm:"-"`
+	DbVersion     int    `json:"dbVersion" gorm:"-"`
 	IsAdd         int    `json:"isAdd" gorm:"-"`
 	//ClientVersion string `json:"clientVersion"`
-	OpenTime int `json:"openTime"`
+	OpenTime  int `json:"openTime"`
 	StartTime int `json:"startTime" gorm:"-"`
 	//IsTest        int    `json:"isTest"`
 	PlatformId string `json:"platformId"`
@@ -60,10 +61,18 @@ func ServerNodePageList(params *ServerNodeQueryParam) ([]*ServerNode, int64) {
 	if err == nil {
 		for _, e := range data {
 			e.ServerVersion = GetNodeVersion(e.Node)
+			e.DbVersion = GetDbVersion(e.Node)
 			e.StartTime = GetNodeStartTime(e.Node)
 		}
 	}
 	return data, count
+}
+
+func GetAllServerNodeList() ([]*ServerNode) {
+	data := make([]*ServerNode, 0)
+	err := DbCenter.Model(&ServerNode{}).Find(&data).Error
+	utils.CheckError(err)
+	return data
 }
 
 func GetServerNode(node string) (*ServerNode, error) {
@@ -103,6 +112,27 @@ func GetNodeVersion(node string) int {
 	return data.Version
 }
 
+func GetDbVersion(node string) int {
+	gameDb, err := GetGameDbByNode(node)
+	utils.CheckError(err)
+	if err != nil {
+		return -1
+	}
+	defer gameDb.Close()
+	var data struct {
+		Version int
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT version FROM db_version`)
+	err = gameDb.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	if err != nil {
+		return -1
+	}
+	return data.Version
+}
+
 func GetNodeStartTime(node string) int {
 	//return "nullddd"
 	gameDb, err := GetGameDbByNode(node)
@@ -124,7 +154,6 @@ func GetNodeStartTime(node string) int {
 	}
 	return data.Time
 }
-
 
 // 获取所有游戏节点
 func GetAllGameServerNode() []*ServerNode {
@@ -157,11 +186,11 @@ func GetAllGameNodeByPlatformId(platformId string) []string {
 	return data
 }
 
-// 获取登录节点
-func GetLoginServerNode() (*ServerNode, error) {
-	serverNode := &ServerNode{}
-	err := DbCenter.Where(&ServerNode{
-		Type: 4,
-	}).First(&serverNode).Error
-	return serverNode, err
-}
+// 获取登录节点 14101 11101
+//func GetLoginServerNode() (*ServerNode, error) {
+//	serverNode := &ServerNode{}
+//	err := DbCenter.Where(&ServerNode{
+//		Type: 4,
+//	}).First(&serverNode).Error
+//	return serverNode, err
+//}

@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"errors"
+	"github.com/astaxie/beego/logs"
 )
 
 //获取某日创角的玩家Id列表
@@ -45,7 +46,7 @@ func IsThatDayPlayerLogin(db *gorm.DB, zeroTimestamp int, playerId int) bool {
 // 是否该玩家连续登录过
 func IsPlayerContinueLogin(db *gorm.DB, zeroTimestamp int, continueDay int, playerId int) bool {
 	for i := 0; i <= continueDay; i ++ {
-		if IsThatDayPlayerLogin(db, zeroTimestamp + 86400 * i, playerId ) == false {
+		if IsThatDayPlayerLogin(db, zeroTimestamp+86400*i, playerId) == false {
 			return false
 		}
 	}
@@ -641,16 +642,16 @@ func CaclChargeRate(totalChargePlayerCount int, totalRoleCount int) float32 {
 	return float32(0)
 }
 
-//二次付费率
-func CaclSceondChargeRate(secondChargePlayerCount int, totalChargePlayerCount int) float32 {
-	if totalChargePlayerCount == 0 {
-		return 0
-	}
-	if totalChargePlayerCount > 0 {
-		return float32(secondChargePlayerCount) / float32(totalChargePlayerCount)
-	}
-	return float32(0)
-}
+////二次付费率
+//func CaclChargeRate(secondChargePlayerCount int, totalChargePlayerCount int) float32 {
+//	if totalChargePlayerCount == 0 {
+//		return 0
+//	}
+//	if totalChargePlayerCount > 0 {
+//		return float32(secondChargePlayerCount) / float32(totalChargePlayerCount)
+//	}
+//	return float32(0)
+//}
 
 //获取区服二次付费人数
 func GetServerSecondChargePlayerCount(node string) int {
@@ -662,6 +663,24 @@ func GetServerSecondChargePlayerCount(node string) int {
 	err := DbCharge.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
+}
+
+//获取区服充值次数列表
+func GetServerChargeCountList(node string) [] int {
+	var data [] struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`select count(player_id) as count from charge_info_record where server_id in (%s)  and charge_type = 99 group by player_id;`, GetGameServerIdListStringByNode(node))
+	err := DbCharge.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	r := make([] int, 0)
+	logs.Debug("data:%+v", data)
+	for _, e := range data {
+		r = append(r, e.Count)
+	}
+	logs.Debug("r:%+v", r)
+	return r
 }
 
 //获取区服首次付费人数
@@ -753,6 +772,68 @@ func GetChargeTaskDistribution(params ChargeTaskDistributionQueryParam) [] *Char
 
 	sql := fmt.Sprintf(
 		`SELECT curr_task_id as task_id, count(*) as count FROM charge_info_record %s group by task_id `, whereParam)
+	err := DbCharge.Raw(sql).Find(&data).Error
+	utils.CheckError(err)
+
+	//if params.Node == "" {
+	//	sql := fmt.Sprintf(
+	//		`SELECT curr_task_id as task_id, count(*) as count FROM charge_info_record where charge_type = 99 group by task_id `)
+	//	err := DbCharge.Raw(sql).Find(&data).Error
+	//	utils.CheckError(err)
+	//} else {
+	//	serverIdList := GetGameServerIdListStringByNode(params.Node)
+	//	sql := fmt.Sprintf(
+	//		`SELECT curr_task_id as task_id, count(*) as count FROM charge_info_record where server_id in (%s) and charge_type = 99 group by task_id `, serverIdList)
+	//	err := DbCharge.Raw(sql).Find(&data).Error
+	//	utils.CheckError(err)
+	//}
+
+	sum := 0
+	for _, e := range data {
+		sum += e.Count
+	}
+	if sum > 0 {
+		for _, e := range data {
+			e.Rate = float32(e.Count) / float32(sum) * 100
+		}
+	}
+
+	return data
+}
+
+type ChargeActivityDistribution struct {
+	ChargeItemId int     `json:"chargeItemId"`
+	Count        int     `json:"count"`
+	Rate         float32 `json:"rate"`
+}
+type ChargeActivityDistributionQueryParam struct {
+	BaseQueryParam
+	PlatformId string
+	Node       string `json:"serverId"`
+	StartTime  int
+	EndTime    int
+	IsFirst    int
+}
+
+// 获取充值任务分布
+func GetChargeActivityDistribution(params ChargeActivityDistributionQueryParam) [] *ChargeActivityDistribution {
+	data := make([] *ChargeActivityDistribution, 0)
+	whereArray := make([] string, 0)
+	whereArray = append(whereArray, fmt.Sprintf("charge_type = 99"))
+	whereArray = append(whereArray, fmt.Sprintf(" part_id = '%s'", params.PlatformId))
+	if params.IsFirst == 1 {
+		whereArray = append(whereArray, fmt.Sprintf("is_first = 1"))
+	}
+	if params.Node != "" {
+		whereArray = append(whereArray, fmt.Sprintf("server_id in (%s)", GetGameServerIdListStringByNode(params.Node)))
+	}
+	whereParam := strings.Join(whereArray, " and ")
+	if whereParam != "" {
+		whereParam = " where " + whereParam
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT charge_item_id, count(*) as count FROM charge_info_record %s group by charge_item_id `, whereParam)
 	err := DbCharge.Raw(sql).Find(&data).Error
 	utils.CheckError(err)
 
@@ -1091,4 +1172,39 @@ func GetChargeLevelDistribution(params ChargeLevelDistributionQueryParam) [] *Ch
 	}
 
 	return data
+}
+
+
+
+//获取该ip节点数量
+func GetIpNodeCount(ip string) int {
+	l := GetAllServerNodeList()
+	count := 0
+	for _, e := range l {
+		thisIp := strings.Split(e.Node, "@")[1]
+		logs.Debug("thisIp:%+v", thisIp)
+		if thisIp == ip {
+			count ++
+		}
+	}
+	return count
+}
+//获取该ip在线人数
+func GetIpOnlinePlayerCount(ip string) int {
+	l := GetAllServerNodeList()
+	count := 0
+	for _, e := range l {
+		thisIp := strings.Split(e.Node, "@")[1]
+		logs.Debug("thisIp:%+v", thisIp)
+		if thisIp == ip {
+			gameDb, err := GetGameDbByNode(e.Node)
+			utils.CheckError(err)
+			if err != nil {
+				continue
+			}
+			defer gameDb.Close()
+			count += GetNowOnlineCount(gameDb)
+		}
+	}
+	return count
 }
