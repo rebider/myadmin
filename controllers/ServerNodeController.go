@@ -6,9 +6,9 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
 	"github.com/chnzrb/myadmin/enums"
-	"strconv"
+	//"strconv"
 	"github.com/astaxie/beego/logs"
-	"os"
+	//"os"
 )
 
 type ServerNodeController struct {
@@ -41,22 +41,21 @@ func (c *ServerNodeController) Edit() {
 		c.Result(enums.CodeFail, "节点不存在", m.Node)
 	}
 
-	out, err := utils.NodeTool(
-		"mod_server_mgr",
-		"add_server_node",
-		m.Node,
-		m.Ip,
-		strconv.Itoa(m.Port),
-		strconv.Itoa(m.WebPort),
-		strconv.Itoa(m.Type),
-		//strconv.Itoa(m.OpenTime),
-		m.PlatformId,
-		//m.ZoneNode,
-		//strconv.Itoa(m.State),
-		m.DbHost,
-		strconv.Itoa(m.DbPort),
-		m.DbName,
-	)
+	out, err := models.AddServerNode(m.Node, m.Ip, m.Port, m.WebPort, m.Type, m.PlatformId, m.DbHost, m.DbPort, m.DbName)
+
+	//out, err := utils.NodeTool(
+	//	"mod_server_mgr",
+	//	"add_server_node",
+	//	m.Node,
+	//	m.Ip,
+	//	strconv.Itoa(m.Port),
+	//	strconv.Itoa(m.WebPort),
+	//	strconv.Itoa(m.Type),
+	//	m.PlatformId,
+	//	m.DbHost,
+	//	strconv.Itoa(m.DbPort),
+	//	m.DbName,
+	//)
 	c.CheckError(err, "保存节点失败:"+out)
 	c.Result(enums.CodeSuccess, "保存成功", m.Node)
 }
@@ -133,27 +132,32 @@ func (c *ServerNodeController) Action() {
 
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	logs.Debug("节点操作666:%v", params)
+
 	c.CheckError(err)
-	curDir := utils.GetCurrentDirectory()
-	defer os.Chdir(curDir)
-	toolDir := utils.GetToolDir()
-	err = os.Chdir(toolDir)
+
+	err = models.NodeAction(params.Nodes, params.Action)
 	c.CheckError(err)
-	var commandArgs []string
-	for _, node := range params.Nodes {
-		switch params.Action {
-		case "start":
-			commandArgs = []string{"node_tool.sh", node, params.Action,}
-		case "stop":
-			commandArgs = []string{"node_tool.sh", node, params.Action,}
-		case "hot_reload":
-			commandArgs = []string{"node_hot_reload.sh", node, "server",}
-		case "cold_reload":
-			commandArgs = []string{"node_cold_reload.sh", node, "server",}
-		}
-		out, err := utils.Cmd("sh", commandArgs)
-		c.CheckError(err, fmt.Sprintf("操作节点失败:%v %v", params, out))
-	}
+	//curDir := utils
+	// .GetCurrentDirectory()
+	//defer os.Chdir(curDir)
+	//toolDir := utils.GetToolDir()
+	//err = os.Chdir(toolDir)
+	//c.CheckError(err)
+	//var commandArgs []string
+	//for _, node := range params.Nodes {
+	//	switch params.Action {
+	//	case "start":
+	//		commandArgs = []string{"node_tool.sh", node, params.Action,}
+	//	case "stop":
+	//		commandArgs = []string{"node_tool.sh", node, params.Action,}
+	//	case "hot_reload":
+	//		commandArgs = []string{"node_hot_reload.sh", node, "server",}
+	//	case "cold_reload":
+	//		commandArgs = []string{"node_cold_reload.sh", node, "server",}
+	//	}
+	//	out, err := utils.Cmd("sh", commandArgs)
+	//	c.CheckError(err, fmt.Sprintf("操作节点失败:%v %v", params, out))
+	//}
 
 	c.Result(enums.CodeSuccess, "操作节点成功", "")
 }
@@ -171,28 +175,30 @@ func (c *ServerNodeController) Install() {
 	//toolDir := utils.GetToolDir()
 	//err = os.Chdir(toolDir)
 	//c.CheckError(err)
-	var commandArgs []string
-	serverNode, err := models.GetServerNode(params.Node)
-	c.CheckError(err, "节点不存在:"+params.Node)
-	app := ""
-	switch serverNode.Type {
-	case 0:
-		app = "center"
-	case 1:
-		app = "game"
-	case 2:
-		app = "zone"
-	case 4:
-		app = "login_server"
-	case 5:
-		app = "unique_id"
-	case 6:
-		app = "charge"
-	}
-
-	commandArgs = []string{"/data/tool/ansible/do-install.sh", serverNode.Node, app,serverNode.DbName, serverNode.DbHost, strconv.Itoa(serverNode.DbPort), "root"}
-	out, err := utils.Cmd("sh", commandArgs)
-	c.CheckError(err, fmt.Sprintf("操作节点失败:%v %v", params, out))
-	logs.Info("部署节点成功:%v", params)
+	//var commandArgs []string
+	//serverNode, err := models.GetServerNode(params.Node)
+	//c.CheckError(err, "节点不存在:"+params.Node)
+	//app := ""
+	//switch serverNode.Type {
+	//case 0:
+	//	app = "center"
+	//case 1:
+	//	app = "game"
+	//case 2:
+	//	app = "zone"
+	//case 4:
+	//	app = "login_server"
+	//case 5:
+	//	app = "unique_id"
+	//case 6:
+	//	app = "charge"
+	//}
+	//
+	//commandArgs = []string{"/data/tool/ansible/do-install.sh", serverNode.Node, app,serverNode.DbName, serverNode.DbHost, strconv.Itoa(serverNode.DbPort), "root"}
+	//out, err := utils.Cmd("sh", commandArgs)
+	//c.CheckError(err, fmt.Sprintf("操作节点失败:%v %v", params, out))
+	//logs.Info("部署节点成功:%v", params)
+	err = models.InstallNode(params.Node)
+	c.CheckError(err)
 	c.Result(enums.CodeSuccess, "部署节点成功", params.Node)
 }

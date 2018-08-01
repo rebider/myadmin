@@ -59,8 +59,8 @@ func GetPropConsumeStatistics(param *PropConsumeStatisticsQueryParam) ([]*PropCo
 	}
 
 	sql := fmt.Sprintf(
-		` select log_type as op_type, sum(value) as count from consume_statistics where type = %d and prop_type = ? and prop_id = ? %s group by log_type %s; `, param.Type, selectPlayer, order)
-	err = gameDb.Raw(sql, param.PropType, param.PropId).Scan(&list).Error
+		` select log_type as op_type, sum(value) as count from consume_statistics where type = %d and prop_type = %d and prop_id = %d %s group by log_type %s; `, param.Type, param.PropType, param.PropId, selectPlayer, order)
+	err = gameDb.Raw(sql).Scan(&list).Error
 	utils.CheckError(err)
 	if err != nil {
 		return nil, err

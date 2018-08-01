@@ -79,7 +79,7 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 	}
 	sql := fmt.Sprintf(
 		`select sum(money) as money_count, count(DISTINCT player_id) as player_count  from charge_info_record  %s;`, whereParam)
-	err := DbCharge.Debug().Raw(sql).Scan(&sumData).Error
+	err := DbCharge.Raw(sql).Scan(&sumData).Error
 	utils.CheckError(err)
 
 	if params.Node == "" {
@@ -148,8 +148,8 @@ func GetChargeItemId(orderId string, platformId string, serverId string) int {
 		ChargeItemId int
 	}
 	sql := fmt.Sprintf(
-		`SELECT charge_item_id FROM player_charge_record where order_id = ? `)
-	err = gameDb.Raw(sql, orderId).Scan(&data).Error
+		`SELECT charge_item_id FROM player_charge_record where order_id = %d `, orderId)
+	err = gameDb.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.ChargeItemId
 }

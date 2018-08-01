@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/chnzrb/myadmin/models"
-	"github.com/astaxie/beego"
+	//"github.com/astaxie/beego"
 	"github.com/chnzrb/myadmin/utils"
 	"encoding/json"
 	"fmt"
@@ -10,9 +10,9 @@ import (
 	"github.com/astaxie/beego/logs"
 	//"strconv"
 	"strconv"
-	"encoding/base64"
-	"net/http"
-	"io/ioutil"
+	//"encoding/base64"
+	//"net/http"
+	//"io/ioutil"
 )
 
 type GameServerController struct {
@@ -48,18 +48,19 @@ func (c *GameServerController) Edit() {
 		c.Result(enums.CodeFail, "游戏服不存在", m.Node)
 	}
 
-	out, err := utils.NodeTool(
-		"mod_server_mgr",
-		"add_game_server",
-		m.PlatformId,
-		m.Sid,
-		m.Desc,
-		m.Node,
-		m.ZoneNode,
-		strconv.Itoa(m.State),
-		strconv.Itoa(m.OpenTime),
-		strconv.Itoa(m.IsShow),
-	)
+	out, err := models.AddGameServer(m.PlatformId, m.Sid, m.Desc, m.Node, m.ZoneNode, m.State, m.OpenTime, m.IsShow)
+	//out, err := utils.NodeTool(
+	//	"mod_server_mgr",
+	//	"add_game_server",
+	//	m.PlatformId,
+	//	m.Sid,
+	//	m.Desc,
+	//	m.Node,
+	//	m.ZoneNode,
+	//	strconv.Itoa(m.State),
+	//	strconv.Itoa(m.OpenTime),
+	//	strconv.Itoa(m.IsShow),
+	//)
 
 	c.CheckError(err, "保存游戏服失败:"+out)
 	c.Result(enums.CodeSuccess, "保存成功", m.Sid)
@@ -118,38 +119,39 @@ func (c *GameServerController) BatchUpdateState() {
 func (c *GameServerController) Refresh() {
 	var params struct {
 	}
-	var result struct {
-		ErrorCode int
-	}
+	//var result struct {
+	//	ErrorCode int
+	//}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
-	logs.Info("封禁:%+v", params)
-
-	data := fmt.Sprintf("time=%d", utils.GetTimestamp())
-	sign := utils.String2md5(data + enums.GmSalt)
-	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-	//serverNode, err := models.GetLoginServerNode()
-	c.CheckError(err, "登录节点未找到")
-	baseUrl := beego.AppConfig.String("login_server" + "::url")
-	url := fmt.Sprintf("%s?data=%s&sign=%s", baseUrl, base64Data, sign)
-	//url := "http://192.168.31.100:16667/refresh?" + "data=" + base64Data+ "&sign=" + sign
-
-	logs.Info("url:%s", url)
-	resp, err := http.Get(url)
+	//logs.Info("刷新区服入口:%+v", params)
+	//
+	//data := fmt.Sprintf("time=%d", utils.GetTimestamp())
+	//sign := utils.String2md5(data + enums.GmSalt)
+	//base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+	//
+	//baseUrl := beego.AppConfig.String("login_server" + "::url")
+	//url := fmt.Sprintf("%s?data=%s&sign=%s", baseUrl, base64Data, sign)
+	////url := "http://192.168.31.100:16667/refresh?" + "data=" + base64Data+ "&sign=" + sign
+	//
+	//logs.Info("url:%s", url)
+	//resp, err := http.Get(url)
+	//c.CheckError(err)
+	//
+	//defer resp.Body.Close()
+	//body, err := ioutil.ReadAll(resp.Body)
+	//c.CheckError(err)
+	//
+	//logs.Info("刷新区服入口 result:%v", string(body))
+	//
+	//err = json.Unmarshal(body, &result)
+	//
+	//c.CheckError(err)
+	err = models.RefreshGameServer()
 	c.CheckError(err)
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	c.CheckError(err)
-
-	logs.Info("result:%v", string(body))
-
-	err = json.Unmarshal(body, &result)
-
-	c.CheckError(err)
-	if result.ErrorCode != 0 {
-		c.Result(enums.CodeFail, "刷新区服入口失败", 0)
-	}
+	//if result.ErrorCode != 0 {
+	//	c.Result(enums.CodeFail, "刷新区服入口失败", 0)
+	//}
 	c.Result(enums.CodeSuccess, "刷新区服入口成功", 0)
 
 }

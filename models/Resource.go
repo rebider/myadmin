@@ -141,8 +141,8 @@ func GetResourceListByUserId(userId int) []*Resource {
 		FROM %s AS T0
 		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
 		INNER JOIN %s AS T2 ON T2.id = T0.resource_id
-		WHERE T1.user_id = ? `, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName())
-		rows, err := Db.Raw(sql, userId).Rows()
+		WHERE T1.user_id = %d `, RoleResourceRelTBName(), RoleUserRelTBName(), ResourceTBName(), userId)
+		rows, err := Db.Raw(sql).Rows()
 		defer rows.Close()
 		utils.CheckError(err)
 		for rows.Next(){

@@ -3,15 +3,9 @@ package crons
 import (
 	"time"
 	"github.com/astaxie/beego/logs"
-	//"github.com/chnzrb/myadmin/utils"
 	"github.com/chnzrb/myadmin/models"
-	/*"net/http"
-	"io/ioutil"
-	"regexp"
-	"strconv"
-	"syscall"
-	"unsafe"*/
-	//"github.com/chnzrb/myadmin/utils"
+	"github.com/astaxie/beego"
+	"github.com/chnzrb/myadmin/utils"
 )
 
 //初始化
@@ -21,11 +15,16 @@ func init() {
 	go tenSecondCron()
 	// 每分钟定时器
 	go minuteCron()
-	// 每日0点定时器
-	go dailyZeroClockCron()
 	// 每小时定时器
 	go everyHourClockCron()
+	// 每日0点定时器
+	go dailyZeroClockCron()
 
+	// 定时检测开服
+	go cronAutoCreateServer()
+
+	//models.CreateAnsibleInventory()
+	//models.S()
 	//go models.Repair()
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000)
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400)
@@ -62,6 +61,40 @@ func minuteCron() {
 	}
 }
 
+//定时检测开服
+func cronAutoCreateServer() {
+	isAutoOpenServer, err := beego.AppConfig.Bool("is_auto_open_server")
+	utils.CheckError(err, "读取是否开启自动开服配置失败")
+	if err != nil {
+		return
+	}
+	if isAutoOpenServer == false {
+		return
+	}
+
+	cronMinute, err := beego.AppConfig.Int("check_open_server_cron_minute")
+	utils.CheckError(err, "读取自动开服定时时间失败")
+	if err != nil {
+		return
+	}
+	if cronMinute <= 0 {
+		logs.Error("开服间隔时间小于0")
+		return
+	}
+	logs.Info("开服检测间隔时间:%d", cronMinute)
+	timer1 := time.NewTicker(time.Duration(cronMinute) * time.Minute)
+	for {
+		select {
+		case <-timer1.C:
+
+			// 业务
+
+			// 自动开服
+			models.AutoCreateAndOpenServer()
+		}
+	}
+}
+
 //10秒执行一次
 func tenSecondCron() {
 	timer1 := time.NewTicker(5 * time.Second)
@@ -74,7 +107,7 @@ func tenSecondCron() {
 	}
 }
 
-var cacheNum = 0
+//var cacheNum = 0
 
 //func test() {
 //	//resp, err := http.Get("https://www.feixiaohao.com/#USD")

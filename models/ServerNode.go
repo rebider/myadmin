@@ -157,13 +157,24 @@ func GetNodeStartTime(node string) int {
 
 // 获取所有游戏节点
 func GetAllGameServerNode() []*ServerNode {
+	//data := make([]*ServerNode, 0)
+	//err := DbCenter.Model(&ServerNode{}).Where(&ServerNode{
+	//	Type: 1,
+	//}).Find(&data).Error
+	//utils.CheckError(err, "查询所有游戏节点失败")
+	return GetAllServerNodeByType(1)
+}
+
+// 获取节点列表
+func GetAllServerNodeByType(nodeType int) []*ServerNode {
 	data := make([]*ServerNode, 0)
 	err := DbCenter.Model(&ServerNode{}).Where(&ServerNode{
-		Type: 1,
+		Type: nodeType,
 	}).Find(&data).Error
-	utils.CheckError(err, "查询所有游戏节点失败")
+	utils.CheckError(err, "获取节点列表失败")
 	return data
 }
+
 
 // 获取所有游戏节点
 func GetAllGameServerNodeByPlatformId(platformId string) []*ServerNode {

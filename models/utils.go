@@ -9,6 +9,13 @@ import (
 	"strings"
 	"errors"
 	"github.com/astaxie/beego/logs"
+	"os"
+	"encoding/base64"
+	"net/http"
+	"io/ioutil"
+	"encoding/json"
+	"github.com/astaxie/beego"
+	"github.com/chnzrb/myadmin/enums"
 )
 
 //获取某日创角的玩家Id列表
@@ -18,8 +25,8 @@ func GetThatDayCreateRolePlayerIdList(db *gorm.DB, zeroTimestamp int) [] int {
 	}
 
 	sql := fmt.Sprintf(
-		`SELECT id FROM player WHERE reg_time between ? and ?`)
-	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Find(&data).Error
+		`SELECT id FROM player WHERE reg_time between %d and %d`, zeroTimestamp, zeroTimestamp+86400)
+	err := db.Raw(sql).Find(&data).Error
 	utils.CheckError(err)
 	idList := make([] int, 0)
 	for _, e := range data {
@@ -34,8 +41,8 @@ func IsThatDayPlayerLogin(db *gorm.DB, zeroTimestamp int, playerId int) bool {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`SELECT count(1) as count FROM player_login_log WHERE player_id = ? and timestamp between ? and ?`)
-	err := db.Raw(sql, playerId, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT count(1) as count FROM player_login_log WHERE player_id = %d and timestamp between %d and %d`, playerId, zeroTimestamp, zeroTimestamp+86400)
+	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	if data.Count == 0 {
 		return false
@@ -59,8 +66,8 @@ func GetThatDayLoginTimes(db *gorm.DB, zeroTimestamp int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`SELECT count(1) as count FROM player_login_log WHERE timestamp between ? and ?`)
-	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT count(1) as count FROM player_login_log WHERE timestamp between %d and %d`, zeroTimestamp, zeroTimestamp+86400)
+	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -71,8 +78,8 @@ func GetThatDayLoginPlayerCount(db *gorm.DB, zeroTimestamp int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`SELECT count(1) as count FROM player WHERE last_login_time between ? and ?`)
-	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT count(1) as count FROM player WHERE last_login_time between %d and %d`, zeroTimestamp, zeroTimestamp+86400)
+	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -82,8 +89,8 @@ func GetThatDayActivePlayerCount(db *gorm.DB, zeroTimestamp int) int {
 	count := 0
 	data := make([] *Player, 0)
 	sql := fmt.Sprintf(
-		`SELECT * FROM player WHERE last_login_time between ? and ?`)
-	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT * FROM player WHERE last_login_time between %d and %d`, zeroTimestamp, zeroTimestamp+86400)
+	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	for _, e := range data {
 		if e.LoginTimes >= (zeroTimestamp+86400-e.RegTime)/86400 {
@@ -92,6 +99,19 @@ func GetThatDayActivePlayerCount(db *gorm.DB, zeroTimestamp int) int {
 	}
 	return count
 }
+
+//获取当前在线人数
+func GetNowOnlineCountByNode(node string) int {
+	gameDb, err := GetGameDbByNode(node)
+
+	utils.CheckError(err)
+	if err != nil {
+		return -1
+	}
+	defer gameDb.Close()
+	return GetNowOnlineCount(gameDb)
+}
+
 
 //获取当前在线人数
 func GetNowOnlineCount(db *gorm.DB) int {
@@ -118,8 +138,8 @@ func GetMaxOnlineCount(node string) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`SELECT max(online_num) as count FROM c_ten_minute_statics WHERE node = ? `)
-	err := DbCenter.Raw(sql, node).Scan(&data).Error
+		`SELECT max(online_num) as count FROM c_ten_minute_statics WHERE node = '%s' `, node)
+	err := DbCenter.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -148,8 +168,8 @@ func GetAvgOnlineTime(node string, zeroTimestamp int) int {
 		Time float32
 	}
 	sql := fmt.Sprintf(
-		`SELECT avg(online_time) as time FROM player_online_log where login_time between ? and ? `)
-	err = gameDb.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT avg(online_time) as time FROM player_online_log where login_time between %d and %d `, zeroTimestamp, zeroTimestamp+86400)
+	err = gameDb.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return int(data.Time)
 }
@@ -160,8 +180,8 @@ func GetThatDayAverageOnlineCount(node string, zeroTimestamp int) float32 {
 		Count float32
 	}
 	sql := fmt.Sprintf(
-		`SELECT avg(online_num)  as count FROM c_ten_minute_statics where node = ? and time between ? and ? `)
-	err := DbCenter.Raw(sql, node, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT avg(online_num)  as count FROM c_ten_minute_statics where node = '%s' and time between %d and %d `, node, zeroTimestamp, zeroTimestamp+86400)
+	err := DbCenter.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -172,8 +192,8 @@ func GetThatDayMaxOnlineCount(node string, zeroTimestamp int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`SELECT max(online_num)  as count FROM c_ten_minute_statics where node = ? and time between ? and ? `)
-	err := DbCenter.Raw(sql, node, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT max(online_num)  as count FROM c_ten_minute_statics where node = '%s' and time between %d and %d `, node, zeroTimestamp, zeroTimestamp+86400)
+	err := DbCenter.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -184,8 +204,8 @@ func GetThatDayMinOnlineCount(node string, zeroTimestamp int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`SELECT min(online_num)  as count FROM c_ten_minute_statics where node = ? and time between ? and ? `)
-	err := DbCenter.Raw(sql, node, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT min(online_num)  as count FROM c_ten_minute_statics where node = '%s' and time between %d and %d `, node, zeroTimestamp, zeroTimestamp+86400)
+	err := DbCenter.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -476,8 +496,8 @@ func GetRemainTime(node string) [] *RemainTime {
 	for _, e := range data {
 		elementList := make([] *Element, 0)
 		sql := fmt.Sprintf(
-			`SELECT is_online, total_online_time FROM player where total_online_time >= ? and total_online_time < ? `)
-		err = gameDb.Raw(sql, e.StartTime, e.EndTime).Find(&elementList).Error
+			`SELECT is_online, total_online_time FROM player where total_online_time >= %d and total_online_time < %d `, e.StartTime, e.EndTime)
+		err = gameDb.Raw(sql).Find(&elementList).Error
 		utils.CheckError(err)
 		if err != nil {
 			return nil
@@ -549,8 +569,8 @@ func GetPlayerName(db *gorm.DB, playerId int) string {
 	}
 
 	sql := fmt.Sprintf(
-		`SELECT server_id, nickname as name FROM player where id = ? `)
-	err := db.Raw(sql, playerId).Scan(&data).Error
+		`SELECT server_id, nickname as name FROM player where id = %d `, playerId)
+	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.ServerId + "." + data.Name
 }
@@ -567,8 +587,8 @@ func GetPlayerLastLoginTime(platformId string, serverId string, playerId int) in
 		Time int
 	}
 	sql := fmt.Sprintf(
-		`SELECT last_login_time as time FROM player where id = ? `)
-	err = gameDb.Raw(sql, playerId).Scan(&data).Error
+		`SELECT last_login_time as time FROM player where id = %d `, playerId)
+	err = gameDb.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Time
 }
@@ -588,9 +608,9 @@ func GetPlayerName_2(platformId string, serverId string, playerId int) string {
 	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
 
 	sql := fmt.Sprintf(
-		`SELECT server_id, nickname as name FROM player where id = ? `)
+		`SELECT server_id, nickname as name FROM player where id = %d `, playerId)
 	//logs.Info("GetPlayerName:%v", playerId)
-	err = gameDb.Raw(sql, playerId).Scan(&data).Error
+	err = gameDb.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	//logs.Info("ppp:%v,%v", data.MaxLevel)
 	return data.ServerId + "." + data.Name
@@ -614,8 +634,8 @@ func GetThatDayServerChargePlayerCount(node string, time int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`select count(DISTINCT player_id) as count from charge_info_record where node = ? and charge_type = 99 and ( record_time between ? and ?);`)
-	err := DbCharge.Raw(sql, node, time, time+86400).Scan(&data).Error
+		`select count(DISTINCT player_id) as count from charge_info_record where node = '%s' and charge_type = 99 and ( record_time between %d and %d);`, node, time, time+86400)
+	err := DbCharge.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -675,11 +695,11 @@ func GetServerChargeCountList(node string) [] int {
 	err := DbCharge.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	r := make([] int, 0)
-	logs.Debug("data:%+v", data)
+	//logs.Debug("data:%+v", data)
 	for _, e := range data {
 		r = append(r, e.Count)
 	}
-	logs.Debug("r:%+v", r)
+	//logs.Debug("r:%+v", r)
 	return r
 }
 
@@ -689,8 +709,8 @@ func GetThadDayServerFirstChargePlayerCount(node string, time int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`select count(DISTINCT player_id) as count from charge_info_record where node = ? and is_first = 1 and charge_type = 99 and (record_time between ? and ?);`)
-	err := DbCharge.Raw(sql, node, time, time+86400).Scan(&data).Error
+		`select count(DISTINCT player_id) as count from charge_info_record where node = '%s' and is_first = 1 and charge_type = 99 and (record_time between %d and %d);`, node, time, time+86400)
+	err := DbCharge.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -713,8 +733,8 @@ func GetThatDayServerTotalChargeMoney(node string, time int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`select sum(money) as count from charge_info_record where node = ? and charge_type = 99 and (record_time between ? and ?);`)
-	err := DbCharge.Raw(sql, node, time, time+86400).Scan(&data).Error
+		`select sum(money) as count from charge_info_record where node = '%s' and charge_type = 99 and (record_time between %d and %d);`, node, time, time+86400)
+	err := DbCharge.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -1174,28 +1194,27 @@ func GetChargeLevelDistribution(params ChargeLevelDistributionQueryParam) [] *Ch
 	return data
 }
 
-
-
 //获取该ip节点数量
 func GetIpNodeCount(ip string) int {
 	l := GetAllServerNodeList()
 	count := 0
 	for _, e := range l {
 		thisIp := strings.Split(e.Node, "@")[1]
-		logs.Debug("thisIp:%+v", thisIp)
+		//logs.Debug("thisIp:%+v", thisIp)
 		if thisIp == ip {
 			count ++
 		}
 	}
 	return count
 }
+
 //获取该ip在线人数
 func GetIpOnlinePlayerCount(ip string) int {
 	l := GetAllServerNodeList()
 	count := 0
 	for _, e := range l {
 		thisIp := strings.Split(e.Node, "@")[1]
-		logs.Debug("thisIp:%+v", thisIp)
+		//logs.Debug("thisIp:%+v", thisIp)
 		if thisIp == ip {
 			gameDb, err := GetGameDbByNode(e.Node)
 			utils.CheckError(err)
@@ -1207,4 +1226,210 @@ func GetIpOnlinePlayerCount(ip string) int {
 		}
 	}
 	return count
+}
+
+// 向中心服添加game_server
+func AddGameServer(PlatformId string, sid string, desc string, node string, zoneNode string, state int, openTime int, isShow int) (string, error) {
+	logs.Info("向中心服添加game_server:%v", PlatformId, sid, desc, node, zoneNode, state, openTime, isShow)
+	out, err := utils.NodeTool(
+		"mod_server_mgr",
+		"add_game_server",
+		PlatformId,
+		sid,
+		desc,
+		node,
+		zoneNode,
+		strconv.Itoa(state),
+		strconv.Itoa(openTime),
+		strconv.Itoa(isShow),
+	)
+	return out, err
+}
+
+func AddServerNode(node string, ip string, port int, webPort int, serverType int, platformId string, dbHost string, dbPort int, dbName string) (string, error) {
+	logs.Info("向中心服添加server_node:%v", node, ip, port, webPort, serverType, platformId, dbHost, dbPort, dbName)
+	out, err := utils.NodeTool(
+		"mod_server_mgr",
+		"add_server_node",
+		node,
+		ip,
+		strconv.Itoa(port),
+		strconv.Itoa(webPort),
+		strconv.Itoa(serverType),
+		platformId,
+		dbHost,
+		strconv.Itoa(dbPort),
+		dbName,
+	)
+	return out, err
+}
+
+func InstallNode(node string) error {
+	logs.Info("开始部署节点:%s......", node)
+	var commandArgs []string
+	serverNode, err := GetServerNode(node)
+	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+	app := ""
+	switch serverNode.Type {
+	case 0:
+		app = "center"
+	case 1:
+		app = "game"
+	case 2:
+		app = "zone"
+	case 4:
+		app = "login_server"
+	case 5:
+		app = "unique_id"
+	case 6:
+		app = "charge"
+	}
+
+	commandArgs = []string{"/data/tool/ansible/do-install.sh", serverNode.Node, app, serverNode.DbName, serverNode.DbHost, strconv.Itoa(serverNode.DbPort), "root"}
+	out, err := utils.Cmd("sh", commandArgs)
+	utils.CheckError(err, fmt.Sprintf("部署节点失败:%v %v", node, out))
+	if err != nil {
+		return err
+	}
+	logs.Info("部署节点成功:%v!!!", node)
+	return nil
+}
+
+func NodeAction(nodes [] string, action string) error {
+	logs.Info("节点操作:nodes->%v, action->%v", nodes, action)
+	curDir := utils.GetCurrentDirectory()
+	defer os.Chdir(curDir)
+	toolDir := utils.GetToolDir()
+	err := os.Chdir(toolDir)
+	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+
+	var commandArgs []string
+	for _, node := range nodes {
+		switch action {
+		case "start":
+			commandArgs = []string{"node_tool.sh", node, action,}
+		case "stop":
+			commandArgs = []string{"node_tool.sh", node, action,}
+		case "pull":
+			commandArgs = []string{"node_tool.sh", node, action,}
+		case "hot_reload":
+			commandArgs = []string{"node_hot_reload.sh", node, "server",}
+		case "cold_reload":
+			commandArgs = []string{"node_cold_reload.sh", node, "server",}
+		}
+		out, err := utils.Cmd("sh", commandArgs)
+		utils.CheckError(err, fmt.Sprintf("操作节点失败:%v %v", action, out))
+		if err != nil {
+			return err
+		}
+	}
+	logs.Info("节点操作成功:nodes->%v, action->%v!", nodes, action)
+	return nil
+}
+
+func RefreshGameServer() error {
+	var result struct {
+		ErrorCode int
+	}
+	logs.Info("刷新区服入口:...")
+
+	data := fmt.Sprintf("time=%d", utils.GetTimestamp())
+	sign := utils.String2md5(data + enums.GmSalt)
+	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+
+	baseUrl := beego.AppConfig.String("login_server" + "::url")
+	url := fmt.Sprintf("%s?data=%s&sign=%s", baseUrl, base64Data, sign)
+	//url := "http://192.168.31.100:16667/refresh?" + "data=" + base64Data+ "&sign=" + sign
+
+	logs.Info("url:%s", url)
+	resp, err := http.Get(url)
+
+	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+
+	logs.Info("刷新区服入口 result:%v", string(body))
+
+	err = json.Unmarshal(body, &result)
+	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+
+	if result.ErrorCode != 0 {
+		logs.Error("刷新区服入口失败!!!!")
+		return errors.New("刷新区服入口失败!!!!")
+	}
+	logs.Info("刷新区服入口成功")
+	return nil
+}
+
+func Max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func S() {
+	logs.Info("开始统计")
+	gameServerList, _ := GetAllGameServer()
+	context := ""
+	for _, e := range gameServerList {
+		var data [] struct {
+			PlayerId int
+		}
+		gameDb, err := GetGameDbByNode(e.Node)
+		utils.CheckError(err)
+		if err != nil {
+			return
+		}
+		defer gameDb.Close()
+		sql := fmt.Sprintf(
+			`select a.player_id as player_id,b.acc_id from player_platform_award AS a,player AS b where a.player_id = b.id and a.id = 1601`)
+		err = gameDb.Raw(sql).Find(&data).Error
+		utils.CheckError(err)
+		for _, i := range data {
+			player, err := GetPlayerOne(e.PlatformId, e.Sid, i.PlayerId)
+			utils.CheckError(err)
+			is2 := IsThatDayPlayerLogin(gameDb, utils.GetThatZeroTimestamp(int64(player.RegTime))+86400, player.Id)
+			is3 := IsThatDayPlayerLogin(gameDb, utils.GetThatZeroTimestamp(int64(player.RegTime))+86400*2, player.Id)
+			var moneyList [] struct {
+				Money int
+				ChargeItemId int
+			}
+			sql := fmt.Sprintf(
+				`select money , charge_item_id from charge_info_record where player_id = %d;`, i.PlayerId)
+			err = DbCharge.Raw(sql).Find(&moneyList).Error
+			m := make([] string, 0)
+			//logs.Info("moneyList:%+v", moneyList)
+			for _, e := range moneyList {
+				m = append(m, strconv.Itoa(e.Money))
+			}
+
+			m1 := make([] string, 0)
+			//logs.Info("moneyList:%+v", moneyList)
+			for _, e := range moneyList {
+				m1 = append(m1, strconv.Itoa(e.ChargeItemId))
+			}
+			context += fmt.Sprintf("%s, %d, %s, %t, %t, [%s], [%s]\n", e.Sid, player.Id, player.AccId, is2, is3, strings.Join(m, " "), strings.Join(m1, " "))
+		}
+	}
+	utils.FilePutContext("data.txt", context)
+	logs.Info("统计完毕")
 }

@@ -146,8 +146,8 @@ func GetPlayerFactionName(gameDb *gorm.DB, playerId int) string {
 		Name string
 	}
 	sql := fmt.Sprintf(
-		`SELECT faction_id  FROM faction_member WHERE player_id = ?`)
-	isNotFound := gameDb.Raw(sql, playerId).Scan(&factionMember).RecordNotFound()
+		`SELECT faction_id  FROM faction_member WHERE player_id = %d`, playerId)
+	isNotFound := gameDb.Raw(sql).Scan(&factionMember).RecordNotFound()
 	//utils.CheckError(err)
 	if isNotFound {
 		return ""
@@ -155,8 +155,8 @@ func GetPlayerFactionName(gameDb *gorm.DB, playerId int) string {
 
 	//logs.Info("faction_id:%d", factionMember.FactionId)
 	sql = fmt.Sprintf(
-		`SELECT name  FROM faction WHERE id = ?`)
-	err := gameDb.Raw(sql, factionMember.FactionId).Scan(&faction).Error
+		`SELECT name  FROM faction WHERE id = %d`, factionMember.FactionId)
+	err := gameDb.Raw(sql).Scan(&faction).Error
 	utils.CheckError(err)
 	if err != nil {
 		return ""
@@ -252,8 +252,8 @@ type PlayerProp struct {
 func GetPlayerPropList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
 	playerPropList := make([]*PlayerProp, 0)
 	sql := fmt.Sprintf(
-		`SELECT * FROM player_prop WHERE player_id = ? `)
-	err := gameDb.Raw(sql, playerId).Scan(&playerPropList).Error
+		`SELECT * FROM player_prop WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&playerPropList).Error
 
 	return playerPropList, err
 }
@@ -261,8 +261,8 @@ func GetPlayerPropList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
 func GetPlayerEquipList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
 	playerPropList := make([]*PlayerProp, 0)
 	sql := fmt.Sprintf(
-		`SELECT * FROM player_equip_pos WHERE player_id = ? `)
-	err := gameDb.Raw(sql, playerId).Scan(&playerPropList).Error
+		`SELECT * FROM player_equip_pos WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&playerPropList).Error
 
 	return playerPropList, err
 }
@@ -277,8 +277,8 @@ func GetPlayerDetail(platformId string, serverId string, playerId int) (*PlayerD
 	playerDetail := &PlayerDetail{}
 
 	sql := fmt.Sprintf(
-		`SELECT player.*, player_data.*, player_task.task_id, player_vip.level as vip_level FROM ((player LEFT JOIN player_data on player.id = player_data.player_id) LEFT JOIN player_task on player.id = player_task.player_id) LEFT JOIN player_vip on player_vip.player_id = player.id WHERE player.id = ? `)
-	err = gameDb.Raw(sql, playerId).Scan(&playerDetail).Error
+		`SELECT player.*, player_data.*, player_task.task_id, player_vip.level as vip_level FROM ((player LEFT JOIN player_data on player.id = player_data.player_id) LEFT JOIN player_task on player.id = player_task.player_id) LEFT JOIN player_vip on player_vip.player_id = player.id WHERE player.id = %d `, playerId)
+	err = gameDb.Raw(sql).Scan(&playerDetail).Error
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("查询玩家失败:%v, %v", serverId, playerId))
 	}

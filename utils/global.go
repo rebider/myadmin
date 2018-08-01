@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"log"
 	"strings"
+	"io"
 )
 
 // 检查是否有错误
@@ -212,4 +213,16 @@ func GetCurrentDirectory() string {
 		log.Fatal(err)
 	}
 	return strings.Replace(dir, "\\", "/", -1)
+}
+
+func FilePutContext(filename string, context string) error {
+	f, err := os.Create(filename) //创建文件
+	CheckError(err)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = io.WriteString(f, context)
+	CheckError(err)
+	return err
 }

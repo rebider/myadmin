@@ -36,11 +36,22 @@ func GetThatDayRegister(db *gorm.DB, zeroTimestamp int) int {
 	//DbCenter.Model(&CServerTraceLog{}).Where(&CServerTraceLog{Node:gameServer.Node}).Count(&count)
 	//todayZeroTimestamp := utils.GetTodayZeroTimestamp()
 	sql := fmt.Sprintf(
-		`SELECT count(1) as count FROM account WHERE time between ? and ?`)
-	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT count(1) as count FROM account WHERE time between %d and %d`, zeroTimestamp, zeroTimestamp+86400)
+	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	//logs.Info("ppp:%v,%v", gameServer.Node, data.Count)
 	return data.Count
+}
+
+func GetTotalCreateRoleCountByNode(node string) int {
+	gameDb, err := GetGameDbByNode(node)
+
+	utils.CheckError(err)
+	if err != nil {
+		return -1
+	}
+	defer gameDb.Close()
+	return GetTotalCreateRoleCount(gameDb)
 }
 
 //获取总创角色人数
@@ -63,8 +74,8 @@ func GetThatDayCreateRoleCount(db *gorm.DB, zeroTimestamp int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`SELECT count(1) as count FROM account WHERE is_create_role = 1 and (time between ? and ?) `)
-	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT count(1) as count FROM account WHERE is_create_role = 1 and (time between %d and %d) `, zeroTimestamp, zeroTimestamp+86400)
+	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }
@@ -101,8 +112,8 @@ func GetThatDayValidCreateRoleCount(db *gorm.DB, zeroTimestamp int) int {
 		Count int
 	}
 	sql := fmt.Sprintf(
-		`SELECT count(1) as count FROM account WHERE is_create_role = 1 and is_finish_first_task = 1 and (time between ? and ?) `)
-	err := db.Raw(sql, zeroTimestamp, zeroTimestamp+86400).Scan(&data).Error
+		`SELECT count(1) as count FROM account WHERE is_create_role = 1 and is_finish_first_task = 1 and (time between %d and %d) `, zeroTimestamp, zeroTimestamp+86400)
+	err := db.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Count
 }

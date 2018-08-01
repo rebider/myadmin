@@ -44,10 +44,10 @@ func (c *BackgroundController) Charge() {
 		ChargeValue int
 		ServerId    string
 		ChargeType  string
-		ItemId	    int
+		ItemId      int
 	}
 	var result struct {
-		Code int
+		Code    int
 		Message string
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
@@ -74,9 +74,9 @@ func (c *BackgroundController) Charge() {
 	sign := utils.String2md5(args + "fa9274fd68cf8991953b186507840e5e")
 	logs.Info("sign:%v", sign)
 
-	gameServer, err :=  models.GetGameServerOne(params.PlatformId, params.ServerId)
+	gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
 	c.CheckError(err)
-	url :=  models.GetGameURLByNode(gameServer.Node) +  "/gm_charge?" + args + "&sign=" + sign
+	url := models.GetGameURLByNode(gameServer.Node) + "/gm_charge?" + args + "&sign=" + sign
 	logs.Info("url:%v", url)
 	resp, err := http.Get(url)
 	c.CheckError(err)
@@ -97,6 +97,7 @@ func (c *BackgroundController) Charge() {
 			Time:        utils.GetTimestamp(),
 			ChargeType:  params.ChargeType,
 			ChargeValue: params.ChargeValue,
+			ItemId:        params.ItemId,
 			UserId:      c.curUser.Id,
 		}
 		err = models.Db.Save(&backgroundChargeLog).Error
