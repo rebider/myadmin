@@ -23,6 +23,7 @@ func init() {
 	// 定时检测开服
 	go cronAutoCreateServer()
 
+	//go models.BackDatabases()
 	//models.CreateAnsibleInventory()
 	//models.S()
 	//go models.Repair()

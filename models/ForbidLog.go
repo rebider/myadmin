@@ -32,11 +32,19 @@ func GetForbidLogList(params *ForbidLogQueryParam) ([]*ForbidLog, int64) {
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
 	}
-	serverIdList := GetGameServerIdListByNode(params.Node)
-	Db.Model(&ForbidLog{}).Where(&ForbidLog{
-		PlatformId: params.PlatformId,
-		PlayerId: params.PlayerId,
-	}).Where("server_id in (?)", serverIdList).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	if params.Node == "" {
+		Db.Model(&ForbidLog{}).Where(&ForbidLog{
+			PlatformId: params.PlatformId,
+			PlayerId: params.PlayerId,
+		}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	} else {
+		serverIdList := GetGameServerIdListByNode(params.Node)
+		Db.Model(&ForbidLog{}).Where(&ForbidLog{
+			PlatformId: params.PlatformId,
+			PlayerId: params.PlayerId,
+		}).Where("server_id in (?)", serverIdList).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	}
+
 	for _, e := range data {
 		u, err := GetUserOne(e.UserId)
 		if err == nil {

@@ -34,7 +34,7 @@ func DealNoticeLog(id int) {
 	}
 	isGo := false
 	now := int(time.Now().Unix())
-	logs.Debug(id, now, noticeLog.Status, noticeLog.NoticeTime, noticeLog.LastSendTime)
+	//logs.Debug(id, now, noticeLog.Status, noticeLog.NoticeTime, noticeLog.LastSendTime)
 	if noticeLog.Status == 0 {
 		if noticeLog.NoticeType == enums.NoticeTypeMoment {
 			// 立即发送

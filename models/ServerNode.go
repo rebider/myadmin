@@ -3,7 +3,9 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
+	"github.com/astaxie/beego"
 	//"github.com/zaaksam/dproxy/go/db"
+	"github.com/astaxie/beego/logs"
 )
 
 type ServerNodeQueryParam struct {
@@ -133,6 +135,39 @@ func GetDbVersion(node string) int {
 	return data.Version
 }
 
+func BackDatabases() {
+	list := GetAllServerNodeList()
+	gameDbPwd := beego.AppConfig.String( "game_db_password")
+	dbBackupDir := beego.AppConfig.String( "db_backup_dir")
+	if dbBackupDir == "" {
+		logs.Error("数据库备份路径未配置!!!!!!!!!!!!!!!!!!!!!!!")
+		return
+	}
+	for _, e := range list {
+		user := "root"
+		dbName := e.DbName
+		host := e.DbHost
+		commandArgs := []string{
+			" -u ",
+			user,
+			" -h ",
+			host,
+			" -p",
+			gameDbPwd,
+			//fmt.Sprintf(" -p%s ", gameDbPwd),
+			dbName,
+			" > ",
+			fmt.Sprintf(" %s%s_%d ", dbBackupDir, dbName, utils.GetTimestamp()),
+		}
+		logs.Info("开始备份数据库:%s......", dbName)
+		out, err := utils.Cmd("mysqldump", commandArgs)
+		if err != nil {
+			logs.Error("备份数据库失败:%s!!!!!, %s", dbName, out)
+		} else {
+			logs.Info("备份数据库成功:%s.", dbName)
+		}
+	}
+}
 func GetNodeStartTime(node string) int {
 	//return "nullddd"
 	gameDb, err := GetGameDbByNode(node)
