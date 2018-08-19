@@ -26,7 +26,7 @@ func (c *InventoryServerController) ServerList() {
 	c.Result(enums.CodeSuccess, "获取资产列表成功", result)
 }
 
-// 编辑 添加用户
+// 编辑 添加服务器
 func (c *InventoryServerController) EditServer() {
 	m := models.InventoryServer{}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
@@ -50,7 +50,7 @@ func (c *InventoryServerController) EditServer() {
 	c.Result(enums.CodeSuccess, "保存成功", m.Id)
 }
 
-// 删除用户
+// 删除服务器
 func (c *InventoryServerController) DeleteServer() {
 	var idList []int
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &idList)
@@ -59,4 +59,12 @@ func (c *InventoryServerController) DeleteServer() {
 	err = models.DeleteInventoryServers(idList)
 	c.CheckError(err, "删除资产失败")
 	c.Result(enums.CodeSuccess, "成功删除资产", idList)
+}
+
+
+// 创建ansible
+func (c *InventoryServerController) CreateAnsibleInventory() {
+	err := models.CreateAnsibleInventory()
+	c.CheckError(err, "生成ansible inventory 失败")
+	c.Result(enums.CodeSuccess, "生成ansible inventory成功", "")
 }

@@ -42,18 +42,17 @@ func (c *MailController) DelMailLog() {
 	c.Result(enums.CodeSuccess, "成功删除邮件", idList)
 }
 
-
-
 //发送邮件
 func (c *MailController) SendMail() {
 	var params struct {
-		PlatformId     string `json:"platformId"`
-		NodeList       [] string `json:"serverIdList"`
-		PlayerNameList string `json:"playerNameList"`
+		PlatformId     string                  `json:"platformId"`
+		NodeList       [] string               `json:"serverIdList"`
+		PlayerNameList string                  `json:"playerNameList"`
 		MailItemList   [] *gm.MSendMailTosProp `json:"mailItemList"`
-		Title          string `json:"title"`
-		Content        string `json:"content"`
-		PlayerIdList [] int  `json:"playerIdList"`
+		Title          string                  `json:"title"`
+		Content        string                  `json:"content"`
+		PlayerIdList   [] int                  `json:"playerIdList"`
+		Type           string                  `json:"type"`
 	}
 	var result struct {
 		ErrorCode int
@@ -61,17 +60,37 @@ func (c *MailController) SendMail() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("发送邮件:%+v", params)
-	if params.PlayerNameList != "" && len(params.NodeList) != 1 {
-		logs.Error("参数错误!!!!")
-		c.Result(enums.CodeFail, "参数错误!!!", 0)
+
+	if params.Type != "1" && params.Type != "2" && params.Type != "3" {
+		c.Result(enums.CodeFail, "邮件类型错误!!!", 0)
 	}
 
-	if params.PlayerNameList != "" {
-		params.PlayerIdList, err = models.TranPlayerNameSting2PlayerIdList(params.PlatformId, params.PlayerNameList)
-		c.CheckError(err, "解析玩家失败")
-	} else {
-		params.PlayerIdList = make([] int, 0)
+	params.PlayerIdList = make([] int, 0)
+	if params.Type == "1" {
+		// 发送给玩家
+		if params.PlayerNameList != "" && len(params.NodeList) != 1 {
+			logs.Error("参数错误!!!!")
+			c.Result(enums.CodeFail, "参数错误!!!", 0)
+		}
+		if params.PlayerNameList != "" {
+			params.PlayerIdList, err = models.TranPlayerNameSting2PlayerIdList(params.PlatformId, params.PlayerNameList)
+			c.CheckError(err, "解析玩家失败")
+		}
+	} else if params.Type == "2" {
+		// 发送给多个服
+		if params.PlayerNameList != "" || len(params.NodeList) == 0 {
+			logs.Error("参数错误!!!!")
+			c.Result(enums.CodeFail, "参数错误!!!", 0)
+		}
+	} else if params.Type == "3" {
+		// 发送全服
+		if params.PlayerNameList != "" || len(params.NodeList) > 0 {
+			logs.Error("参数错误!!!!")
+			c.Result(enums.CodeFail, "参数错误!!!", 0)
+		}
 	}
+
+
 
 
 	request, err := json.Marshal(params)
@@ -91,6 +110,7 @@ func (c *MailController) SendMail() {
 		UserId:         c.curUser.Id,
 		ItemList:       string(itemList),
 		PlayerNameList: params.PlayerNameList,
+		Type:           params.Type,
 		Status:         0,
 	}
 
@@ -98,15 +118,22 @@ func (c *MailController) SendMail() {
 	c.CheckError(err, "写邮件日志失败")
 
 
-	for _, node :=range params.NodeList {
+	realNodeList := make([] string, 0)
+	if params.Type == "3"{
+		realNodeList = models.GetAllGameNodeByPlatformId(params.PlatformId)
+	} else {
+		realNodeList = params.NodeList
+	}
+	for _, node := range realNodeList {
 		url := models.GetGameURLByNode(node) + "/send_mail"
 		data := string(request)
 		sign := utils.String2md5(data + enums.GmSalt)
 		base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-		requestBody := "data=" + base64Data+ "&sign=" + sign
+		requestBody := "data=" + base64Data + "&sign=" + sign
 		resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
 		utils.CheckError(err)
 		if err != nil {
+			logs.Info("发送邮件失败 类型:%s 区服:%s, 标题:%s, 内容:%s, 玩家:%v", params.Type, node, params.Title, params.Content, params.PlayerNameList)
 			continue
 		}
 
@@ -114,7 +141,7 @@ func (c *MailController) SendMail() {
 		responseBody, err := ioutil.ReadAll(resp.Body)
 
 		if err != nil {
-			logs.Info("发送邮件失败 区服:%s, 标题:%s, 内容:%s, 玩家:%v", node, params.Title, params.Content, params.PlayerNameList)
+			logs.Info("发送邮件失败 类型:%s 区服:%s, 标题:%s, 内容:%s, 玩家:%v", params.Type, node, params.Title, params.Content, params.PlayerNameList)
 			continue
 		}
 
@@ -123,7 +150,7 @@ func (c *MailController) SendMail() {
 		err = json.Unmarshal(responseBody, &result)
 
 		//c.CheckError(err)
-		if result.ErrorCode != 0 || err != nil{
+		if result.ErrorCode != 0 || err != nil {
 			logs.Info("发送邮件失败 区服:%s, 标题:%s, 内容:%s, 玩家:%v", node, params.Title, params.Content, params.PlayerNameList)
 		} else {
 			logs.Info("发送邮件成功 区服:%s, 标题:%s, 内容:%s, 玩家:%v", node, params.Title, params.Content, params.PlayerNameList)

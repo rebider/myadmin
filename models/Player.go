@@ -133,7 +133,7 @@ func GetAccountType(platfromId string, accId string) int {
 	}
 	sql := fmt.Sprintf(
 		`SELECT type FROM global_account WHERE platform_id = '%s' and account = '%s'`, platfromId, accId)
-	err := DbLoginServer.Raw(sql).Scan(&data).Error
+	err := DbCenter.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return data.Type
 }

@@ -15,6 +15,7 @@ import (
 	"log"
 	"strings"
 	"io"
+	"fmt"
 )
 
 // 检查是否有错误
@@ -49,6 +50,7 @@ func NodeTool(arg ... string) (string, error) {
 
 func Cmd(commandName string, params []string) (string, error) {
 	cmd := exec.Command(commandName, params...)
+	fmt.Println(cmd.Args)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = os.Stderr
@@ -114,11 +116,11 @@ func GetTimestamp() int {
 	return int(time.Now().Unix())
 }
 
-// 获取gm 地址
-func GetGmURL() string {
-	url := beego.AppConfig.String("gm" + "::url")
-	return url
-}
+//// 获取gm 地址
+//func GetGmURL() string {
+//	url := beego.AppConfig.String("gm" + "::url")
+//	return url
+//}
 
 // 获取gm 地址
 func GetToolDir() string {
@@ -126,11 +128,11 @@ func GetToolDir() string {
 	return url
 }
 
-// 获取充值地址
-func GetChargeURL() string {
-	url := beego.AppConfig.String("charge_url" + "::url")
-	return url
-}
+//// 获取充值地址
+//func GetChargeURL() string {
+//	url := beego.AppConfig.String("charge_url" + "::url")
+//	return url
+//}
 
 // 获取ip归属地
 func GetIpLocation(ip string) string {

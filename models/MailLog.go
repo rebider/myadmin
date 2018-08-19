@@ -4,11 +4,10 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-
 type MailLog struct {
 	Id             int    `json:"id"`
-	PlatformId     string    `json:"platformId"`
-	NodeList   string `json:"serverIdList"`
+	PlatformId     string `json:"platformId"`
+	NodeList       string `json:"serverIdList"`
 	PlayerNameList string `json:"playerNameList"`
 	Title          string `json:"title"`
 	Content        string `json:"content"`
@@ -16,6 +15,7 @@ type MailLog struct {
 	UserId         int    `json:"userId"`
 	ItemList       string `json:"itemList"`
 	Status         int    `json:"status"`
+	Type           string `json:"type"` //1:发送给多个玩家  2: 发送多个服务器 3: 全服发送
 	UserName       string `json:"userName" gorm:"-"`
 }
 

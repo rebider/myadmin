@@ -71,6 +71,17 @@ func GetAllServerListOfGame() []*InventoryServer {
 	return data
 }
 
+func GetAllServerList() []*InventoryServer {
+	data := make([]*InventoryServer, 0)
+	err := Db.Model(&InventoryServer{}).Find(&data).Error
+	utils.CheckError(err)
+	for _, e := range data {
+		e.NodeCount = GetIpNodeCount(e.InnerIp)
+		e.OnlinePlayerCount = GetIpOnlinePlayerCount(e.InnerIp)
+	}
+	return data
+}
+
 func GetMaxFreeServer() (*InventoryServer, error) {
 	l := GetAllServerListOfGame()
 	if len(l) == 0 {
@@ -80,8 +91,8 @@ func GetMaxFreeServer() (*InventoryServer, error) {
 	inventoryServer := &InventoryServer{}
 	for _, e := range l {
 		logs.Debug("server:%s, nodeCount:%d, onlineCount:%d", e.Name, e.NodeCount, e.OnlinePlayerCount)
-		if e.NodeCount >= 25 {
-			// 一个服务器最多安装25个节点
+		if e.NodeCount >= 30 {
+			// 一个服务器最多安装30个节点
 			continue
 		}
 		// 一个节点当作10个在线来计算
@@ -155,7 +166,16 @@ func CreateAnsibleInventory() error{
 			mapList[nodeIp] = append(make([] string, 0), "'" + nodeName + "'")
 		}
 	}
-	//logs.Info("mapList:%+v", mapList)
+	serverOfGameList := GetAllServerList()
+	for _, e := range serverOfGameList{
+		if _, ok := mapList[e.InnerIp]; ok {
+		} else {
+			logs.Info("e:%+v", e)
+			mapList[e.InnerIp] = make([] string, 0)
+		}
+	}
+	logs.Info("serverOfGameList:%+v", mapList)
+	logs.Info("mapList:%+v", mapList)
 	content := "## Generated automatically, no need to modify.\n"
 	content += fmt.Sprintf("## Auto Created :%s\n\n", time.Now().String())
 	//for ip, _ := range mapList {

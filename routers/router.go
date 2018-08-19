@@ -173,6 +173,8 @@ func init() {
 	beego.Router("/inventory/server_list", &controllers.InventoryServerController{}, "*:ServerList")
 	beego.Router("/inventory/edit_server/?:id", &controllers.InventoryServerController{}, "*:EditServer")
 	beego.Router("/inventory/delete_server", &controllers.InventoryServerController{}, "*:DeleteServer")
+	beego.Router("/inventory/create_ansible_inventory", &controllers.InventoryServerController{}, "*:CreateAnsibleInventory")
+
 
 	beego.Router("/inventory/database_list", &controllers.InventoryDatabaseController{}, "*:DatabaseList")
 	beego.Router("/inventory/edit_database/?:id", &controllers.InventoryDatabaseController{}, "*:EditDatabase")

@@ -24,6 +24,7 @@ type NoticeLogQueryParam struct {
 	EndTime    int
 	UserId     int
 	NoticeType int
+	IsShowFinish string
 }
 
 func GetNoticeLogOne(id int) (*NoticeLog, error) {
@@ -47,10 +48,18 @@ func GetNoticeLogList(params *NoticeLogQueryParam) ([]*NoticeLog, int64) {
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
 	}
-	Db.Model(&NoticeLog{}).Where(&NoticeLog{
-		PlatformId: params.PlatformId,
-		NoticeType:params.NoticeType,
-	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	if params.IsShowFinish == "0" {
+		Db.Model(&NoticeLog{}).Where(&NoticeLog{
+			PlatformId: params.PlatformId,
+			NoticeType:params.NoticeType,
+		}).Where("status = ?", "0").Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	} else {
+		Db.Model(&NoticeLog{}).Where(&NoticeLog{
+			PlatformId: params.PlatformId,
+			NoticeType:params.NoticeType,
+		}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	}
+
 	for _, e := range data {
 		u, err := GetUserOne(e.UserId)
 		if err == nil {
