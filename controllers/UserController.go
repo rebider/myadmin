@@ -15,9 +15,13 @@ type UserController struct {
 
 func (c *UserController) Info() {
 	m := c.curUser
-	platformList, err := models.GetPlatformList()
-	utils.CheckError(err)
-	gameServerList := models.GetServerList()
+	platformList := models.GetPlatformList()
+	platformIdList:= make([]string, 0)
+	for _, e := range platformList {
+		platformIdList = append(platformIdList, e.Id)
+	}
+	//utils.CheckError(err)
+	gameServerList := models.GetServerList(platformIdList)
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
 			Name           string         `json:"name"`

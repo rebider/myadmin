@@ -10,16 +10,20 @@ import (
 	"os"
 	"github.com/astaxie/beego/logs"
 )
+
 var (
-	Db *gorm.DB
-	DbCenter *gorm.DB
-	DbCharge *gorm.DB
+	Db            *gorm.DB
+	DbCenter      *gorm.DB
+	DbCharge      *gorm.DB
 	DbLoginServer *gorm.DB
 )
 
+// 现在是否在开服
+var IsNowOpenServer = false
+
 //初始化
 func init() {
-	gorm.DefaultTableNameHandler = func (db *gorm.DB, defaultTableName string) string  {
+	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
 		return defaultTableName
 	}
 	initDb()
@@ -69,15 +73,13 @@ func initCenter() {
 	utils.CheckError(err, "连接中心服失败")
 }
 
-
-func PingDb(db *gorm.DB)  {
+func PingDb(db *gorm.DB) {
 	sql := `show databases`
 	err := db.Raw(sql).Error
 	if err != nil {
 		logs.Error("ping 数据库失败:%v", err)
 	}
 }
-
 
 func initCharge() {
 	//数据库名称
@@ -122,7 +124,6 @@ func initLoginServer() {
 	DbLoginServer.SetLogger(log.New(os.Stdout, "\r\n", 0))
 	DbLoginServer.SingularTable(true)
 }
-
 
 func TableName(name string) string {
 	prefix := beego.AppConfig.String("db_dt_prefix")

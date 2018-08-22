@@ -10,12 +10,13 @@ import (
 	"errors"
 	"github.com/astaxie/beego/logs"
 	"os"
-	"encoding/base64"
-	"net/http"
-	"io/ioutil"
-	"encoding/json"
-	"github.com/astaxie/beego"
-	"github.com/chnzrb/myadmin/enums"
+	//"encoding/base64"
+	//"net/http"
+	//"io/ioutil"
+	//"encoding/json"
+	//"github.com/astaxie/beego"
+	//"github.com/chnzrb/myadmin/enums"
+	//"github.com/astaxie/beego/context/param"
 )
 
 //获取某日创角的玩家Id列表
@@ -1334,49 +1335,55 @@ func NodeAction(nodes [] string, action string) error {
 }
 
 func RefreshGameServer() error {
-	var result struct {
-		ErrorCode int
-	}
-	logs.Info("刷新区服入口:...")
-
-	data := fmt.Sprintf("time=%d", utils.GetTimestamp())
-	sign := utils.String2md5(data + enums.GmSalt)
-	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-
-	baseUrl := beego.AppConfig.String("login_server" + "::url")
-	url := fmt.Sprintf("%s?data=%s&sign=%s", baseUrl, base64Data, sign)
-	//url := "http://192.168.31.100:16667/refresh?" + "data=" + base64Data+ "&sign=" + sign
-
-	logs.Info("url:%s", url)
-	resp, err := http.Get(url)
-
-	utils.CheckError(err)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-
-	utils.CheckError(err)
-	if err != nil {
-		return err
-	}
-
-	logs.Info("刷新区服入口 result:%v", string(body))
-
-	err = json.Unmarshal(body, &result)
-	utils.CheckError(err)
-	if err != nil {
-		return err
-	}
-
-	if result.ErrorCode != 0 {
-		logs.Error("刷新区服入口失败!!!!")
-		return errors.New("刷新区服入口失败!!!!")
-	}
-	logs.Info("刷新区服入口成功")
-	return nil
+	out, err := utils.NodeTool(
+		"mod_server_sync",
+		"push_all_web_node",
+	)
+	utils.CheckError(err, out)
+	return err
+	//var result struct {
+	//	ErrorCode int
+	//}
+	//logs.Info("刷新区服入口:...")
+	//
+	//data := fmt.Sprintf("time=%d", utils.GetTimestamp())
+	//sign := utils.String2md5(data + enums.GmSalt)
+	//base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+	//
+	//baseUrl := beego.AppConfig.String("login_server" + "::url")
+	//url := fmt.Sprintf("%s?data=%s&sign=%s", baseUrl, base64Data, sign)
+	////url := "http://192.168.31.100:16667/refresh?" + "data=" + base64Data+ "&sign=" + sign
+	//
+	//logs.Info("url:%s", url)
+	//resp, err := http.Get(url)
+	//
+	//utils.CheckError(err)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//defer resp.Body.Close()
+	//body, err := ioutil.ReadAll(resp.Body)
+	//
+	//utils.CheckError(err)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//logs.Info("刷新区服入口 result:%v", string(body))
+	//
+	//err = json.Unmarshal(body, &result)
+	//utils.CheckError(err)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//if result.ErrorCode != 0 {
+	//	logs.Error("刷新区服入口失败!!!!")
+	//	return errors.New("刷新区服入口失败!!!!")
+	//}
+	//logs.Info("刷新区服入口成功")
+	//return nil
 }
 
 func Max(x, y int) int {

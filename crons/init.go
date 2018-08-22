@@ -73,17 +73,17 @@ func cronAutoCreateServer() {
 		return
 	}
 
-	cronMinute, err := beego.AppConfig.Int("check_open_server_cron_minute")
+	cronSecond, err := beego.AppConfig.Int("check_open_server_cron_second")
 	utils.CheckError(err, "读取自动开服定时时间失败")
 	if err != nil {
 		return
 	}
-	if cronMinute <= 0 {
+	if cronSecond <= 0 {
 		logs.Error("开服间隔时间小于0")
 		return
 	}
-	logs.Info("开服检测间隔时间:%d", cronMinute)
-	timer1 := time.NewTicker(time.Duration(cronMinute) * time.Minute)
+	logs.Info("开服检测间隔时间:%d秒", cronSecond)
+	timer1 := time.NewTicker(time.Duration(cronSecond) * time.Second)
 	for {
 		select {
 		case <-timer1.C:
@@ -91,7 +91,7 @@ func cronAutoCreateServer() {
 			// 业务
 
 			// 自动开服
-			models.AutoCreateAndOpenServer()
+			models.AutoCreateAndOpenServer(true)
 		}
 	}
 }

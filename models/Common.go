@@ -137,10 +137,19 @@ type Server struct {
 	//Node       string `json:"node"`
 }
 
-func GetServerList() [] *Server {
+func GetServerList(platformIdList [] string) [] *Server {
 	serverList := make([] *Server, 0)
 	gameServerNodeList := GetAllGameServerNode()
 	for _, serverNode := range gameServerNodeList {
+		isContain := false
+		for _, platformId := range platformIdList {
+			if platformId == serverNode.PlatformId {
+				isContain = true
+			}
+		}
+		if isContain == false {
+			continue
+		}
 		gameServerList := GetGameServerByNode(serverNode.Node)
 		if len(gameServerList) > 0 {
 			serverIdList := make([] string, 0)

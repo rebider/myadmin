@@ -15,8 +15,8 @@ type ToolController struct {
 }
 
 func (c *ToolController) GetJson() {
-	list, err := models.GetPlatformList()
-	utils.CheckError(err)
+	list := models.GetPlatformList()
+	//utils.CheckError(err)
 	logs.Info("platformList:%v", list)
 	c.Result(enums.CodeSuccess, "获取平台列表成功 ", list)
 }

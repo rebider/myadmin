@@ -101,21 +101,30 @@ func (c *GameServerController) BatchUpdateState() {
 	utils.CheckError(err)
 	logs.Info("批量修改区服状态:%+v", param)
 
-	for _, node := range param.Nodes {
-
+	if len(param.Nodes) == 0 {
 		out, err := utils.NodeTool(
 			"mod_server_mgr",
-			"update_node_state",
-			node,
+			"update_all_game_state",
 			strconv.Itoa(param.State),
 		)
-		c.CheckError(err, "批量修改区服状态:"+out)
+		c.CheckError(err, "修改所有区服状态:"+out)
+	} else {
+		for _, node := range param.Nodes {
+
+			out, err := utils.NodeTool(
+				"mod_server_mgr",
+				"update_node_state",
+				node,
+				strconv.Itoa(param.State),
+			)
+			c.CheckError(err, "批量修改区服状态:"+out)
+		}
 	}
 
 	c.Result(enums.CodeSuccess, fmt.Sprintf("批量修改区服状态 %d 项", len(param.Nodes)), 0)
 }
 
-// 封禁
+// 刷新区服入口
 func (c *GameServerController) Refresh() {
 	var params struct {
 	}
@@ -155,3 +164,17 @@ func (c *GameServerController) Refresh() {
 	c.Result(enums.CodeSuccess, "刷新区服入口成功", 0)
 
 }
+
+
+// 立即开服
+func (c *GameServerController) OpenServer() {
+	var params struct {
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	err = models.AutoCreateAndOpenServer(false)
+	c.CheckError(err)
+	c.Result(enums.CodeSuccess, "开服成功", 0)
+
+}
+

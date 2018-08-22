@@ -234,92 +234,108 @@ func SubString(str string, begin, length int) (substr string) {
 	return string(rs[begin:end])
 }
 
-func AutoCreateAndOpenServer() {
+func AutoCreateAndOpenServer(isCheck bool) error {
+	if IsNowOpenServer == true {
+		logs.Warning("正在开服中!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+		return nil
+	}
 	t0 := time.Now()
-	isAutoOpenServer, err := beego.AppConfig.Bool("is_auto_open_server")
-	utils.CheckError(err, "读取是否开启自动开服配置失败")
-	if err != nil {
-		return
-	}
-	if isAutoOpenServer == false {
-		return
-	}
+
 
 	openServerRoleCount, err := beego.AppConfig.Int("open_server_create_role_count")
 	utils.CheckError(err, "读取自动开服人数配置失败")
 	if err != nil {
-		return
+		return err
 	}
 
 	configDbHost := beego.AppConfig.String("config_db_host")
 	if configDbHost == "" {
 		logs.Error("读取配置游戏服连接的数据库配置失败")
-		return
+		return err
 	}
 
-	logs.Info("检测自动开服......")
+	if isCheck {
+		logs.Info("检测自动开服......")
+		// 检测是否满足开服条件
+		isAutoOpenServer, err := beego.AppConfig.Bool("is_auto_open_server")
+		utils.CheckError(err, "读取是否开启自动开服配置失败")
+		if err != nil {
+			return err
+		}
+		if isAutoOpenServer == false {
+			return err
+		}
+
+		if time.Now().Hour() >= 22 {
+			logs.Info("晚上10点后不自动开服")
+			return err
+		}
+	} else {
+		logs.Info("立即开服......")
+	}
 
 	now := utils.GetTimestamp()
 
-	if time.Now().Hour() >= 22 {
-		logs.Info("晚上10点后不自动开服")
-		return
-	}
 	maxGameServer, intSid, err := GetMaxGameServer()
 	utils.CheckError(err, "获取最大区服失败")
 	if err != nil {
-		return
+		return err
 	}
 	logs.Info("最大区服:%+v", maxGameServer)
 	logs.Info("最大区服ID:%+v(%d)", maxGameServer.Sid, intSid)
 	gameDb, err := GetGameDbByNode(maxGameServer.Node)
 	utils.CheckError(err, "连接游戏服数据库失败")
 	if err != nil {
-		return
+		return err
 	}
 	defer gameDb.Close()
 	createRoleCount := GetTotalCreateRoleCount(gameDb)
-	logs.Info("总创角:%d, %d", createRoleCount, openServerRoleCount)
-	if createRoleCount >= openServerRoleCount {
+	logs.Info("当前创角:%d, 创角临界值:%d", createRoleCount, openServerRoleCount)
+
+	if isCheck == false || createRoleCount >= openServerRoleCount {
+		IsNowOpenServer = true
+		defer func() {
+			IsNowOpenServer = false
+		}()
 		logs.Info("*************************** 开服部署新服 *****************************\n")
 		newIntSid := intSid + 1
 		newSid := fmt.Sprintf("s%d", newIntSid)
 		serverNode, err := GetServerNode(maxGameServer.Node)
 		utils.CheckError(err, "获取节点失败!!")
 		if err != nil {
-			return
+			return err
 		}
 		maxFreeServer, err := GetMaxFreeServer()
 		utils.CheckError(err)
 		if err != nil {
-			return
+			return err
 		}
 
 		logs.Info("最空闲的服务器:%+v", maxFreeServer)
 		logs.Info("新服id:%s", newSid)
-		newNode := fmt.Sprintf("%s@%s", newSid, maxFreeServer.InnerIp)
+		newNode := fmt.Sprintf("%s_%s@%s", serverNode.PlatformId, newSid, maxFreeServer.InnerIp)
 		logs.Info("新节点:%s", newNode)
 
 		//maxPort := Max(serverNode.Port, serverNode.WebPort)
 		maxPort := GetThisIpMaxPort(maxFreeServer.InnerIp)
 		logs.Info("最大端口:%d", maxPort)
-		out, err := AddServerNode(newNode, maxFreeServer.Host, maxPort+1, maxPort+2, 1, serverNode.PlatformId, configDbHost, 3306, fmt.Sprintf("db_game_%s", newSid))
+		out, err := AddServerNode(newNode, maxFreeServer.Host, maxPort+1, maxPort+2, 1, serverNode.PlatformId, configDbHost, 3306, fmt.Sprintf("db_%s_game_%s", serverNode.PlatformId, newSid))
 		utils.CheckError(err, "新增节点失败:"+out)
 		if err != nil {
-			return
+			return err
 		}
 
 		zoneNode, err := GetFreeZone()
 		utils.CheckError(err, "获取空闲跨服节点失败:"+out)
 		if err != nil {
-			return
+			return err
 	}
 
 		out, err = AddGameServer(maxGameServer.PlatformId, newSid, fmt.Sprintf("%d区", newIntSid), newNode, zoneNode, 3, now, 1)
 
 		utils.CheckError(err, "新增游戏服失败:"+out)
 		if err != nil {
-			return
+			return err
 		}
 
 		//time.Sleep(time.Duration(15) * time.Second)
@@ -337,36 +353,41 @@ func AutoCreateAndOpenServer() {
 		err = InstallNode(newNode)
 		utils.CheckError(err, "部署节点失败")
 		if err != nil {
-			return
+			return err
 		}
 
 		err = NodeAction([] string{newNode}, "start")
 		utils.CheckError(err, "启动节点失败")
 		if err != nil {
-			return
+			return err
 		}
+
 
 		err = RefreshGameServer()
 		utils.CheckError(err, "刷新区服入口失败")
 		if err != nil {
-			return
+			return err
 		}
 
 		err = NodeAction([] string{zoneNode}, "pull")
 		utils.CheckError(err, "更新跨服节点数据")
 		if err != nil {
-			return
+			return err
 		}
+
+
+
 		err = CreateAnsibleInventory()
 		utils.CheckError(err, "生成ansible inventory失败")
 		if err != nil {
-			return
+			return err
 		}
 		usedTime := time.Since(t0)
 		logs.Info("************************ 自动开服成功:%s 耗时:%s **********************", newSid, usedTime.String())
 	} else {
 		logs.Info("不满足开服条件.")
 	}
+	return nil
 }
 
 // 获取单个游戏服

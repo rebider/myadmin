@@ -102,6 +102,9 @@ func init() {
 	beego.Router("/game_server/delete", &controllers.GameServerController{}, "*:Delete")
 	beego.Router("/game_server/refresh", &controllers.GameServerController{}, "*:Refresh")
 	beego.Router("/game_server/batch_update_state", &controllers.GameServerController{}, "*:BatchUpdateState")
+	beego.Router("/game_server/open_server", &controllers.GameServerController{}, "*:OpenServer")
+
+
 	//节点
 	beego.Router("/server_node/list", &controllers.ServerNodeController{}, "*:List")
 	beego.Router("/server_node/edit/?:node", &controllers.ServerNodeController{}, "*:Edit")
@@ -143,11 +146,21 @@ func init() {
 	beego.Router("/notice/notice_log/", &controllers.NoticeController{}, "*:NoticeLogList")
 	beego.Router("/notice/del_notice_log/", &controllers.NoticeController{}, "*:DelNoticeLog")
 
+	//登录公告
+	beego.Router("/login_notice/set/", &controllers.LoginNoticeController{}, "*:SetNotice")
+	beego.Router("/login_notice/batch_set/", &controllers.LoginNoticeController{}, "*:BatchSetNotice")
+	beego.Router("/login_notice/list/", &controllers.LoginNoticeController{}, "*:LoginNoticeList")
+	beego.Router("/login_notice/delete/", &controllers.LoginNoticeController{}, "*:DelLoginNotice")
 
 	//邮件
 	beego.Router("/mail/send_mail/", &controllers.MailController{}, "*:SendMail")
 	beego.Router("/mail/mail_log/", &controllers.MailController{}, "*:MailLogList")
 	beego.Router("/mail/del_mail_log/", &controllers.MailController{}, "*:DelMailLog")
+
+	//平台
+	beego.Router("/platform/list/", &controllers.PlatformController{}, "*:List")
+	beego.Router("/platform/edit/", &controllers.PlatformController{}, "*:Edit")
+	beego.Router("/platform/del/", &controllers.PlatformController{}, "*:Del")
 
 	// 充值
 	beego.Router("/charge/charge_list/", &controllers.ChargeController{}, "*:ChargeList")
