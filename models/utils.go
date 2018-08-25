@@ -743,13 +743,13 @@ func GetThatDayServerTotalChargeMoney(node string, time int) int {
 //获取区服总充值人民币
 func GetServerTotalChargeMoney(node string) int {
 	var data struct {
-		Count int
+		Count float32
 	}
 	sql := fmt.Sprintf(
 		`select sum(money) as count from charge_info_record where server_id in (%s) and charge_type = 99;`, GetGameServerIdListStringByNode(node))
 	err := DbCharge.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
-	return data.Count
+	return int(data.Count)
 }
 
 func SplitPlayerName(playerName string) (string, string, error) {

@@ -150,7 +150,7 @@ func init() {
 	beego.Router("/login_notice/set/", &controllers.LoginNoticeController{}, "*:SetNotice")
 	beego.Router("/login_notice/batch_set/", &controllers.LoginNoticeController{}, "*:BatchSetNotice")
 	beego.Router("/login_notice/list/", &controllers.LoginNoticeController{}, "*:LoginNoticeList")
-	beego.Router("/login_notice/delete/", &controllers.LoginNoticeController{}, "*:DelLoginNotice")
+	beego.Router("/login_notice/del/", &controllers.LoginNoticeController{}, "*:DelLoginNotice")
 
 	//邮件
 	beego.Router("/mail/send_mail/", &controllers.MailController{}, "*:SendMail")

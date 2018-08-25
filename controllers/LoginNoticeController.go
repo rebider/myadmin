@@ -8,8 +8,6 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
 	"time"
-	//"strconv"
-	//"github.com/astaxie/beego/context/param"
 )
 
 type LoginNoticeController struct {
@@ -19,21 +17,26 @@ type LoginNoticeController struct {
 // 设置登录公告
 func (c *LoginNoticeController) SetNotice() {
 	var params struct {
-		PlatformId string
-		Notice    string
-		IsAdd      int
+		PlatformId string `json:"platformId"`
+		Notice    string	`json:"notice"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("设置登录公告:%+v", params)
 	c.CheckError(err)
-	out, err := utils.NodeTool(
-		"mod_login_notice",
-		"update_login_notice",
-		params.PlatformId,
-		params.Notice,
-	)
-	c.CheckError(err, "设置中心服登录公告:"+out)
+
+	data, err := json.Marshal(params)
+	utils.CheckError(err)
+
+	url := utils.GetCenterURL() + "/set_login_notice"
+	err = utils.HttpRequest(url, string(data))
+	//out, err := utils.NodeTool(
+	//	"mod_login_notice",
+	//	"update_login_notice",
+	//	params.PlatformId,
+	//	params.Notice,
+	//)
+	c.CheckError(err, "设置中心服登录公告")
 	noticeLog := &models.LoginNotice{
 		PlatformId:  params.PlatformId,
 		Notice:     params.Notice,
@@ -56,13 +59,23 @@ func (c *LoginNoticeController) BatchSetNotice() {
 	logs.Info("批量设置登录公告:%+v", params)
 	c.CheckError(err)
 	for _, PlatformId := range params.PlatformIdList {
-		out, err := utils.NodeTool(
-			"mod_login_notice",
-			"update_login_notice",
-			PlatformId,
-			params.Notice,
-		)
-		c.CheckError(err, "设置中心服登录公告:"+out)
+		var request struct {
+			PlatformId string `json:"platformId"`
+			Notice    string	`json:"notice"`
+		}
+		request.PlatformId = PlatformId
+		request.Notice = params.Notice
+		data, err := json.Marshal(request)
+		utils.CheckError(err)
+		url := utils.GetCenterURL() + "/set_login_notice"
+		err = utils.HttpRequest(url, string(data))
+		//out, err := utils.NodeTool(
+		//	"mod_login_notice",
+		//	"update_login_notice",
+		//	PlatformId,
+		//	params.Notice,
+		//)
+		c.CheckError(err, "批量中心服登录公告")
 		noticeLog := &models.LoginNotice{
 			PlatformId:  PlatformId,
 			Notice:     params.Notice,

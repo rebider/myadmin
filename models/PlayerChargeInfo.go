@@ -10,9 +10,9 @@ type PlayerChargeInfoRecord struct {
 	Account         string `json:"account" gorm:"-"`
 	PlatformId      string    `json:"platformId" gorm:"column:part_id"`
 	ServerId        string `json:"serverId"`
-	TotalMoney      int    `json:"totalMoney"`
-	MaxMoney        int    `json:"maxMoney"`
-	MinMoney        int    `json:"minMoney"`
+	TotalMoney      float32    `json:"totalMoney"`
+	MaxMoney        float32    `json:"maxMoney"`
+	MinMoney        float32    `json:"minMoney"`
 	ChargeCount     int    `json:"chargeCount"`
 	LastLoginTime   int    `json:"lastLoginTime" gorm:"-"`
 	RegisterTime    int    `json:"registerTime" gorm:"-"`

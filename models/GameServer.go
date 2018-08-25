@@ -281,8 +281,8 @@ func AutoCreateAndOpenServer(isCheck bool) error {
 	if err != nil {
 		return err
 	}
-	logs.Info("最大区服:%+v", maxGameServer)
-	logs.Info("最大区服ID:%+v(%d)", maxGameServer.Sid, intSid)
+	//logs.Info("最大区服:%+v", maxGameServer)
+	//logs.Info("最大区服ID:%+v(%d)", maxGameServer.Sid, intSid)
 	gameDb, err := GetGameDbByNode(maxGameServer.Node)
 	utils.CheckError(err, "连接游戏服数据库失败")
 	if err != nil {
@@ -290,7 +290,7 @@ func AutoCreateAndOpenServer(isCheck bool) error {
 	}
 	defer gameDb.Close()
 	createRoleCount := GetTotalCreateRoleCount(gameDb)
-	logs.Info("当前创角:%d, 创角临界值:%d", createRoleCount, openServerRoleCount)
+	logs.Info("最新区服:%s, 当前创角:%d, 创角临界值:%d", maxGameServer.Sid, createRoleCount, openServerRoleCount)
 
 	if isCheck == false || createRoleCount >= openServerRoleCount {
 		IsNowOpenServer = true

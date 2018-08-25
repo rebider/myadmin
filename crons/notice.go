@@ -10,10 +10,10 @@ import (
 	"github.com/chnzrb/myadmin/enums"
 	//"github.com/golang/protobuf/proto"
 	//"fmt"
-	"encoding/base64"
-	"net/http"
-	"strings"
-	"io/ioutil"
+	//"encoding/base64"
+	//"net/http"
+	//"strings"
+	//"io/ioutil"
 )
 
 func ClockDealAllNoticeLog() {
@@ -65,9 +65,9 @@ func DealNoticeLog(id int) {
 			nodeList = models.GetAllGameNodeByPlatformId(noticeLog.PlatformId)
 		}
 
-		var result struct {
-			ErrorCode int
-		}
+		//var result struct {
+		//	ErrorCode int
+		//}
 
 		var request struct {
 			NodeList [] string `json:"nodeList"`
@@ -77,36 +77,47 @@ func DealNoticeLog(id int) {
 		request.Content = noticeLog.Content
 
 		for _, node :=range nodeList {
-			url := models.GetGameURLByNode(node) + "/send_notice"
 			data, err := json.Marshal(request)
 			utils.CheckError(err)
-			sign := utils.String2md5(string(data) + enums.GmSalt)
-			base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-			requestBody := "data=" + base64Data + "&sign=" + sign
-			resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
-			utils.CheckError(err)
-			if err != nil {
-				continue
-			}
-			defer resp.Body.Close()
-			responseBody, err := ioutil.ReadAll(resp.Body)
-			utils.CheckError(err)
-			if err != nil {
-				continue
-			}
-			logs.Info("result:%v", string(responseBody))
+			url := models.GetGameURLByNode(node) + "/send_notice"
 
-			err = json.Unmarshal(responseBody, &result)
-
+			err = utils.HttpRequest(url, string(data))
 			utils.CheckError(err)
-			if err != nil {
-				continue
-			}
-			if result.ErrorCode == 0 {
+			if err == nil {
 				logs.Info("发送公告成功 PlatformId: %v, id: %v", node, noticeLog.Id)
 			} else {
 				logs.Info("发送公告失败 PlatformId: %v, id: %v", node, noticeLog.Id)
 			}
+			//url := models.GetGameURLByNode(node) + "/send_notice"
+			//data, err := json.Marshal(request)
+			//utils.CheckError(err)
+			//sign := utils.String2md5(string(data) + enums.GmSalt)
+			//base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+			//requestBody := "data=" + base64Data + "&sign=" + sign
+			//resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
+			//utils.CheckError(err)
+			//if err != nil {
+			//	continue
+			//}
+			//defer resp.Body.Close()
+			//responseBody, err := ioutil.ReadAll(resp.Body)
+			//utils.CheckError(err)
+			//if err != nil {
+			//	continue
+			//}
+			//logs.Info("result:%v", string(responseBody))
+			//
+			//err = json.Unmarshal(responseBody, &result)
+			//
+			//utils.CheckError(err)
+			//if err != nil {
+			//	continue
+			//}
+			//if result.ErrorCode == 0 {
+			//	logs.Info("发送公告成功 PlatformId: %v, id: %v", node, noticeLog.Id)
+			//} else {
+			//	logs.Info("发送公告失败 PlatformId: %v, id: %v", node, noticeLog.Id)
+			//}
 		}
 
 

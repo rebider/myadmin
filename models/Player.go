@@ -22,6 +22,7 @@ type Player struct {
 	LastOfflineTime  int    `json:"lastOfflineTime"`
 	TotalOnlineTime  int    `json:"totalOnlineTime"`
 	LastLoginIp      string `json:"lastLoginIp"`
+	From             string `json:"from"`
 	IsOnline         int    `json:"isOnline"`
 	Type             int    `json:"type" gorm:"-"`
 	Level            int    `json:"level" gorm:"-" `
@@ -120,7 +121,7 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		e.Ingot = GetPlayerIngot(gameDb, e.Id)
 		playerChargeData, err := GetPlayerChargeDataOne(e.Id)
 		utils.CheckError(err)
-		e.TotalChargeMoney = playerChargeData.TotalMoney
+		e.TotalChargeMoney = int(playerChargeData.TotalMoney)
 		e.Type = GetAccountType(params.PlatformId, e.AccId)
 		//e.LastLoginIp = e.LastLoginIp + "(" + utils.GetIpLocation(e.LastLoginIp) + ")"
 	}
@@ -289,7 +290,7 @@ func GetPlayerDetail(platformId string, serverId string, playerId int) (*PlayerD
 	utils.CheckError(err)
 	playerChargeData, err := GetPlayerChargeDataOne(playerId)
 	utils.CheckError(err)
-	playerDetail.TotalChargeMoney = playerChargeData.TotalMoney
+	playerDetail.TotalChargeMoney = int(playerChargeData.TotalMoney)
 	playerDetail.Player.Type = GetAccountType(platformId, playerDetail.Player.AccId)
 	//playerDetail.LastLoginIp = playerDetail.LastLoginIp + "(" + utils.GetIpLocation(playerDetail.LastLoginIp) + ")"
 	return playerDetail, err

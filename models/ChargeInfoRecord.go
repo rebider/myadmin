@@ -25,7 +25,7 @@ type ChargeInfoRecord struct {
 	PlayerId      int    `json:"playerId"`
 	PlayerName    string `json:"playerName" gorm:"-"`
 	LastLoginTime int    `json:"lastLoginTime" gorm:"-"`
-	Money         int    `json:"money"`
+	Money         float32    `json:"money"`
 	Ingot         int    `json:"ingot"`
 	RecordTime    int    `json:"recordTime"`
 	ChargeItemId  int    `json:"chargeItemId"`
@@ -62,7 +62,7 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 	}
 
 	var sumData struct {
-		MoneyCount int64
+		MoneyCount float32
 		PlayerCount int64
 	}
 	whereArray := make([] string, 0)
@@ -108,7 +108,7 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 		e.LastLoginTime = GetPlayerLastLoginTime(e.PartId, e.ServerId, e.PlayerId)
 		//e.ChargeItemId = GetChargeItemId(e.OrderId, e.PartId, e.ServerId)
 	}
-	return data, count, sumData.PlayerCount, sumData.MoneyCount
+	return data, count, sumData.PlayerCount, int64(sumData.MoneyCount)
 }
 
 func Repair() {

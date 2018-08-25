@@ -8,10 +8,10 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/chnzrb/myadmin/proto"
 	"time"
-	"net/http"
-	"io/ioutil"
-	"strings"
-	"encoding/base64"
+	//"net/http"
+	//"io/ioutil"
+	//"strings"
+	//"encoding/base64"
 )
 
 type MailController struct {
@@ -54,9 +54,9 @@ func (c *MailController) SendMail() {
 		PlayerIdList   [] int                  `json:"playerIdList"`
 		Type           string                  `json:"type"`
 	}
-	var result struct {
-		ErrorCode int
-	}
+	//var result struct {
+	//	ErrorCode int
+	//}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("发送邮件:%+v", params)
@@ -127,34 +127,38 @@ func (c *MailController) SendMail() {
 	for _, node := range realNodeList {
 		url := models.GetGameURLByNode(node) + "/send_mail"
 		data := string(request)
-		sign := utils.String2md5(data + enums.GmSalt)
-		base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-		requestBody := "data=" + base64Data + "&sign=" + sign
-		resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
-		utils.CheckError(err)
+		err = utils.HttpRequest(url, data)
 		if err != nil {
-			logs.Info("发送邮件失败 类型:%s 区服:%s, 标题:%s, 内容:%s, 玩家:%v", params.Type, node, params.Title, params.Content, params.PlayerNameList)
-			continue
+			logs.Error("发送邮件失败 区服:%s, 标题:%s, 内容:%s, 玩家:%v", node, params.Title, params.Content, params.PlayerNameList)
 		}
-
-		defer resp.Body.Close()
-		responseBody, err := ioutil.ReadAll(resp.Body)
-
-		if err != nil {
-			logs.Info("发送邮件失败 类型:%s 区服:%s, 标题:%s, 内容:%s, 玩家:%v", params.Type, node, params.Title, params.Content, params.PlayerNameList)
-			continue
-		}
-
-		//logs.Debug("result:%v", string(responseBody))
-
-		err = json.Unmarshal(responseBody, &result)
-
-		//c.CheckError(err)
-		if result.ErrorCode != 0 || err != nil {
-			logs.Info("发送邮件失败 区服:%s, 标题:%s, 内容:%s, 玩家:%v", node, params.Title, params.Content, params.PlayerNameList)
-		} else {
-			logs.Info("发送邮件成功 区服:%s, 标题:%s, 内容:%s, 玩家:%v", node, params.Title, params.Content, params.PlayerNameList)
-		}
+		//sign := utils.String2md5(data + enums.GmSalt)
+		//base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+		//requestBody := "data=" + base64Data + "&sign=" + sign
+		//resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
+		//utils.CheckError(err)
+		//if err != nil {
+		//	logs.Info("发送邮件失败 类型:%s 区服:%s, 标题:%s, 内容:%s, 玩家:%v", params.Type, node, params.Title, params.Content, params.PlayerNameList)
+		//	continue
+		//}
+		//
+		//defer resp.Body.Close()
+		//responseBody, err := ioutil.ReadAll(resp.Body)
+		//
+		//if err != nil {
+		//	logs.Info("发送邮件失败 类型:%s 区服:%s, 标题:%s, 内容:%s, 玩家:%v", params.Type, node, params.Title, params.Content, params.PlayerNameList)
+		//	continue
+		//}
+		//
+		////logs.Debug("result:%v", string(responseBody))
+		//
+		//err = json.Unmarshal(responseBody, &result)
+		//
+		////c.CheckError(err)
+		//if result.ErrorCode != 0 || err != nil {
+		//	logs.Info("发送邮件失败 区服:%s, 标题:%s, 内容:%s, 玩家:%v", node, params.Title, params.Content, params.PlayerNameList)
+		//} else {
+		//	logs.Info("发送邮件成功 区服:%s, 标题:%s, 内容:%s, 玩家:%v", node, params.Title, params.Content, params.PlayerNameList)
+		//}
 
 	}
 	//args := fmt.Sprintf("platform_id=%d&server_id=%s&player_id=%d&type=%d&sec=%d", params.PlatformId, params.ServerId, params.PlayerId, params.Type, params.Sec)

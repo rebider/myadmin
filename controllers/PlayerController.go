@@ -8,10 +8,10 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	//"github.com/chnzrb/myadmin/proto"
 	//"github.com/golang/protobuf/proto"
-	"encoding/base64"
-	"net/http"
-	"strings"
-	"io/ioutil"
+	//"encoding/base64"
+	//"net/http"
+	//"strings"
+	//"io/ioutil"
 )
 
 type PlayerController struct {
@@ -62,9 +62,9 @@ func (c *PlayerController) SetAccountType() {
 		ServerId   string `json:"serverId"`
 		Type int32 `json:"type"`
 	}
-	var result struct {
-		ErrorCode int
-	}
+	//var result struct {
+	//	ErrorCode int
+	//}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	c.CheckError(err)
 	logs.Info("设置帐号类型:%+v", params)
@@ -75,28 +75,31 @@ func (c *PlayerController) SetAccountType() {
 	_, err = models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err)
 
-
 	url := models.GetGameURLByPlatformIdAndSid(params.PlatformId, params.ServerId) + "/set_account_type"
 	data := string(request)
-	logs.Info("url:%s", url)
-	sign := utils.String2md5(data + enums.GmSalt)
-	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-	requestBody := "data=" + base64Data+ "&sign=" + sign
-	resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
+    err = utils.HttpRequest(url, data)
 	c.CheckError(err)
-
-	defer resp.Body.Close()
-	responseBody, err := ioutil.ReadAll(resp.Body)
-	c.CheckError(err)
-
-	logs.Info("result:%v", string(responseBody))
-
-	err = json.Unmarshal(responseBody, &result)
-
-	c.CheckError(err)
-	if result.ErrorCode != 0 {
-		c.Result(enums.CodeFail, "设置帐号类型失败", 0)
-	}
+	//url := models.GetGameURLByPlatformIdAndSid(params.PlatformId, params.ServerId) + "/set_account_type"
+	//data := string(request)
+	//logs.Info("url:%s", url)
+	//sign := utils.String2md5(data + enums.GmSalt)
+	//base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+	//requestBody := "data=" + base64Data+ "&sign=" + sign
+	//resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
+	//c.CheckError(err)
+	//
+	//defer resp.Body.Close()
+	//responseBody, err := ioutil.ReadAll(resp.Body)
+	//c.CheckError(err)
+	//
+	//logs.Info("result:%v", string(responseBody))
+	//
+	//err = json.Unmarshal(responseBody, &result)
+	//
+	//c.CheckError(err)
+	//if result.ErrorCode != 0 {
+	//	c.Result(enums.CodeFail, "设置帐号类型失败", 0)
+	//}
 	c.Result(enums.CodeSuccess, "设置帐号类型成功", 0)
 	//serverId := player.ServerId
 	//request := gm.MSetAccountTypeTos{Token: proto.String(""), Type: proto.Int32(params.Type), PlayerId: proto.Int32(int32(params.PlayerId))}

@@ -16,6 +16,9 @@ import (
 	"strings"
 	"io"
 	"fmt"
+	"encoding/base64"
+	"errors"
+	"github.com/chnzrb/myadmin/enums"
 )
 
 // 检查是否有错误
@@ -116,17 +119,50 @@ func GetTimestamp() int {
 	return int(time.Now().Unix())
 }
 
-//// 获取gm 地址
-//func GetGmURL() string {
-//	url := beego.AppConfig.String("gm" + "::url")
-//	return url
-//}
+// 获取gm 地址
+func GetCenterURL() string {
+	url := beego.AppConfig.String("center_server" + "::url")
+	return url
+}
 
 // 获取gm 地址
 func GetToolDir() string {
 	url := beego.AppConfig.String("tool_path")
 	return url
 }
+
+func HttpRequest(url string, data string) error{
+	var result struct {
+		ErrorCode int
+		ErrorMsg string
+	}
+	sign := String2md5(data + enums.GmSalt)
+	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+	requestBody := "data=" + base64Data + "&sign=" + sign
+	resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
+	CheckError(err)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	CheckError(err)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(responseBody, &result)
+
+	CheckError(err)
+	if err != nil {
+		return err
+	}
+	if result.ErrorCode != 0 {
+		return errors.New(result.ErrorMsg)
+	}
+	return nil
+}
+
 
 //// 获取充值地址
 //func GetChargeURL() string {
