@@ -25,6 +25,14 @@ func (c *InventoryDatabaseController) DatabaseList() {
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取资产列表成功", result)
 }
+func (c *InventoryDatabaseController) AllDatabaseList() {
+	logs.Info("查询资产列表")
+	data := models.GetAllInventoryDatabaseList()
+	result := make(map[string]interface{})
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取资产列表成功", result)
+}
+
 
 // 编辑 添加用户
 func (c *InventoryDatabaseController) EditDatabase() {

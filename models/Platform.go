@@ -6,15 +6,21 @@ import (
 	//"fmt"
 	//"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
+	"fmt"
+	"sort"
 )
 
 type Platform struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	Time int `json:"time"`
+	Id                        string                       `json:"id"`
+	Name                      string                       `json:"name"`
+	IsAutoOpenServer          int                          `json:"isAutoOpenServer"`
+	InventoryDatabaseId       int                          `json:"inventoryDatabaseId"`
+	ZoneInventoryServerId     int                          `json:"zoneInventoryServerId"`
+	CreateRoleLimit           int                          `json:"createRoleLimit"`
+	PlatformInventorySeverRel []*PlatformInventorySeverRel `json:"-"`
+	InventorySeverIds         []int                        `json:"inventorySeverIds" gorm:"-"`
+	Time                      int                          `json:"time"`
 }
-
-
 
 func (a *Platform) TableName() string {
 	return PlatformDatabaseTBName()
@@ -27,6 +33,7 @@ func PlatformDatabaseTBName() string {
 type PlatformParam struct {
 	BaseQueryParam
 }
+
 //type Platform struct {
 //	Id   int    `json:"id"`
 //	Name string `json:"name"`
@@ -37,24 +44,69 @@ type PlatformParam struct {
 //	Time        int    `json:"time"`
 //}
 
-//获取用户列表
+//获取平台列表
 func GetPlatformList() []*Platform {
 	data := make([]*Platform, 0)
 	err := Db.Model(&Platform{}).Find(&data).Error
 	utils.CheckError(err)
+	for _, v := range data {
+		v.InventorySeverIds = make([] int, 0)
+
+		err = Db.Model(&v).Related(&v.PlatformInventorySeverRel).Error
+		utils.CheckError(err)
+
+		for _, e := range v.PlatformInventorySeverRel {
+			v.InventorySeverIds = append(v.InventorySeverIds, e.InventoryServerId)
+		}
+		sort.Ints(v.InventorySeverIds)
+	}
 	return data
 }
 
-// 获取单个用户
-//func GetPlatformOne(id int) (*Platform, error) {
-//	r := &Platform{
-//		Id: id,
-//	}
-//	err := Db.First(&r).Error
-//	return r, err
-//}
+//获取平台列表
+func GetPlatformListByUserId(userId int) []*Platform {
+	var list []*Platform
+	user, err := GetUserOne(userId)
+	utils.CheckError(err)
+	if user.IsSuper == 1 {
+		list = GetPlatformList()
+	} else {
+		sql := fmt.Sprintf(`SELECT DISTINCT T2.*
+		FROM %s AS T0
+		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
+		INNER JOIN %s AS T2 ON T2.id = T0.platform_id
+		WHERE T1.user_id = ?`, RolePlatformRelTBName(), RoleUserRelTBName(), PlatformDatabaseTBName())
+		rows, err := Db.Raw(sql, userId).Rows()
+		defer rows.Close()
+		utils.CheckError(err)
+		for rows.Next() {
+			var platform Platform
+			Db.ScanRows(rows, &platform)
+			list = append(list, &platform)
+		}
+	}
+	return list
+}
 
-// 删除用户列表
+//获取单个平台
+func GetPlatformOne(id string) (*Platform, error) {
+	r := &Platform{
+		Id: id,
+	}
+	err := Db.First(&r).Error
+	r.InventorySeverIds = make([] int, 0)
+
+	err = Db.Model(&r).Related(&r.PlatformInventorySeverRel).Error
+	utils.CheckError(err)
+
+	for _, e := range r.PlatformInventorySeverRel {
+		r.InventorySeverIds = append(r.InventorySeverIds, e.InventoryServerId)
+	}
+	sort.Ints(r.InventorySeverIds)
+	return r, err
+}
+
+// 删除平台列表
 func DeletePlatform(ids [] string) error {
 	tx := Db.Begin()
 	defer func() {
@@ -69,8 +121,19 @@ func DeletePlatform(ids [] string) error {
 		tx.Rollback()
 		return err
 	}
+	//删除角色平台关系
+	if _, err := DeleteRolePlatformRelByPlatformIdList(ids); err != nil {
+		tx.Rollback()
+		return err
+	}
+	//删除服务器平台关系
+	if _, err := DeletePlatformInventorySeverRelByPlatformIdList(ids); err != nil {
+		tx.Rollback()
+		return err
+	}
 	return tx.Commit().Error
 }
+
 //
 //func GetPlatformList()[] *Platform {
 //	filename := "views/static/json/Platform.json"

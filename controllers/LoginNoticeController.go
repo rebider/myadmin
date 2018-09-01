@@ -36,7 +36,7 @@ func (c *LoginNoticeController) SetNotice() {
 	//	params.PlatformId,
 	//	params.Notice,
 	//)
-	c.CheckError(err, "设置中心服登录公告")
+	c.CheckError(err, "设置中心服登录公告:" + url)
 	noticeLog := &models.LoginNotice{
 		PlatformId:  params.PlatformId,
 		Notice:     params.Notice,

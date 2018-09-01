@@ -59,6 +59,11 @@ func GetDailyOnlineStatisticsList(params *DailyOnlineStatisticsQueryParam) []*Da
 				Time:i,
 			}
 			for _, e := range tmpData {
+				serverNode, err := GetServerNode(e.Node)
+				utils.CheckError(err, e.Node)
+				if serverNode.PlatformId != params.PlatformId {
+					continue
+				}
 				tmpE.MaxOnlineCount += e.MaxOnlineCount
 				tmpE.MinOnlineCount += e.MinOnlineCount
 				tmpE.AvgOnlineCount += e.AvgOnlineCount

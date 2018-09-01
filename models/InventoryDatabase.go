@@ -43,6 +43,15 @@ func GetInventoryDatabaseList(params *InventoryDatabaseParam) ([]*InventoryDatab
 	return data, count
 }
 
+//获取所有数据库
+func GetAllInventoryDatabaseList() ([]*InventoryDatabase) {
+	data := make([]*InventoryDatabase, 0)
+	err := Db.Model(&InventoryDatabase{}).Find(&data).Error
+	utils.CheckError(err)
+	return data
+}
+
+
 // 获取单个用户
 func GetInventoryDatabaseOne(id int) (*InventoryDatabase, error) {
 	r := &InventoryDatabase{

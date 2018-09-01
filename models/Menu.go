@@ -29,7 +29,7 @@ type Menu struct {
 	IsShow      int            `json:"isShow"`
 	Children    []*Menu        `json:"children"`
 	Icon        string         `json:"icon"`
-	RoleMenuRel []*RoleMenuRel `json:"-"`
+	//RoleMenuRel []*RoleMenuRel `json:"-"`
 }
 
 type menuSlice [] *Menu

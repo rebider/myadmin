@@ -58,6 +58,11 @@ func GetDailyActiveStatisticsList(params *DailyActiveStatisticsQueryParam) []*Da
 				Time: i,
 			}
 			for _, e := range tmpData {
+				serverNode, err := GetServerNode(e.Node)
+				utils.CheckError(err, e.Node)
+				if serverNode.PlatformId != params.PlatformId {
+					continue
+				}
 				tmpE.LoginTimes += e.LoginTimes
 				tmpE.LoginPlayerCount += e.LoginPlayerCount
 				tmpE.ActivePlayerCount += e.ActivePlayerCount

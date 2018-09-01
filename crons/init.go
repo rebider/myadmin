@@ -64,14 +64,14 @@ func minuteCron() {
 
 //定时检测开服
 func cronAutoCreateServer() {
-	isAutoOpenServer, err := beego.AppConfig.Bool("is_auto_open_server")
-	utils.CheckError(err, "读取是否开启自动开服配置失败")
-	if err != nil {
-		return
-	}
-	if isAutoOpenServer == false {
-		return
-	}
+	//isAutoOpenServer, err := beego.AppConfig.Bool("is_auto_open_server")
+	//utils.CheckError(err, "读取是否开启自动开服配置失败")
+	//if err != nil {
+	//	return
+	//}
+	//if isAutoOpenServer == false {
+	//	return
+	//}
 
 	cronSecond, err := beego.AppConfig.Int("check_open_server_cron_second")
 	utils.CheckError(err, "读取自动开服定时时间失败")
@@ -90,8 +90,11 @@ func cronAutoCreateServer() {
 
 			// 业务
 
-			// 自动开服
-			models.AutoCreateAndOpenServer(true)
+			platformList := models.GetPlatformList()
+			for _, platform := range platformList {
+				// 自动开服
+				models.AutoCreateAndOpenServer(platform.Id, true)
+			}
 		}
 	}
 }
@@ -108,64 +111,6 @@ func tenSecondCron() {
 	}
 }
 
-//var cacheNum = 0
-
-//func test() {
-//	//resp, err := http.Get("https://www.feixiaohao.com/#USD")
-//	resp, err := http.Get("https://www.feixiaohao.com/#USD")
-//
-//	utils.CheckError(err)
-//	if err != nil {
-//		return
-//	}
-//	defer resp.Body.Close()
-//	body, err := ioutil.ReadAll(resp.Body)
-//	utils.CheckError(err)
-//	//logs.Info("all:%v", string(body))
-//	//reg := regexp.MustCompile(`<tr id="bitcoin">.*class="price" data-usd="(\d+)".*</tr>`)
-//	//reg := regexp.MustCompile(`class=price data-usd=(\d+)`)
-//	reg := regexp.MustCompile(`href=/currencies/bitcoin/#markets target=_blank class=price data-usd=(\d+)`)
-//
-//	//for i, e := range reg.FindAllStringSubmatch(string(body), -1) {
-//	//	logs.Info("ggg:%v:%v", i, e)
-//	//}
-//	n, err := strconv.Atoi(reg.FindAllStringSubmatch(string(body), -1)[0][1])
-//	logs.Debug("[P]:%v", n)
-//	utils.CheckError(err)
-//	diff := cacheNum - n
-//
-//	if diff >= 10 || diff <= -10 {
-//		logs.Warning("%v -> %v", cacheNum, n)
-//		go winSound()
-//	}
-//	cacheNum = n
-//	//exec.Command("cmd", "bee.bat")
-//
-//}
-//
-//func winSound() {
-//	funInDllFile, err := syscall.LoadLibrary("Winmm.dll") // 调用的dll文件
-//	if err != nil {
-//		print("cant not call : syscall.LoadLibrary , errorInfo :" + err.Error())
-//	}
-//	defer syscall.FreeLibrary(funInDllFile)
-//
-//	// 调用的dll里面的函数是：
-//	funName := "PlaySound"
-//	// 注册一长串调用代码，简化为 _win32Fun 变量.
-//	win32Fun, err := syscall.GetProcAddress(syscall.Handle(funInDllFile), funName)
-//	// 通过syscall.Syscall6()去调用win32的xxx函数，因为xxx函数有3个参数,故需取Syscall6才能放得下. 最后的3个参数,设置为0即可
-//	_, _, err = syscall.Syscall6(
-//		uintptr(win32Fun),                                          // 调用的函数名
-//		3,                                                          // 指明该函数的参数数量
-//		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("alert"))), // 该函数的参数1. 可通过msdn查找函数名 查参数含义
-//		// SystemStart
-//		uintptr(0), // 该函数的参数2.
-//		uintptr(0), // 该函数的参数3.
-//		0,
-//		0,
-//		0)
-//}
 
 //每天0天执行
 func dailyZeroClockCron() {

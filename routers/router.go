@@ -62,6 +62,7 @@ func init() {
 	beego.Router("/role/delete", &controllers.RoleController{}, "*:Delete")
 	beego.Router("/role/allocateResource", &controllers.RoleController{}, "*:AllocateResource")
 	beego.Router("/role/allocateMenu", &controllers.RoleController{}, "*:AllocateMenu")
+	beego.Router("/role/allocatePlatform", &controllers.RoleController{}, "*:AllocatePlatform")
 
 	//资源
 	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
@@ -162,6 +163,11 @@ func init() {
 	beego.Router("/platform/edit/", &controllers.PlatformController{}, "*:Edit")
 	beego.Router("/platform/del/", &controllers.PlatformController{}, "*:Del")
 
+	//开服管理
+	//beego.Router("/open_server/list/", &controllers.OpenServerController{}, "*:List")
+	//beego.Router("/open_server/edit/", &controllers.OpenServerController{}, "*:Edit")
+	//beego.Router("/open_server/del/", &controllers.OpenServerController{}, "*:Del")
+
 	// 充值
 	beego.Router("/charge/charge_list/", &controllers.ChargeController{}, "*:ChargeList")
 	beego.Router("/charge/charge_rank/", &controllers.ChargeController{}, "*:ChargeRankList")
@@ -183,12 +189,13 @@ func init() {
 	beego.Router("/remain/time_remain/", &controllers.RemainController{}, "*:GetTimeRemain")
 
 	//资产
+	beego.Router("/inventory/all_server_list", &controllers.InventoryServerController{}, "*:AllServerList")
 	beego.Router("/inventory/server_list", &controllers.InventoryServerController{}, "*:ServerList")
 	beego.Router("/inventory/edit_server/?:id", &controllers.InventoryServerController{}, "*:EditServer")
 	beego.Router("/inventory/delete_server", &controllers.InventoryServerController{}, "*:DeleteServer")
 	beego.Router("/inventory/create_ansible_inventory", &controllers.InventoryServerController{}, "*:CreateAnsibleInventory")
 
-
+	beego.Router("/inventory/all_database_list", &controllers.InventoryDatabaseController{}, "*:AllDatabaseList")
 	beego.Router("/inventory/database_list", &controllers.InventoryDatabaseController{}, "*:DatabaseList")
 	beego.Router("/inventory/edit_database/?:id", &controllers.InventoryDatabaseController{}, "*:EditDatabase")
 	beego.Router("/inventory/delete_database", &controllers.InventoryDatabaseController{}, "*:DeleteDatabase")

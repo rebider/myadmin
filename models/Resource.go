@@ -25,8 +25,8 @@ type Resource struct {
 	ParentId        int                `json:"parentId"`
 	Children        []*Resource        `json:"children"`
 	UrlFor          string             `json:"urlFor"`
-	Url             string             `json:"url"`
-	RoleResourceRel []*RoleResourceRel `json:"-"`
+	Url             string             `json:"url" gorm:"-"`
+	//RoleResourceRel []*RoleResourceRel `json:"-"`
 }
 
 func relateResourceListParent(resourceList []*Resource){

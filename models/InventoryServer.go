@@ -82,21 +82,40 @@ func GetAllServerList() []*InventoryServer {
 	return data
 }
 
-func GetMaxFreeServer() (*InventoryServer, error) {
-	l := GetAllServerListOfGame()
+func GetMaxFreeServerByPlatformId(platformId string) (*InventoryServer, error) {
+	platform, err := GetPlatformOne(platformId)
+	utils.CheckError(err)
+	if err != nil {
+		return nil, err
+	}
+
+	err = Db.Model(&platform).Related(&platform.PlatformInventorySeverRel).Error
+	utils.CheckError(err)
+	if err != nil {
+		return nil, err
+	}
+	l := make([] *InventoryServer, 0)
+	for _, v := range platform.PlatformInventorySeverRel {
+		thisInventoryServer, err := GetInventoryServerOne(v.InventoryServerId)
+		utils.CheckError(err)
+		if err != nil {
+			return nil, err
+		}
+		l = append(l, thisInventoryServer)
+	}
 	if len(l) == 0 {
 		return nil, errors.New("没有空闲服务器")
-}
+	}
 	minCount := -1
 	inventoryServer := &InventoryServer{}
 	for _, e := range l {
-		logs.Debug("server:%s, nodeCount:%d, onlineCount:%d", e.Name, e.NodeCount, e.OnlinePlayerCount)
-		if e.NodeCount >= 30 {
-			// 一个服务器最多安装30个节点
+		//logs.Debug("server:%s, nodeCount:%d, onlineCount:%d", e.Name, e.NodeCount, e.OnlinePlayerCount)
+		if e.NodeCount >= 33 {
+			// 一个服务器最多安装33个节点
 			continue
 		}
 		// 一个节点当作10个在线来计算
-		thisValue := e.OnlinePlayerCount + e.NodeCount * 10
+		thisValue := e.OnlinePlayerCount + e.NodeCount*10
 
 		if minCount == -1 {
 			minCount = thisValue
@@ -115,12 +134,56 @@ func GetMaxFreeServer() (*InventoryServer, error) {
 	return inventoryServer, nil
 }
 
-// 获取单个用户
+func GetMaxFreeServer() (*InventoryServer, error) {
+	l := GetAllServerListOfGame()
+	if len(l) == 0 {
+		return nil, errors.New("没有空闲服务器")
+	}
+	minCount := -1
+	inventoryServer := &InventoryServer{}
+	for _, e := range l {
+		logs.Debug("server:%s, nodeCount:%d, onlineCount:%d", e.Name, e.NodeCount, e.OnlinePlayerCount)
+		if e.NodeCount >= 33 {
+			// 一个服务器最多安装33个节点
+			continue
+		}
+		// 一个节点当作10个在线来计算
+		thisValue := e.OnlinePlayerCount + e.NodeCount*10
+
+		if minCount == -1 {
+			minCount = thisValue
+			inventoryServer = e
+		} else {
+
+			if thisValue < minCount {
+				minCount = thisValue
+				inventoryServer = e
+			}
+		}
+	}
+	if minCount == -1 {
+		return nil, errors.New("没有空闲的服务器")
+	}
+	return inventoryServer, nil
+}
+
+// 获取单个服务器
+func GetInventoryServerOneDirty(id int) (*InventoryServer, error) {
+	r := &InventoryServer{
+		Id: id,
+	}
+	err := Db.First(&r).Error
+	return r, err
+}
+
+// 获取单个服务器
 func GetInventoryServerOne(id int) (*InventoryServer, error) {
 	r := &InventoryServer{
 		Id: id,
 	}
 	err := Db.First(&r).Error
+	r.NodeCount = GetIpNodeCount(r.InnerIp)
+	r.OnlinePlayerCount = GetIpOnlinePlayerCount(r.InnerIp)
 	return r, err
 }
 
@@ -139,17 +202,21 @@ func DeleteInventoryServers(ids [] int) error {
 		tx.Rollback()
 		return err
 	}
+	if _, err := DeletePlatformInventorySeverRelByInventoryServerIdList(ids); err != nil {
+		tx.Rollback()
+		return err
+	}
 	return tx.Commit().Error
 }
 
-func CreateAnsibleInventory() error{
+func CreateAnsibleInventory() error {
 	logs.Info("开始创建ansible inventory 文件.....")
 	ansibleInventoryFile := beego.AppConfig.String("ansible_inventory_file")
 	if ansibleInventoryFile == "" {
 		logs.Error("读取配置ansible_inventory_file失败")
 		return errors.New("读取配置ansible_inventory_file失败")
 	}
-	mapList := make(map[string] []string , 0)
+	mapList := make(map[string][]string, 0)
 	serverNodeList := GetAllServerNodeList()
 	for _, e := range serverNodeList {
 		array := strings.Split(e.Node, "@")
@@ -160,14 +227,14 @@ func CreateAnsibleInventory() error{
 		nodeIp := array[1]
 		//logs.Info("nodeName:%+v", nodeName)
 		if v, ok := mapList[nodeIp]; ok {
-			v = append(v, "'" + nodeName + "'")
+			v = append(v, "'"+nodeName+"'")
 			mapList[nodeIp] = v
 		} else {
-			mapList[nodeIp] = append(make([] string, 0), "'" + nodeName + "'")
+			mapList[nodeIp] = append(make([] string, 0), "'"+nodeName+"'")
 		}
 	}
 	serverOfGameList := GetAllServerList()
-	for _, e := range serverOfGameList{
+	for _, e := range serverOfGameList {
 		if _, ok := mapList[e.InnerIp]; ok {
 		} else {
 			logs.Info("e:%+v", e)
@@ -199,7 +266,6 @@ func CreateAnsibleInventory() error{
 	logs.Info("创建ansible inventory 文件(%s)成功.", ansibleInventoryFile)
 	return nil
 }
-
 
 //func CreateAnsibleInventory() error{
 //	logs.Info("开始创建ansible inventory 文件.....")

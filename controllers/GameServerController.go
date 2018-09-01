@@ -169,10 +169,12 @@ func (c *GameServerController) Refresh() {
 // 立即开服
 func (c *GameServerController) OpenServer() {
 	var params struct {
+		PlatformId string `json:platformId`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	utils.CheckError(err)
-	err = models.AutoCreateAndOpenServer(false)
+	c.CheckError(err)
+	logs.Info("立即开服:%+v", params)
+	err = models.AutoCreateAndOpenServer(params.PlatformId,false)
 	c.CheckError(err)
 	c.Result(enums.CodeSuccess, "开服成功", 0)
 

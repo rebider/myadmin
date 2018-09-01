@@ -13,7 +13,6 @@ func RoleTBName() string {
 	return TableName("role")
 }
 
-
 type RoleQueryParam struct {
 	BaseQueryParam
 }
@@ -24,7 +23,9 @@ type Role struct {
 	Name            string             `json:"name"`
 	ResourceIds     [] int             `json:"resourceIds" gorm:"-"`
 	MenuIds         [] int             `json:"menuIds" gorm:"-"`
+	PlatformIds     [] string          `json:"platformIds" gorm:"-"`
 	RoleResourceRel []*RoleResourceRel `json:"-"`
+	RolePlatformRel []*RolePlatformRel `json:"-"`
 	RoleMenuRel     []*RoleMenuRel     `json:"-"`
 }
 
@@ -38,7 +39,14 @@ func GetRoleList(params *RoleQueryParam) ([]*Role, int64) {
 		err = Db.Model(&v).Related(&v.RoleResourceRel).Error
 		utils.CheckError(err)
 
+		v.MenuIds = make([] int, 0)
+		v.ResourceIds = make([] int, 0)
+		v.PlatformIds = make([] string, 0)
+
 		err = Db.Model(&v).Related(&v.RoleMenuRel).Error
+		utils.CheckError(err)
+
+		err = Db.Model(&v).Related(&v.RolePlatformRel).Error
 		utils.CheckError(err)
 
 		for _, e := range v.RoleResourceRel {
@@ -50,6 +58,11 @@ func GetRoleList(params *RoleQueryParam) ([]*Role, int64) {
 			v.MenuIds = append(v.MenuIds, e.MenuId)
 		}
 		sort.Ints(v.MenuIds)
+
+		for _, e := range v.RolePlatformRel {
+			v.PlatformIds = append(v.PlatformIds, e.PlatformId)
+		}
+		sort.Strings(v.PlatformIds)
 	}
 	return data, count
 }
@@ -73,6 +86,10 @@ func DeleteRoles(ids []int) error {
 		tx.Rollback()
 		return err
 	}
+	if _, err := DeleteRolePlatformRelByRoleIdList(ids); err != nil {
+		tx.Rollback()
+		return err
+	}
 	if _, err := DeleteRoleMenuRelByRoleIdList(ids); err != nil {
 		tx.Rollback()
 		return err
@@ -81,7 +98,7 @@ func DeleteRoles(ids []int) error {
 		tx.Rollback()
 		return err
 	}
-	return  tx.Commit().Error
+	return tx.Commit().Error
 }
 
 //获取单个角色

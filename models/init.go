@@ -19,8 +19,9 @@ var (
 )
 
 // 现在是否在开服
-var IsNowOpenServer = false
-
+//var IsNowOpenServer = false
+//var IsNowOpenServerMap map[string]bool
+var IsNowOpenServerMap = make( map[string]bool, 0)
 //初始化
 func init() {
 	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {

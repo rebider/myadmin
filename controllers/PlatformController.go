@@ -22,12 +22,19 @@ func (c *PlatformController) List() {
 	c.Result(enums.CodeSuccess, "获取平台列表成功", result)
 }
 
-// 编辑 添加用户
+// 编辑 添加平台
 func (c *PlatformController) Edit() {
 	m := models.Platform{}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &m)
 	utils.CheckError(err, "编辑平台")
 	logs.Info("编辑平台:%+v", m)
+	//删除旧的用平台服务器关系
+	_, err = models.DeletePlatformInventorySeverRelByPlatformIdList([] string{m.Id})
+	c.CheckError(err, "删除旧的用户角色关系失败")
+	for _, inventorySeverId := range m.InventorySeverIds {
+		relation := models.PlatformInventorySeverRel{PlatformId: m.Id, InventoryServerId: inventorySeverId}
+		m.PlatformInventorySeverRel = append(m.PlatformInventorySeverRel, &relation)
+	}
 	now := utils.GetTimestamp()
 	m.Time = now
 	err = models.Db.Save(&m).Error

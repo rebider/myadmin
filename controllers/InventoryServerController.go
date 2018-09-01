@@ -25,7 +25,13 @@ func (c *InventoryServerController) ServerList() {
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取资产列表成功", result)
 }
-
+func (c *InventoryServerController) AllServerList() {
+	logs.Info("查询所有资产列表")
+	data:= models.GetAllServerList()
+	result := make(map[string]interface{})
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取所有资产列表成功", result)
+}
 // 编辑 添加服务器
 func (c *InventoryServerController) EditServer() {
 	m := models.InventoryServer{}

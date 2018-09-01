@@ -15,7 +15,7 @@ type UserController struct {
 
 func (c *UserController) Info() {
 	m := c.curUser
-	platformList := models.GetPlatformList()
+	platformList := models.GetPlatformListByUserId(m.Id)
 	platformIdList:= make([]string, 0)
 	for _, e := range platformList {
 		platformIdList = append(platformIdList, e.Id)

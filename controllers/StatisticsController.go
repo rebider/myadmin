@@ -6,6 +6,7 @@ import (
 	"github.com/chnzrb/myadmin/models"
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/chnzrb/myadmin/enums"
+	"errors"
 )
 
 type StatisticsController struct {
@@ -18,6 +19,9 @@ func (c *StatisticsController) OnlineStatisticsList() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("获取在线统计:%+v", params)
+	if params.PlatformId == "" {
+		c.CheckError(errors.New("平台ID不能为空"))
+	}
 	data := models.GetDailyOnlineStatisticsList(&params)
 	result := make(map[string]interface{})
 	//result["total"] = total
@@ -30,6 +34,9 @@ func (c *StatisticsController) RegisterStatisticsList() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("获取注册统计:%+v", params)
+	if params.PlatformId == "" {
+		c.CheckError(errors.New("平台ID不能为空"))
+	}
 	data:= models.GetDailyRegisterStatisticsList(&params)
 	result := make(map[string]interface{})
 	//result["total"] = total
@@ -43,6 +50,9 @@ func (c *StatisticsController) ActiveStatisticsList() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("获取活跃统计:%+v", params)
+	if params.PlatformId == "" {
+		c.CheckError(errors.New("平台ID不能为空"))
+	}
 	data := models.GetDailyActiveStatisticsList(&params)
 	result := make(map[string]interface{})
 	//result["total"] = total

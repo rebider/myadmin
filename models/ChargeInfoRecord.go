@@ -67,6 +67,7 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 	}
 	whereArray := make([] string, 0)
 	whereArray = append(whereArray, " charge_type = 99 ")
+	whereArray = append(whereArray, " part_id =  '" + params.PlatformId + "' ")
 	if params.Node != "" {
 		whereArray = append(whereArray, fmt.Sprintf(" server_id in (%s) ", GetGameServerIdListStringByNode(params.Node)))
 	}

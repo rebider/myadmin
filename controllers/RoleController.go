@@ -84,6 +84,36 @@ func (c *RoleController) AllocateResource() {
 	c.Result(enums.CodeSuccess, "保存成功", "")
 }
 
+//角色分配平台
+func (c *RoleController) AllocatePlatform() {
+	var params struct {
+		Id          int    `json:"id"`
+		PlatformIds [] string `json:"platformIds"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	logs.Info("角色分配平台:%+v", params)
+	utils.CheckError(err)
+
+	roleId := params.Id
+	platformIds := params.PlatformIds
+
+	m, err := models.GetRoleOne(roleId)
+	c.CheckError(err, fmt.Sprintf("角色不存在:%d", roleId))
+
+	_, err = models.DeleteRolePlatformRelByRoleIdList([] int {roleId})
+	c.CheckError(err, "删除旧的角色平台关系失败")
+
+	for _, platformId := range platformIds {
+		_, err := models.GetPlatformOne(platformId)
+		c.CheckError(err, fmt.Sprintf("平台不存在:%s", platformId))
+
+		relation := models.RolePlatformRel{RoleId: roleId, PlatformId: platformId}
+		m.RolePlatformRel = append(m.RolePlatformRel, &relation)
+	}
+	err = models.Db.Save(&m).Error
+	c.CheckError(err, "保存失败")
+	c.Result(enums.CodeSuccess, "保存成功", "")
+}
 
 //角色分配菜单
 func (c *RoleController) AllocateMenu() {

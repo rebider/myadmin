@@ -6,6 +6,7 @@ import (
 	"github.com/chnzrb/myadmin/models"
 	"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
+	"errors"
 )
 
 type ChargeController struct {
@@ -18,6 +19,9 @@ func (c *ChargeController) ChargeList() {
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
 	logs.Info("查询充值记录日志:%+v", params)
+	if params.PlatformId == "" {
+		c.CheckError(errors.New("平台ID不能为空"))
+	}
 	if params.PlayerName != "" {
 		player, err := models.GetPlayerByPlatformIdAndNickname(params.PlatformId, params.PlayerName)
 		if player == nil || err != nil {

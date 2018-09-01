@@ -49,6 +49,11 @@ func GetDailyChargeStatisticsList(params *DailyChargeStatisticsQueryParam) []*Da
 				Time: i,
 			}
 			for _, e := range tmpData {
+				serverNode, err := GetServerNode(e.Node)
+				utils.CheckError(err, e.Node)
+				if serverNode.PlatformId != params.PlatformId {
+					continue
+				}
 				tmpE.ChargeMoney += e.ChargeMoney
 				tmpE.ChargePlayerCount += e.ChargePlayerCount
 				tmpE.NewChargePlayerCount += e.NewChargePlayerCount
