@@ -35,19 +35,24 @@ type ServerGeneralize struct {
 
 type ServerGeneralizeQueryParam struct {
 	PlatformId string
-	Node       string `json:"serverId"`
+	ServerId       string `json:"serverId"`
+	ChannelList [] string `json:"channelList"`
 }
 
-func GetServerGeneralize(platformId string, node string) (*ServerGeneralize, error) {
+func GetServerGeneralize(platformId string, serverId string, channelList [] string) (*ServerGeneralize, error) {
+	gameServer, err := GetGameServerOne(platformId, serverId)
+	if err != nil {
+		return nil, err
+	}
+	node := gameServer.Node
 	gameDb, err := GetGameDbByNode(node)
-	utils.CheckError(err)
 	if err != nil {
 		return nil, err
 	}
 	defer gameDb.Close()
 	serverNode, err := GetServerNode(node)
 	utils.CheckError(err)
-	chargeTimesList := GetServerChargeCountList(node)
+	chargeTimesList := GetServerChargeCountList(platformId, serverId, channelList)
 	//logs.Debug("chargeTimesList:%+v", chargeTimesList)
 	chargeCount2 := 0
 	chargeCount3 := 0
@@ -67,34 +72,35 @@ func GetServerGeneralize(platformId string, node string) (*ServerGeneralize, err
 		//	chargeCountMore++
 		//}
 	}
+	todayZeroTime := utils.GetTodayZeroTimestamp()
 	serverGeneralize := &ServerGeneralize{
-		PlatformId:              platformId,
-		ServerId:                GetGameServerIdListStringByNode(node),
-		OpenTime:                serverNode.OpenTime,
-		Version:                 GetNodeVersion(node),
-		Status:                  serverNode.State,
-		TotalRegister:           GetTotalRegister(gameDb),
-		TotalCreateRole:         GetTotalCreateRoleCount(gameDb),
-		OnlineCount:             GetNowOnlineCount(gameDb),
-		MaxLevel:                GetMaxPlayerLevel(gameDb),
-		TodayCreateRole:         GetTodayCreateRoleCount(gameDb),
-		TodayRegister:           GetTodayRegister(gameDb),
-		MaxOnlineCount:          GetMaxOnlineCount(node),
-		TotalChargeIngot:        GetServerTotalChargeIngot(node),
-		TotalChargeMoney:        GetServerTotalChargeMoney(node),
-		TotalChargePlayerCount:  GetServerChargePlayerCount(node),
-		SecondChargePlayerCount: GetServerSecondChargePlayerCount(node),
+		PlatformId:      platformId,
+		ServerId:        GetGameServerIdListStringByNode(node),
+		OpenTime:        serverNode.OpenTime,
+		Version:         GetNodeVersion(node),
+		Status:          serverNode.State,
+		TotalRegister:   GetTotalRegisterRoleCountByChannelList(gameDb, serverId, channelList),
+		TotalCreateRole: GetTotalCreateRoleCountByChannelList(gameDb, serverId, channelList),
+		OnlineCount:     GetNowOnlineCount2(gameDb, serverId, channelList),
+		MaxLevel:        GetMaxPlayerLevel(gameDb, serverId, channelList),
+		TodayCreateRole: GetCreateRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTime, todayZeroTime + 86400),
+		TodayRegister:   GetRegisterRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTime, todayZeroTime + 86400),
+		MaxOnlineCount:  GetThatDayMaxOnlineCount(platformId, serverId, channelList,  todayZeroTime, todayZeroTime + 86400),
+		TotalChargeIngot:        GetServerTotalChargeIngot(platformId,serverId, channelList),
+		TotalChargeMoney:        GetServerTotalChargeMoneyByChannelList(platformId,serverId, channelList),
+		TotalChargePlayerCount:  GetServerChargePlayerCount(platformId,serverId, channelList),
+		SecondChargePlayerCount: GetServerSecondChargePlayerCount(platformId,serverId, channelList),
 		//ChargeCountMore:         chargeCountMore,
-		TotalIngot:              GetTotalProp(gameDb, 1, 2),
-		TotalCoin:               GetTotalProp(gameDb, 1, 1),
+		TotalIngot:              GetTotalProp(gameDb, 1, 2,channelList),
+		TotalCoin:               GetTotalProp(gameDb, 1, 1, channelList),
 	}
 
-	serverGeneralize.ARPU = CaclARPU(serverGeneralize.TotalChargeMoney, serverGeneralize.TotalChargePlayerCount)
-	serverGeneralize.ChargeRate = CaclChargeRate(serverGeneralize.TotalChargePlayerCount, serverGeneralize.TotalCreateRole)
-	serverGeneralize.SecondChargeRate = CaclChargeRate(serverGeneralize.SecondChargePlayerCount, serverGeneralize.TotalChargePlayerCount)
-	serverGeneralize.ChargeCount2Rate = CaclChargeRate(chargeCount2, serverGeneralize.TotalChargePlayerCount)
-	serverGeneralize.ChargeCount3Rate = CaclChargeRate(chargeCount3, serverGeneralize.TotalChargePlayerCount)
-	serverGeneralize.ChargeCount5Rate = CaclChargeRate(chargeCount5, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.ARPU = CaclRate(serverGeneralize.TotalChargeMoney, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.ChargeRate = CaclRate(serverGeneralize.TotalChargePlayerCount, serverGeneralize.TotalCreateRole)
+	serverGeneralize.SecondChargeRate = CaclRate(serverGeneralize.SecondChargePlayerCount, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.ChargeCount2Rate = CaclRate(chargeCount2, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.ChargeCount3Rate = CaclRate(chargeCount3, serverGeneralize.TotalChargePlayerCount)
+	serverGeneralize.ChargeCount5Rate = CaclRate(chargeCount5, serverGeneralize.TotalChargePlayerCount)
 
 	return serverGeneralize, err
 }

@@ -16,23 +16,26 @@ type UserController struct {
 func (c *UserController) Info() {
 	m := c.curUser
 	platformList := models.GetPlatformListByUserId(m.Id)
-	platformIdList:= make([]string, 0)
+	platformIdList := make([]string, 0)
 	for _, e := range platformList {
 		platformIdList = append(platformIdList, e.Id)
 	}
 	//utils.CheckError(err)
 	gameServerList := models.GetServerList(platformIdList)
+	channelList := models.GetChannelList()
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
 			Name           string         `json:"name"`
 			ResourceTree   []*models.Menu `json:"menuTree"`
 			PlatformList   []*models.Platform
+			ChannelList    []*models.Channel
 			GameServerList []*models.Server
 		}{
 			Name:           m.Name,
 			ResourceTree:   models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id), true),
 			PlatformList:   platformList,
 			GameServerList: gameServerList,
+			ChannelList:    channelList,
 		})
 }
 
@@ -110,7 +113,7 @@ func (c *UserController) ChangePassword() {
 	Id := c.curUser.Id
 	user, err := models.GetUserOne(Id)
 	c.CheckError(err, "未找到该用户")
-	md5str := utils.String2md5(enums.PasswordSalt +  params.OldPwd)
+	md5str := utils.String2md5(enums.PasswordSalt + params.OldPwd)
 	if user.Password != md5str {
 		c.Result(enums.CodeFail, "原密码错误", "")
 	}

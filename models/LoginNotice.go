@@ -27,6 +27,21 @@ func GetAllLoginNotice() []*LoginNotice {
 	return data
 }
 
+func GetLoginNoticeListByPlatformIdList( platformIdList [] string) []*LoginNotice {
+	data := make([]*LoginNotice, 0)
+	if len(platformIdList) == 0 {
+		return data
+	}
+	Db.Model(&LoginNotice{}).Where("platform_id in (?)", platformIdList).Find(&data)
+	for _, e := range data {
+		u, err := GetUserOne(e.UserId)
+		if err == nil {
+			e.UserName = u.Name
+		}
+	}
+	return data
+}
+
 
 // 删除登录公告日志
 func DeleteLoginNotice(ids [] int) error {

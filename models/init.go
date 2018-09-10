@@ -54,6 +54,7 @@ func initDb() {
 	//Db.LogMode(true)
 	Db.SetLogger(log.New(os.Stdout, "\r\n", 0))
 	Db.SingularTable(true)
+	Db.DB().SetMaxIdleConns(50)
 }
 
 func initCenter() {

@@ -92,7 +92,14 @@ func (c *LoginNoticeController) BatchSetNotice() {
 // 获取登录公告列表
 func (c *LoginNoticeController) LoginNoticeList() {
 	//logs.Info("查询公告日志:%+v", params)
-	data := models.GetAllLoginNotice()
+	var params struct {
+		PlatformIdList [] string
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("获取登录公告列表:%+v", params)
+	c.CheckError(err)
+	data := models.GetLoginNoticeListByPlatformIdList(params.PlatformIdList)
 	result := make(map[string]interface{})
 	//result["total"] = total
 	result["rows"] = data

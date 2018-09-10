@@ -8,6 +8,7 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
 	"sort"
+	"github.com/astaxie/beego/logs"
 )
 
 type Platform struct {
@@ -18,6 +19,7 @@ type Platform struct {
 	ZoneInventoryServerId     int                          `json:"zoneInventoryServerId"`
 	CreateRoleLimit           int                          `json:"createRoleLimit"`
 	PlatformInventorySeverRel []*PlatformInventorySeverRel `json:"-"`
+	ChannelList               []*Channel					`json:"channelList"`
 	InventorySeverIds         []int                        `json:"inventorySeverIds" gorm:"-"`
 	Time                      int                          `json:"time"`
 }
@@ -59,6 +61,7 @@ func GetPlatformList() []*Platform {
 			v.InventorySeverIds = append(v.InventorySeverIds, e.InventoryServerId)
 		}
 		sort.Ints(v.InventorySeverIds)
+		v.ChannelList = GetChannelListByPlatformId(v.Id)
 	}
 	return data
 }
@@ -66,6 +69,7 @@ func GetPlatformList() []*Platform {
 //获取平台列表
 func GetPlatformListByUserId(userId int) []*Platform {
 	var list []*Platform
+	var channelList []*Channel
 	user, err := GetUserOne(userId)
 	utils.CheckError(err)
 	if user.IsSuper == 1 {
@@ -74,19 +78,64 @@ func GetPlatformListByUserId(userId int) []*Platform {
 		sql := fmt.Sprintf(`SELECT DISTINCT T2.*
 		FROM %s AS T0
 		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
-		INNER JOIN %s AS T2 ON T2.id = T0.platform_id
-		WHERE T1.user_id = ?`, RolePlatformRelTBName(), RoleUserRelTBName(), PlatformDatabaseTBName())
+		INNER JOIN %s AS T2 ON T2.id = T0.channel_id
+		WHERE T1.user_id = ?`, RoleChannelRelTBName(), RoleUserRelTBName(), ChannelDatabaseTBName())
 		rows, err := Db.Raw(sql, userId).Rows()
 		defer rows.Close()
 		utils.CheckError(err)
 		for rows.Next() {
-			var platform Platform
-			Db.ScanRows(rows, &platform)
-			list = append(list, &platform)
+			var channel Channel
+			Db.ScanRows(rows, &channel)
+			logs.Debug("channel:%+v", channel)
+			channelList = append(channelList, &channel)
+		}
+		flag := make(map [string] bool)
+		for _, v :=range channelList {
+			_, ok := flag[v.PlatformId]
+			if ok {
+
+			} else {
+				flag[v.PlatformId] = true
+				platform, err := GetPlatformOne(v.PlatformId)
+				utils.CheckError(err)
+				list = append(list, platform)
+			}
+		}
+		for _, v := range list {
+			for _, channel :=range channelList {
+				if channel.PlatformId == v.Id {
+					v.ChannelList = append(v.ChannelList, channel)
+				}
+			}
 		}
 	}
 	return list
 }
+
+////获取平台列表
+//func GetPlatformListByUserId(userId int) []*Platform {
+//	var list []*Platform
+//	user, err := GetUserOne(userId)
+//	utils.CheckError(err)
+//	if user.IsSuper == 1 {
+//		list = GetPlatformList()
+//	} else {
+//		sql := fmt.Sprintf(`SELECT DISTINCT T2.*
+//		FROM %s AS T0
+//		INNER JOIN %s AS T1 ON T0.role_id = T1.role_id
+//		INNER JOIN %s AS T2 ON T2.id = T0.platform_id
+//		WHERE T1.user_id = ?`, RoleChannelRelTBName(), RoleUserRelTBName(), PlatformDatabaseTBName())
+//		rows, err := Db.Raw(sql, userId).Rows()
+//		defer rows.Close()
+//		utils.CheckError(err)
+//		for rows.Next() {
+//			var platform Platform
+//			Db.ScanRows(rows, &platform)
+//			list = append(list, &platform)
+//		}
+//	}
+//	return list
+//}
 
 //获取单个平台
 func GetPlatformOne(id string) (*Platform, error) {
@@ -122,7 +171,7 @@ func DeletePlatform(ids [] string) error {
 		return err
 	}
 	//删除角色平台关系
-	if _, err := DeleteRolePlatformRelByPlatformIdList(ids); err != nil {
+	if _, err := DeleteRoleChannelRelByPlatformIdList(ids); err != nil {
 		tx.Rollback()
 		return err
 	}

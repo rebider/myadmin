@@ -55,18 +55,6 @@ func (c *ChargeController) ChargeRankList() {
 
 
 
-// 充值统计
-func (c *ChargeController) ChargeStatisticsList() {
-	var params models.DailyChargeStatisticsQueryParam
-	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	utils.CheckError(err)
-	logs.Info("获取充值统计:%+v", params)
-	data:= models.GetDailyChargeStatisticsList(&params)
-	result := make(map[string]interface{})
-	//result["total"] = total
-	result["rows"] = data
-	c.Result(enums.CodeSuccess, "获取充值统计", result)
-}
 
 // 充值任务分布
 func (c *ChargeController) ChargeTaskDistribution() {

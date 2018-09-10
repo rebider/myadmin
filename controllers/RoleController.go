@@ -84,31 +84,31 @@ func (c *RoleController) AllocateResource() {
 	c.Result(enums.CodeSuccess, "保存成功", "")
 }
 
-//角色分配平台
-func (c *RoleController) AllocatePlatform() {
+//角色分配渠道
+func (c *RoleController) AllocateChannel() {
 	var params struct {
 		Id          int    `json:"id"`
-		PlatformIds [] string `json:"platformIds"`
+		ChannelIds [] int `json:"channelIds"`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	logs.Info("角色分配平台:%+v", params)
+	logs.Info("角色分配渠道:%+v", params)
 	utils.CheckError(err)
 
 	roleId := params.Id
-	platformIds := params.PlatformIds
+	channelIds := params.ChannelIds
 
 	m, err := models.GetRoleOne(roleId)
 	c.CheckError(err, fmt.Sprintf("角色不存在:%d", roleId))
 
-	_, err = models.DeleteRolePlatformRelByRoleIdList([] int {roleId})
+	_, err = models.DeleteRoleChannelRelByRoleIdList([] int {roleId})
 	c.CheckError(err, "删除旧的角色平台关系失败")
 
-	for _, platformId := range platformIds {
-		_, err := models.GetPlatformOne(platformId)
-		c.CheckError(err, fmt.Sprintf("平台不存在:%s", platformId))
+	for _, channelId := range channelIds {
+		_, err := models.GetChannelOne(channelId)
+		c.CheckError(err, fmt.Sprintf("渠道不存在:%s", channelId))
 
-		relation := models.RolePlatformRel{RoleId: roleId, PlatformId: platformId}
-		m.RolePlatformRel = append(m.RolePlatformRel, &relation)
+		relation := models.RoleChannelRel{RoleId: roleId, ChannelId: channelId}
+		m.RoleChannelRel = append(m.RoleChannelRel, &relation)
 	}
 	err = models.Db.Save(&m).Error
 	c.CheckError(err, "保存失败")

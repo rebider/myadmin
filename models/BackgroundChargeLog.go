@@ -13,7 +13,7 @@ type BackgroundChargeLog struct {
 	Time        int    `json:"time"`
 	ChargeType  string `json:"chargeType"`
 	ChargeValue int    `json:"chargeValue"`
-	ItemId        int    `json:"itemId"`
+	ItemId      int    `json:"itemId"`
 	UserId      int    `json:"userId"`
 	UserName    string `json:"userName" gorm:"-"`
 }
@@ -21,7 +21,7 @@ type BackgroundChargeLog struct {
 type BackgroundChargeLogQueryParam struct {
 	BaseQueryParam
 	PlatformId string
-	Node       string `json:"serverId"`
+	ServerId   string `json:"serverId"`
 	PlayerName string
 	PlayerId   int
 	StartTime  int
@@ -43,18 +43,19 @@ func GetBackgroundChargeLogList(params *BackgroundChargeLogQueryParam) ([]*Backg
 		return db
 	}
 
-	if params.Node == "" {
-		f(Db.Model(&BackgroundChargeLog{}).Where(&BackgroundChargeLog{
-			PlatformId: params.PlatformId,
-			PlayerId:   params.PlayerId,
-		})).Order(sortOrder).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
-	} else {
-		serverIdList := GetGameServerIdListByNode(params.Node)
-		f(Db.Model(&BackgroundChargeLog{}).Where(&BackgroundChargeLog{
-			PlatformId: params.PlatformId,
-			PlayerId:   params.PlayerId,
-		}).Where("server_id in (?)", serverIdList)).Order(sortOrder).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
-	}
+	//if params.ServerId == "" {
+	f(Db.Model(&BackgroundChargeLog{}).Where(&BackgroundChargeLog{
+		PlatformId: params.PlatformId,
+		PlayerId:   params.PlayerId,
+		ServerId:   params.ServerId,
+	})).Order(sortOrder).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
+	//} else {
+	//	serverIdList := GetGameServerIdListByNode(params.Node)
+	//	f(Db.Model(&BackgroundChargeLog{}).Where(&BackgroundChargeLog{
+	//		PlatformId: params.PlatformId,
+	//		PlayerId:   params.PlayerId,
+	//	}).Where("server_id in (?)", serverIdList)).Order(sortOrder).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data)
+	//}
 
 	for _, e := range data {
 		u, err := GetUserOne(e.UserId)

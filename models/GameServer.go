@@ -392,7 +392,7 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
 			//不自动开服
 			return nil
 		}
-		logs.Info("检测自动开服:%s......", platformId)
+		//logs.Info("检测自动开服:%s......", platformId)
 		// 检测是否满足开服条件
 		//isAutoOpenServer, err := beego.AppConfig.Bool("is_auto_open_server")
 		//utils.CheckError(err, "读取是否开启自动开服配置失败")
@@ -404,13 +404,13 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
 		//}
 
 		if time.Now().Hour() >= 22 {
-			logs.Info("晚上10点后不自动开服")
+			//logs.Info("晚上10点后不自动开服")
 			return nil
 		}
 	} else {
 		logs.Info("立即开服:%s......", platformId)
 	}
-	logs.Debug("platform:%+v", platform)
+	//logs.Debug("platform:%+v", platform)
 
 	if platform.CreateRoleLimit == 0 {
 		err = errors.New(fmt.Sprintf("自动开服人数配置错误:%s, %d", platform.Id, platform.CreateRoleLimit))
@@ -432,7 +432,7 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
 	if err != nil {
 		return err
 	}
-	logs.Info("最大区服:%+v", maxGameServer)
+	//logs.Info("最大区服:%+v", maxGameServer)
 	//logs.Info("最大区服ID:%+v(%d)", maxGameServer.Sid, intSid)
 	gameDb, err := GetGameDbByNode(maxGameServer.Node)
 	utils.CheckError(err, "连接游戏服数据库失败")
@@ -441,7 +441,7 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
 	}
 	defer gameDb.Close()
 	createRoleCount := GetTotalCreateRoleCount(gameDb)
-	logs.Info("最新区服:%s, 当前创角:%d, 创角临界值:%d", maxGameServer.Sid, createRoleCount, platform.CreateRoleLimit)
+	//logs.Info("最新区服:%s, 当前创角:%d, 创角临界值:%d", maxGameServer.Sid, createRoleCount, platform.CreateRoleLimit)
 	newIntSid := intSid + 1
 	newSid := fmt.Sprintf("s%d", newIntSid)
 	if isCheck == false || createRoleCount >= platform.CreateRoleLimit {
@@ -532,7 +532,7 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
 		usedTime := time.Since(t0)
 		logs.Info("************************ 自动开服成功:%s - %s 耗时:%s **********************", platformId, newSid, usedTime.String())
 	} else {
-		logs.Info("不满足开服条件.")
+		//logs.Info("不满足开服条件.")
 	}
 	return nil
 }
@@ -721,6 +721,16 @@ func GetGameServerByNode(node string) [] *GameServer {
 	utils.CheckError(err)
 	return data
 }
+// 获取该平台所有游戏服
+func GetGameServerByPlatformId( platformId string) [] *GameServer {
+	data := make([]*GameServer, 0)
+	err := DbCenter.Model(&GameServer{}).Where(&GameServer{
+		PlatformId: platformId,
+	}).Find(&data).Error
+	utils.CheckError(err)
+	return data
+}
+
 func GetGameServerIdListStringByNode(node string) string {
 	serverIdList := GetGameServerIdListByNode(node)
 	return "'" + strings.Join(serverIdList, "','") + "'"

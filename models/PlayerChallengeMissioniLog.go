@@ -20,7 +20,7 @@ type PlayerChallengeMissionLog struct {
 type PlayerChallengeMissionLogQueryParam struct {
 	BaseQueryParam
 	PlatformId  string
-	Node        string `json:"serverId"`
+	ServerId        string `json:"serverId"`
 	Ip          string
 	PlayerId    int
 	PlayerName  string
@@ -30,7 +30,13 @@ type PlayerChallengeMissionLogQueryParam struct {
 }
 
 func GetPlayerChallengeMissionLogList(params *PlayerChallengeMissionLogQueryParam) ([]*PlayerChallengeMissionLog, int64) {
-	gameDb, err := GetGameDbByNode(params.Node)
+	gameServer, err := GetGameServerOne(params.PlatformId, params.ServerId)
+	utils.CheckError(err)
+	if err != nil {
+		return nil, 0
+	}
+	node := gameServer.Node
+	gameDb, err := GetGameDbByNode(node)
 	utils.CheckError(err)
 	if err != nil {
 		return nil, 0

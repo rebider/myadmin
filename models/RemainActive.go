@@ -8,6 +8,9 @@ import (
 
 type RemainActive struct {
 	Node         string `json:"node" gorm:"primary_key"`
+	PlatformId   string `json:"platformId" gorm:"primary_key"`
+	ServerId     string `json:"serverId" gorm:"primary_key"`
+	Channel      string `json:"channel" gorm:"primary_key"`
 	Time         int    `json:"time" gorm:"primary_key"`
 	RegisterRole int    `json:"registerRole" gorm:"-"`
 	CreateRole   int    `json:"createRole" gorm:"-"`
@@ -46,7 +49,8 @@ type ActiveRemainQueryParam struct {
 	BaseQueryParam
 	PlatformId string
 	//ServerId   string
-	Node      string `json:"serverId"`
+	ServerId      string `json:"serverId"`
+	ChannelList [] string `json:"channelList"`
 	StartTime int
 	EndTime   int
 }
@@ -61,20 +65,25 @@ func GetRemainActiveList(params *ActiveRemainQueryParam) ([]*RemainActive, int64
 		}
 		return db
 	}
-	err := f(Db.Model(&RemainActive{}).Where(&RemainActive{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
+	err := f(Db.Model(&RemainActive{}).Where(&RemainActive{PlatformId: params.PlatformId, ServerId: params.ServerId})).Where(" channel in (?)", params.ChannelList).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
 	utils.CheckError(err)
 	for _, e := range data {
-		dailyRegisterStatistics, err := GetDailyRegisterStatisticsOne(e.Node, e.Time)
+		dailyStatistics, err := GetDailyStatisticsOne(e.PlatformId, e.ServerId, e.Channel, e.Time)
 		utils.CheckError(err)
-		e.CreateRole = dailyRegisterStatistics.CreateRoleCount
-		e.RegisterRole = dailyRegisterStatistics.RegisterCount
+		e.CreateRole = dailyStatistics.CreateRoleCount
+		e.RegisterRole = dailyStatistics.RegisterCount
 	}
 	return data, count
 }
 
 //更新 活跃留存
-func UpdateRemainActive(node string, timestamp int) error {
-	logs.Info("更新活跃留存:%v, %v", node, timestamp)
+func UpdateRemainActive(platformId string, serverId string, channel string, timestamp int) error {
+	logs.Info("更新 活跃留存:%v, %v, %v, %v", platformId, serverId, channel, timestamp)
+	gameServer, err := GetGameServerOne(platformId, serverId)
+	if err != nil {
+		return err
+	}
+	node := gameServer.Node
 	serverNode, err := GetServerNode(node)
 	if err != nil {
 		return err
@@ -92,7 +101,7 @@ func UpdateRemainActive(node string, timestamp int) error {
 		if openDayZeroTimestamp > thatDayZeroTimestamp {
 			continue
 		}
-		createRolePlayerIdList := GetThatDayCreateRolePlayerIdList(gameDb, thatDayZeroTimestamp)
+		createRolePlayerIdList := GetThatDayCreateRolePlayerIdList(gameDb, serverId, channel, thatDayZeroTimestamp)
 		createRoleNum := len(createRolePlayerIdList)
 		rate := 0
 		if createRoleNum > 0 {
@@ -136,6 +145,9 @@ func UpdateRemainActive(node string, timestamp int) error {
 		}
 		m := &RemainActive{
 			Node:    node,
+			PlatformId:platformId,
+			ServerId:serverId,
+			Channel:channel,
 			Time:    thatDayZeroTimestamp,
 			Remain2: -1,
 			Remain3: -1,

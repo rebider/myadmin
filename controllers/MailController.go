@@ -122,7 +122,8 @@ func (c *MailController) SendMail() {
 	if params.Type == "3"{
 		realNodeList = models.GetAllGameNodeByPlatformId(params.PlatformId)
 	} else {
-		realNodeList = params.NodeList
+		realNodeList = models.GetNodeListByServerIdList(params.PlatformId, params.NodeList)
+		//realNodeList = params.NodeList
 	}
 	for _, node := range realNodeList {
 		url := models.GetGameURLByNode(node) + "/send_mail"

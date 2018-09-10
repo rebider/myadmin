@@ -7,10 +7,13 @@ import (
 )
 
 type RemainTotal struct {
-	Node          string `json:"node" gorm:"primary_key"`
-	Time          int    `json:"time" gorm:"primary_key"`
-	RegisterRole  int    `json:"registerRole" gorm:"-"`
-	CreateRole    int    `json:"createRole" gorm:"-"`
+	Node         string `json:"node" gorm:"primary_key"`
+	PlatformId   string `json:"platformId" gorm:"primary_key"`
+	ServerId     string `json:"serverId" gorm:"primary_key"`
+	Channel      string `json:"channel" gorm:"primary_key"`
+	Time         int    `json:"time" gorm:"primary_key"`
+	RegisterRole int    `json:"registerRole" gorm:"-"`
+	CreateRole   int    `json:"createRole" gorm:"-"`
 	Remain2      int    `json:"remain2"`
 	Remain3      int    `json:"remain3"`
 	Remain4      int    `json:"remain4"`
@@ -46,7 +49,9 @@ type TotalRemainQueryParam struct {
 	BaseQueryParam
 	PlatformId string
 	//ServerId   string
-	Node      string `json:"serverId"`
+	ServerId  string `json:"serverId"`
+	ChannelList [] string `json:"channelList"`
+	Channel string
 	StartTime int
 	EndTime   int
 }
@@ -61,20 +66,26 @@ func GetRemainTotalList(params *TotalRemainQueryParam) ([]*RemainTotal, int64) {
 		}
 		return db
 	}
-	err := f(Db.Model(&RemainTotal{}).Where(&RemainTotal{Node: params.Node})).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
+	err := f(Db.Model(&RemainTotal{}).Where(&RemainTotal{PlatformId: params.PlatformId, ServerId: params.ServerId, Channel:params.Channel})).Where(" channel in (?)", params.ChannelList).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
 	utils.CheckError(err)
 	for _, e := range data {
-		dailyRegisterStatistics, err := GetDailyRegisterStatisticsOne(e.Node, e.Time)
+		dailyStatistics, err := GetDailyStatisticsOne(e.PlatformId, e.ServerId, e.Channel, e.Time)
+		//logs.Info("dailyStatistics:%+v", dailyStatistics)
 		utils.CheckError(err)
-		e.CreateRole = dailyRegisterStatistics.CreateRoleCount
-		e.RegisterRole = dailyRegisterStatistics.RegisterCount
+		e.CreateRole = dailyStatistics.CreateRoleCount
+		e.RegisterRole = dailyStatistics.RegisterCount
 	}
 	return data, count
 }
 
 //更新 总体留存
-func UpdateRemainTotal(node string, timestamp int) error {
-	logs.Info("更新总体留存:%v, %v", node, timestamp)
+func UpdateRemainTotal(platformId string, serverId string, channel string, timestamp int) error {
+	logs.Info("总体总体留存:%v, %v, %v, %v", platformId, serverId, channel, timestamp)
+	gameServer, err := GetGameServerOne(platformId, serverId)
+	if err != nil {
+		return err
+	}
+	node := gameServer.Node
 	serverNode, err := GetServerNode(node)
 	if err != nil {
 		return err
@@ -92,7 +103,7 @@ func UpdateRemainTotal(node string, timestamp int) error {
 		if openDayZeroTimestamp > thatDayZeroTimestamp {
 			continue
 		}
-		createRolePlayerIdList := GetThatDayCreateRolePlayerIdList(gameDb, thatDayZeroTimestamp)
+		createRolePlayerIdList := GetThatDayCreateRolePlayerIdList(gameDb, serverId, channel, thatDayZeroTimestamp)
 		createRoleNum := len(createRolePlayerIdList)
 		rate := 0
 		if createRoleNum > 0 {
@@ -105,16 +116,19 @@ func UpdateRemainTotal(node string, timestamp int) error {
 			rate = int(float32(loginNum) / float32(createRoleNum) * 10000)
 		}
 		m := &RemainTotal{
-			Node:    node,
-			Time:    thatDayZeroTimestamp,
-			Remain2: -1,
-			Remain3: -1,
-			Remain4: -1,
-			Remain5: -1,
-			Remain6: -1,
-			Remain7: -1,
-			Remain8: -1,
-			Remain9: -1,
+			Node:     node,
+			PlatformId:platformId,
+			ServerId:serverId,
+			Channel:channel,
+			Time:     thatDayZeroTimestamp,
+			Remain2:  -1,
+			Remain3:  -1,
+			Remain4:  -1,
+			Remain5:  -1,
+			Remain6:  -1,
+			Remain7:  -1,
+			Remain8:  -1,
+			Remain9:  -1,
 			Remain10: -1,
 			Remain11: -1,
 			Remain12: -1,

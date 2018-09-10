@@ -62,7 +62,7 @@ func init() {
 	beego.Router("/role/delete", &controllers.RoleController{}, "*:Delete")
 	beego.Router("/role/allocateResource", &controllers.RoleController{}, "*:AllocateResource")
 	beego.Router("/role/allocateMenu", &controllers.RoleController{}, "*:AllocateMenu")
-	beego.Router("/role/allocatePlatform", &controllers.RoleController{}, "*:AllocatePlatform")
+	beego.Router("/role/allocateChannel", &controllers.RoleController{}, "*:AllocateChannel")
 
 	//资源
 	beego.Router("/resource/list", &controllers.ResourceController{}, "*:List")
@@ -131,12 +131,13 @@ func init() {
 
 
 	//统计
-	beego.Router("/statistics/online_statistics/", &controllers.StatisticsController{}, "*:OnlineStatisticsList")
-	beego.Router("/statistics/register_statistics/", &controllers.StatisticsController{}, "*:RegisterStatisticsList")
+	//beego.Router("/statistics/online_statistics/", &controllers.StatisticsController{}, "*:OnlineStatisticsList")
+	//beego.Router("/statistics/register_statistics/", &controllers.StatisticsController{}, "*:RegisterStatisticsList")
 	beego.Router("/statistics/consume_analysis/", &controllers.StatisticsController{}, "*:ConsumeAnalysis")
 	beego.Router("/statistics/get_server_generalize/", &controllers.StatisticsController{}, "*:GetServerGeneralize")
 	beego.Router("/statistics/real_time_online/", &controllers.StatisticsController{}, "*:GetRealTimeOnline")
-	beego.Router("/statistics/get_active_statistics/", &controllers.StatisticsController{}, "*:ActiveStatisticsList")
+	beego.Router("/statistics/daily_statistics/", &controllers.StatisticsController{}, "*:DailyStatisticsList")
+	//beego.Router("/statistics/get_active_statistics/", &controllers.StatisticsController{}, "*:ActiveStatisticsList")
 
 	//封禁
 	beego.Router("/forbid/set_forbid/", &controllers.ForbidController{}, "*:SetForbid")
@@ -163,6 +164,10 @@ func init() {
 	beego.Router("/platform/edit/", &controllers.PlatformController{}, "*:Edit")
 	beego.Router("/platform/del/", &controllers.PlatformController{}, "*:Del")
 
+	beego.Router("/channel/list/", &controllers.ChannelController{}, "*:List")
+	beego.Router("/channel/edit/", &controllers.ChannelController{}, "*:Edit")
+	beego.Router("/channel/del/", &controllers.ChannelController{}, "*:Del")
+
 	//开服管理
 	//beego.Router("/open_server/list/", &controllers.OpenServerController{}, "*:List")
 	//beego.Router("/open_server/edit/", &controllers.OpenServerController{}, "*:Edit")
@@ -171,7 +176,7 @@ func init() {
 	// 充值
 	beego.Router("/charge/charge_list/", &controllers.ChargeController{}, "*:ChargeList")
 	beego.Router("/charge/charge_rank/", &controllers.ChargeController{}, "*:ChargeRankList")
-	beego.Router("/charge/charge_statistics/", &controllers.ChargeController{}, "*:ChargeStatisticsList")
+	//beego.Router("/charge/charge_statistics/", &controllers.ChargeController{}, "*:ChargeStatisticsList")
 	beego.Router("/charge/charge_task_distribution/", &controllers.ChargeController{}, "*:ChargeTaskDistribution")
 	beego.Router("/charge/charge_activity_distribution/", &controllers.ChargeController{}, "*:ChargeActivityDistribution")
 	beego.Router("/charge/charge_money_distribution/", &controllers.ChargeController{}, "*:ChargeMoneyDistribution")

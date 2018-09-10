@@ -110,8 +110,8 @@ func GetMaxFreeServerByPlatformId(platformId string) (*InventoryServer, error) {
 	inventoryServer := &InventoryServer{}
 	for _, e := range l {
 		//logs.Debug("server:%s, nodeCount:%d, onlineCount:%d", e.Name, e.NodeCount, e.OnlinePlayerCount)
-		if e.NodeCount >= 33 {
-			// 一个服务器最多安装33个节点
+		if e.NodeCount >= 43 {
+			// 一个服务器最多安装43个节点
 			continue
 		}
 		// 一个节点当作10个在线来计算

@@ -23,9 +23,9 @@ type Role struct {
 	Name            string             `json:"name"`
 	ResourceIds     [] int             `json:"resourceIds" gorm:"-"`
 	MenuIds         [] int             `json:"menuIds" gorm:"-"`
-	PlatformIds     [] string          `json:"platformIds" gorm:"-"`
+	ChannelIds      [] int             `json:"channelIds" gorm:"-"`
 	RoleResourceRel []*RoleResourceRel `json:"-"`
-	RolePlatformRel []*RolePlatformRel `json:"-"`
+	RoleChannelRel  []*RoleChannelRel  `json:"-"`
 	RoleMenuRel     []*RoleMenuRel     `json:"-"`
 }
 
@@ -41,12 +41,12 @@ func GetRoleList(params *RoleQueryParam) ([]*Role, int64) {
 
 		v.MenuIds = make([] int, 0)
 		v.ResourceIds = make([] int, 0)
-		v.PlatformIds = make([] string, 0)
+		v.ChannelIds = make([] int, 0)
 
 		err = Db.Model(&v).Related(&v.RoleMenuRel).Error
 		utils.CheckError(err)
 
-		err = Db.Model(&v).Related(&v.RolePlatformRel).Error
+		err = Db.Model(&v).Related(&v.RoleChannelRel).Error
 		utils.CheckError(err)
 
 		for _, e := range v.RoleResourceRel {
@@ -59,10 +59,10 @@ func GetRoleList(params *RoleQueryParam) ([]*Role, int64) {
 		}
 		sort.Ints(v.MenuIds)
 
-		for _, e := range v.RolePlatformRel {
-			v.PlatformIds = append(v.PlatformIds, e.PlatformId)
+		for _, e := range v.RoleChannelRel {
+			v.ChannelIds = append(v.ChannelIds, e.ChannelId)
 		}
-		sort.Strings(v.PlatformIds)
+		sort.Ints(v.ChannelIds)
 	}
 	return data, count
 }
@@ -86,7 +86,7 @@ func DeleteRoles(ids []int) error {
 		tx.Rollback()
 		return err
 	}
-	if _, err := DeleteRolePlatformRelByRoleIdList(ids); err != nil {
+	if _, err := DeleteRoleChannelRelByRoleIdList(ids); err != nil {
 		tx.Rollback()
 		return err
 	}

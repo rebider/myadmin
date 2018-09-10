@@ -55,11 +55,13 @@ func DealNoticeLog(id int) {
 		logs.Info("处理公告:%+v", noticeLog)
 		nodeList := make([] string, 0)
 		if noticeLog.IsAllServer == 0 {
-			err := json.Unmarshal([]byte(noticeLog.NodeList), &nodeList)
+			serverIdList := make([] string, 0)
+			err := json.Unmarshal([]byte(noticeLog.NodeList), &serverIdList)
 			if err != nil {
 				logs.Error("解析公告(%+v)区服列表失败%+v", id, err)
 				return
 			}
+			nodeList = models.GetNodeListByServerIdList(noticeLog.PlatformId, serverIdList)
 		} else {
 			// 全服
 			nodeList = models.GetAllGameNodeByPlatformId(noticeLog.PlatformId)
@@ -84,7 +86,7 @@ func DealNoticeLog(id int) {
 			err = utils.HttpRequest(url, string(data))
 			utils.CheckError(err)
 			if err == nil {
-				logs.Info("发送公告成功 PlatformId: %v, id: %v", node, noticeLog.Id)
+				//logs.Info("发送公告成功 PlatformId: %v, id: %v", node, noticeLog.Id)
 			} else {
 				logs.Info("发送公告失败 PlatformId: %v, id: %v", node, noticeLog.Id)
 			}

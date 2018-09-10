@@ -5,25 +5,26 @@ import (
 )
 
 type PlayerChargeInfoRecord struct {
-	PlayerId        int    `json:"playerId" gorm:"primary_key"`
-	PlayerName      string `json:"playerName" gorm:"-"`
-	Account         string `json:"account" gorm:"-"`
-	PlatformId      string    `json:"platformId" gorm:"column:part_id"`
-	ServerId        string `json:"serverId"`
-	TotalMoney      float32    `json:"totalMoney"`
-	MaxMoney        float32    `json:"maxMoney"`
-	MinMoney        float32    `json:"minMoney"`
-	ChargeCount     int    `json:"chargeCount"`
-	LastLoginTime   int    `json:"lastLoginTime" gorm:"-"`
-	RegisterTime    int    `json:"registerTime" gorm:"-"`
-	LastChargeTime  int    `json:"lastChargeTime" gorm:"column:last_time"`
-	FirstChargeTime int    `json:"firstChargeTime" gorm:"column:first_time"`
+	PlayerId        int     `json:"playerId" gorm:"primary_key"`
+	PlayerName      string  `json:"playerName" gorm:"-"`
+	Account         string  `json:"account" gorm:"-"`
+	PlatformId      string  `json:"platformId" gorm:"column:part_id"`
+	ServerId        string  `json:"serverId"`
+	TotalMoney      float32 `json:"totalMoney"`
+	MaxMoney        float32 `json:"maxMoney"`
+	MinMoney        float32 `json:"minMoney"`
+	ChargeCount     int     `json:"chargeCount"`
+	LastLoginTime   int     `json:"lastLoginTime" gorm:"-"`
+	RegisterTime    int     `json:"registerTime" gorm:"-"`
+	LastChargeTime  int     `json:"lastChargeTime" gorm:"column:last_time"`
+	FirstChargeTime int     `json:"firstChargeTime" gorm:"column:first_time"`
 }
 
 type PlayerChargeDataQueryParam struct {
 	BaseQueryParam
 	PlatformId string
-	Node       string `json:"serverId"`
+	ServerId   string `json:"serverId"`
+	ChannelList [] string `json:"channelList"`
 }
 
 func GetPlayerChargeDataOne(playerId int) (*PlayerChargeInfoRecord, error) {
@@ -34,20 +35,20 @@ func GetPlayerChargeDataOne(playerId int) (*PlayerChargeInfoRecord, error) {
 	return playerChargeInfo, err
 }
 
-
 func GetPlayerChargeDataList(params *PlayerChargeDataQueryParam) ([]*PlayerChargeInfoRecord, int64) {
 	data := make([]*PlayerChargeInfoRecord, 0)
 	var count int64
 	sortOrder := "total_money desc"
-	if params.Node == "" {
-		DbCharge.Model(&PlayerChargeInfoRecord{}).Where(&PlayerChargeInfoRecord{
-			PlatformId: params.PlatformId,
-		}).Where("charge_count > 0 ").Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
-	} else {
-		DbCharge.Model(&PlayerChargeInfoRecord{}).Where(&PlayerChargeInfoRecord{
-			PlatformId: params.PlatformId,
-		}).Where("charge_count > 0 ").Where("server_id in (?)", GetGameServerIdListByNode(params.Node)).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
-	}
+	//if params.Node == "" {
+	DbCharge.Model(&PlayerChargeInfoRecord{}).Where(&PlayerChargeInfoRecord{
+		PlatformId: params.PlatformId,
+		ServerId:   params.ServerId,
+	}).Where("charge_count > 0 ").Where("channel in(?)", params.ChannelList).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	//} else {
+	//	DbCharge.Model(&PlayerChargeInfoRecord{}).Where(&PlayerChargeInfoRecord{
+	//		PlatformId: params.PlatformId,
+	//	}).Where("charge_count > 0 ").Where("server_id in (?)", GetGameServerIdListByNode(params.Node)).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+	//}
 
 	for _, e := range data {
 		gameDb, err := GetGameDbByPlatformIdAndSid(e.PlatformId, e.ServerId)

@@ -20,9 +20,23 @@ func init() {
 	// 每日0点定时器
 	go dailyZeroClockCron()
 
+	//整10分钟
+	go tenMinuteClockCron()
+
 	// 定时检测开服
 	go cronAutoCreateServer()
 
+	//now := time.Now()
+	//// 计算下一个整点
+	////next := now.Add(time.Hour * 1)
+	//next := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute() / 10 * 10, 0, 0, now.Location())
+	//next1 := next.Add(time.Minute * 10)
+	//logs.Info("整点10分钟剩余时间:%v, %v, %v", next1.Sub(now), now.Minute() / 10, next1.Unix())
+
+	//go Repire()
+	//go DoUpdateAllGameNodeDailyStatistics(1536163200)
+	//go models.RepireTenMinuteStatistics()
+	//go models.RepireRemainActive()
 	//go models.BackDatabases()
 	//models.CreateAnsibleInventory()
 	//models.S()
@@ -149,5 +163,24 @@ func everyHourClockCron() {
 		go models.PingDb(models.Db)
 		go models.PingDb(models.DbCenter)
 		go models.PingDb(models.DbCharge)
+	}
+}
+
+//整10分钟执行
+func tenMinuteClockCron() {
+	for {
+		now := time.Now()
+		// 计算下一个整点
+		//next := now.Add(time.Hour * 1)
+		next := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute() / 10 * 10, 0, 0, now.Location())
+		next1 := next.Add(time.Minute * 10)
+		nextTimestamp := next1.Unix()
+		logs.Info("下次整点10分钟:%v, %v, %v", next1.Sub(now), nextTimestamp, next1.String())
+		t := time.NewTimer(next1.Sub(now))
+		<-t.C
+		// 业务
+		logs.Info("整点10分钟定时执行:%v", next1.String())
+		DoUpdateAllGameNodeTenMinuteStatistics(int(nextTimestamp))
+
 	}
 }
