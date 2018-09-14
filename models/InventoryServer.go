@@ -29,6 +29,7 @@ type InventoryServer struct {
 	InnerIp           string `json:"innerIp"`
 	Host              string `json:"host"`
 	Type              int    `json:"type"`
+	MaxNodeCount      int    `json:"maxNodeCount"`
 	NodeCount         int    `json:"nodeCount" gorm:"-"`
 	OnlinePlayerCount int    `json:"onlinePlayerCount" gorm:"-"`
 	AddTime           int    `json:"addTime"`
@@ -109,9 +110,9 @@ func GetMaxFreeServerByPlatformId(platformId string) (*InventoryServer, error) {
 	minCount := -1
 	inventoryServer := &InventoryServer{}
 	for _, e := range l {
-		//logs.Debug("server:%s, nodeCount:%d, onlineCount:%d", e.Name, e.NodeCount, e.OnlinePlayerCount)
-		if e.NodeCount >= 43 {
-			// 一个服务器最多安装43个节点
+		logs.Debug("server:%s, nodeCount:%d, onlineCount:%d", e.Name, e.NodeCount, e.OnlinePlayerCount, e.MaxNodeCount)
+		if e.NodeCount >= e.MaxNodeCount {
+			// 一个服务器最多安装50个节点
 			continue
 		}
 		// 一个节点当作10个在线来计算
@@ -266,6 +267,71 @@ func CreateAnsibleInventory() error {
 	logs.Info("创建ansible inventory 文件(%s)成功.", ansibleInventoryFile)
 	return nil
 }
+//func CreateAnsibleInventory2() error {
+//	logs.Info("开始创建ansible inventory2 文件.....")
+//	ansibleInventoryDir := beego.AppConfig.String("ansible_inventory_dir")
+//	if ansibleInventoryDir == "" {
+//		logs.Error("ansible_inventory_dir")
+//		return errors.New("读取配置ansible_inventory_dir失败")
+//	}
+//	mapList := make(map[string][]string, 0)
+//	serverNodeList := GetAllServerNodeList()
+//	typeList := [] struct{
+//		nodeType int
+//		name string
+//	}
+//	for _, e := range typeList {
+//
+//	}
+//	for _, e := range serverNodeList {
+//		array := strings.Split(e.Node, "@")
+//		if len(array) != 2 {
+//			return errors.New("解析节点名字失败:" + e.Node)
+//		}
+//		nodeName := array[0]
+//		nodeIp := array[1]
+//		//logs.Info("nodeName:%+v", nodeName)
+//		if v, ok := mapList[nodeIp]; ok {
+//			v = append(v, "'"+nodeName+"'")
+//			mapList[nodeIp] = v
+//		} else {
+//			mapList[nodeIp] = append(make([] string, 0), "'"+nodeName+"'")
+//		}
+//	}
+//	serverOfGameList := GetAllServerList()
+//	for _, e := range serverOfGameList {
+//		if _, ok := mapList[e.InnerIp]; ok {
+//		} else {
+//			logs.Info("e:%+v", e)
+//			mapList[e.InnerIp] = make([] string, 0)
+//		}
+//	}
+//	logs.Info("serverOfGameList:%+v", mapList)
+//	logs.Info("mapList:%+v", mapList)
+//	content := "## Generated automatically, no need to modify.\n"
+//	content += fmt.Sprintf("## Auto Created :%s\n\n", time.Now().String())
+//	//for ip, _ := range mapList {
+//	//	content += fmt.Sprintf("%s\n", ip)
+//	//}
+//	//content += "\n\n\n"
+//
+//	for ip, nodes := range mapList {
+//		content += fmt.Sprintf("%s    ", ip)
+//		content += "nodes="
+//		content += "\"[" + strings.Join(nodes, ", ") + "]\""
+//		content += "\n\n"
+//
+//	}
+//
+//	err := utils.FilePutContext(ansibleInventoryFile, content)
+//
+//	if err != nil {
+//		return err
+//	}
+//	logs.Info("创建ansible inventory 文件(%s)成功.", ansibleInventoryFile)
+//	return nil
+//}
+
 
 //func CreateAnsibleInventory() error{
 //	logs.Info("开始创建ansible inventory 文件.....")
