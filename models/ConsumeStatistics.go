@@ -47,8 +47,8 @@ func GetPropConsumeStatistics(param *PropConsumeStatisticsQueryParam) ([]*PropCo
 	whereArray = append(whereArray, fmt.Sprintf("type = %d", param.Type))
 	whereArray = append(whereArray, fmt.Sprintf("prop_type = %d", param.PropType))
 	whereArray = append(whereArray, fmt.Sprintf("prop_id = %d", param.PropId))
-	whereArray = append(whereArray, fmt.Sprintf("server_id = %d", param.ServerId))
-	whereArray = append(whereArray, fmt.Sprintf("player_id in (select id from player where channel in(%s))", GetSQLWhereParam(param.ChannelList)))
+	//whereArray = append(whereArray, fmt.Sprintf("server_id = %s", param.ServerId))
+	whereArray = append(whereArray, fmt.Sprintf("player_id in (select id from player where channel in(%s) and server_id = '%s')", GetSQLWhereParam(param.ChannelList),  param.ServerId))
 	if param.PlayerId > 0 {
 		whereArray = append(whereArray, fmt.Sprintf("player_id = %d", param.PlayerId))
 	}

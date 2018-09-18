@@ -1524,7 +1524,16 @@ func InstallNode(node string) error {
 		app = "war"
 	}
 
-	commandArgs = []string{"/data/tool/ansible/do-install.sh", serverNode.Node, app, serverNode.DbName, serverNode.DbHost, strconv.Itoa(serverNode.DbPort), "root"}
+	version := ""
+	if serverNode.PlatformId == "" {
+		logs.Warning("部署节点(%s)没有对应平台， 取默认版本库server!!!!!!!!!!!!!!!!!", node)
+		version = "server"
+	} else {
+		platform, err := GetPlatformOne(serverNode.PlatformId)
+		utils.CheckError(err)
+		version = platform.Version
+	}
+	commandArgs = []string{"/data/tool/ansible/do-install.sh", serverNode.Node, app, serverNode.DbName, serverNode.DbHost, strconv.Itoa(serverNode.DbPort), "root", version}
 	out, err := utils.Cmd("sh", commandArgs)
 	utils.CheckError(err, fmt.Sprintf("部署节点失败:%v %v", node, out))
 	if err != nil {
@@ -1567,6 +1576,15 @@ func NodeAction(nodes [] string, action string) error {
 	}
 	logs.Info("节点操作成功:nodes->%v, action->%v!", nodes, action)
 	return nil
+}
+
+func AfterAddGameServer() error {
+	out, err := utils.NodeTool(
+		"mod_server_sync",
+		"after_add_game_node",
+	)
+	utils.CheckError(err, out)
+	return err
 }
 
 func RefreshGameServer() error {

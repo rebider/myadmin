@@ -18,8 +18,9 @@ type Platform struct {
 	InventoryDatabaseId       int                          `json:"inventoryDatabaseId"`
 	ZoneInventoryServerId     int                          `json:"zoneInventoryServerId"`
 	CreateRoleLimit           int                          `json:"createRoleLimit"`
+	Version                   string                       `json:"version"`
 	PlatformInventorySeverRel []*PlatformInventorySeverRel `json:"-"`
-	ChannelList               []*Channel					`json:"channelList"`
+	ChannelList               []*Channel                   `json:"channelList"`
 	InventorySeverIds         []int                        `json:"inventorySeverIds" gorm:"-"`
 	Time                      int                          `json:"time"`
 }
@@ -89,8 +90,8 @@ func GetPlatformListByUserId(userId int) []*Platform {
 			logs.Debug("channel:%+v", channel)
 			channelList = append(channelList, &channel)
 		}
-		flag := make(map [string] bool)
-		for _, v :=range channelList {
+		flag := make(map[string]bool)
+		for _, v := range channelList {
 			_, ok := flag[v.PlatformId]
 			if ok {
 
@@ -102,7 +103,7 @@ func GetPlatformListByUserId(userId int) []*Platform {
 			}
 		}
 		for _, v := range list {
-			for _, channel :=range channelList {
+			for _, channel := range channelList {
 				if channel.PlatformId == v.Id {
 					v.ChannelList = append(v.ChannelList, channel)
 				}

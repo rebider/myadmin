@@ -107,7 +107,8 @@ func cronAutoCreateServer() {
 			platformList := models.GetPlatformList()
 			for _, platform := range platformList {
 				// 自动开服
-				models.AutoCreateAndOpenServer(platform.Id, true)
+				now := utils.GetTimestamp()
+				models.AutoCreateAndOpenServer(platform.Id, true, now)
 			}
 		}
 	}

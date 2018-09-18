@@ -349,7 +349,7 @@ func SubString(str string, begin, length int) (substr string) {
 	return string(rs[begin:end])
 }
 
-func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
+func AutoCreateAndOpenServer(platformId string,isCheck bool, openServerTime int) error {
 	//logs.Info("1")
 	//logs.Info("%+v", IsNowOpenServerMap)
 	isNowOpenServer, ok := IsNowOpenServerMap[platformId]
@@ -425,7 +425,7 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
 		return err
 	}
 
-	now := utils.GetTimestamp()
+
 
 	maxGameServer, intSid, err := GetMaxGameServerByPlatformId(platformId)
 	utils.CheckError(err, "获取最大区服失败")
@@ -478,7 +478,7 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
 			return err
 		}
 
-		out, err = AddGameServer(platformId, newSid, fmt.Sprintf("%d区", newIntSid), newNode, zoneNode, 3, now, 1)
+		out, err = AddGameServer(platformId, newSid, fmt.Sprintf("%d区", newIntSid), newNode, zoneNode, 3, openServerTime, 1)
 
 		utils.CheckError(err, "新增游戏服失败:"+out)
 		if err != nil {
@@ -510,8 +510,8 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool) error {
 		}
 
 
-		err = RefreshGameServer()
-		utils.CheckError(err, "刷新区服入口失败")
+		err = AfterAddGameServer()
+		utils.CheckError(err, "同步登录充值战区失败")
 		if err != nil {
 			return err
 		}

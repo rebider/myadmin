@@ -94,6 +94,7 @@ func (c *GameServerController) Delete() {
 // 批量修改区服状态
 func (c *GameServerController) BatchUpdateState() {
 	var param struct {
+		PlatformId string `json:platformId`
 		Nodes []string `json:node`
 		State int
 	}
@@ -102,9 +103,14 @@ func (c *GameServerController) BatchUpdateState() {
 	logs.Info("批量修改区服状态:%+v", param)
 
 	if len(param.Nodes) == 0 {
+		if param.PlatformId == "" {
+			logs.Error("平台id不能为空")
+			c.Result(enums.CodeFail, "平台id不能为空", 0)
+		}
 		out, err := utils.NodeTool(
 			"mod_server_mgr",
-			"update_all_game_state",
+			"update_all_game_server_state",
+			param.PlatformId,
 			strconv.Itoa(param.State),
 		)
 		c.CheckError(err, "修改所有区服状态:"+out)
@@ -156,7 +162,7 @@ func (c *GameServerController) Refresh() {
 	//err = json.Unmarshal(body, &result)
 	//
 	//c.CheckError(err)
-	err = models.RefreshGameServer()
+	err = models.AfterAddGameServer()
 	c.CheckError(err)
 	//if result.ErrorCode != 0 {
 	//	c.Result(enums.CodeFail, "刷新区服入口失败", 0)
@@ -166,17 +172,26 @@ func (c *GameServerController) Refresh() {
 }
 
 
-// 立即开服
+// 开服
 func (c *GameServerController) OpenServer() {
 	var params struct {
 		PlatformId string `json:platformId`
+		Time int `json:time`
 	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	c.CheckError(err)
-	logs.Info("立即开服:%+v", params)
-	err = models.AutoCreateAndOpenServer(params.PlatformId,false)
+	logs.Info("开服:%+v", params)
+
+	openServerTime := 0
+	if params.Time == 0 {
+		// 立即开服
+		openServerTime = utils.GetTimestamp()
+	} else {
+		//定时开服
+		openServerTime = params.Time
+	}
+	err = models.AutoCreateAndOpenServer(params.PlatformId,false, openServerTime)
 	c.CheckError(err)
 	c.Result(enums.CodeSuccess, "开服成功", 0)
-
 }
 
