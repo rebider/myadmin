@@ -116,8 +116,8 @@ func GetMaxFreeServerByPlatformId(platformId string) (*InventoryServer, error) {
 			// 一个服务器最多安装50个节点
 			continue
 		}
-		// 一个节点当作50个在线来计算
-		thisValue := e.OnlinePlayerCount + e.NodeCount*50
+		// 一个节点当作25个在线来计算
+		thisValue := e.OnlinePlayerCount + e.NodeCount*25
 
 		if minCount == -1 {
 			minCount = thisValue
@@ -218,7 +218,7 @@ func CreateAnsibleInventory() error {
 		logs.Error("读取配置ansible_inventory_file失败")
 		return errors.New("读取配置ansible_inventory_file失败")
 	}
-	mapList := make(map[string][]string, 0)
+	//mapList := make(map[string][]string, 0)
 	//serverNodeList := GetAllServerNodeList()
 	//for _, e := range serverNodeList {
 	//	array := strings.Split(e.Node, "@")
@@ -243,8 +243,8 @@ func CreateAnsibleInventory() error {
 	//		mapList[e.InnerIp] = make([] string, 0)
 	//	}
 	//}
-	logs.Info("serverOfGameList:%+v", mapList)
-	logs.Info("mapList:%+v", mapList)
+	//logs.Info("serverOfGameList:%+v", mapList)
+	//logs.Info("mapList:%+v", mapList)
 	content := "## Generated automatically, no need to modify.\n"
 	content += fmt.Sprintf("## Auto Created :%s\n\n", time.Now().String())
 	//for ip, _ := range mapList {

@@ -63,6 +63,7 @@ func GetRegisterRoleCount(db *gorm.DB, serverId string, channel string, startTim
 	return count
 }
 
+
 //获取时间内注册人数
 func GetRegisterRoleCountByChannelList(db *gorm.DB, serverId string, channelList [] string, startTime int, endTime int) int {
 	var count int

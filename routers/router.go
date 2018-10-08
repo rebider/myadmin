@@ -137,6 +137,7 @@ func init() {
 	beego.Router("/statistics/get_server_generalize/", &controllers.StatisticsController{}, "*:GetServerGeneralize")
 	beego.Router("/statistics/real_time_online/", &controllers.StatisticsController{}, "*:GetRealTimeOnline")
 	beego.Router("/statistics/daily_statistics/", &controllers.StatisticsController{}, "*:DailyStatisticsList")
+	beego.Router("/statistics/charge_statistics/", &controllers.StatisticsController{}, "*:GetChargeStatistics")
 	//beego.Router("/statistics/get_active_statistics/", &controllers.StatisticsController{}, "*:ActiveStatisticsList")
 
 	//封禁
@@ -181,6 +182,8 @@ func init() {
 	beego.Router("/charge/charge_activity_distribution/", &controllers.ChargeController{}, "*:ChargeActivityDistribution")
 	beego.Router("/charge/charge_money_distribution/", &controllers.ChargeController{}, "*:ChargeMoneyDistribution")
 	beego.Router("/charge/charge_level_distribution/", &controllers.ChargeController{}, "*:ChargeLevelDistribution")
+	beego.Router("/charge/get_daily_ltv/", &controllers.ChargeController{}, "*:GetDailyLTV")
+
 
 	//后台充值
 	beego.Router("/charge/background_charge/", &controllers.BackgroundController{}, "*:Charge")
@@ -192,6 +195,7 @@ func init() {
 	beego.Router("/remain/task_remain/", &controllers.RemainController{}, "*:GetTaskRemain")
 	beego.Router("/remain/level_remain/", &controllers.RemainController{}, "*:GetLevelRemain")
 	beego.Router("/remain/time_remain/", &controllers.RemainController{}, "*:GetTimeRemain")
+	beego.Router("/remain/charge_remain/", &controllers.RemainController{}, "*:GetChargeRemain")
 
 	//资产
 	beego.Router("/inventory/all_server_list", &controllers.InventoryServerController{}, "*:AllServerList")

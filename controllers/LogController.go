@@ -81,7 +81,8 @@ func (c *LogController) PlayerPropLogList() {
 		}
 		params.PlayerId = player.Id
 	}
-	data, total := models.GetPlayerPropLogList(&params)
+	data, total := models.GetPlayerPropLogList2(&params)
+	//models.GetPlayerPropLogList2(&params)
 	result := make(map[string]interface{})
 	result["total"] = total
 	result["rows"] = data

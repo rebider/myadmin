@@ -180,3 +180,37 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 //	utils.CheckError(err)
 //	return data.ChargeItemId
 //}
+
+type ChargeStatistics struct {
+	PlatformId string `json:"platformId"`
+	//ServerId                    string    `json:"serverId"`
+	TodayCharge               int       `json:"todayCharge"`
+	YesterdayCharge           int       `json:"yesterdayCharge"`
+	BeforeYesterdayCharge     int       `json:"beforeYesterdayCharge"`
+	TodayChargeList           [] string `json:"todayChargeList"`
+	YesterdayChargeList       [] string `json:"yesterdayChargeList"`
+	BeforeYesterdayChargeList [] string `json:"beforeYesterdayChargeList"`
+}
+
+func GetChargeStatistics(platformId string, serverId string, channelList [] string) (*ChargeStatistics, error) {
+
+	todayZeroTimestamp := utils.GetTodayZeroTimestamp()
+	yesterdayZeroTimestamp := todayZeroTimestamp - 86400
+	beforeYesterdayZeroTimestamp := yesterdayZeroTimestamp - 86400
+
+	todayOnlineList, todayTotalCharge := get24hoursChargeCount(platformId, serverId, channelList, todayZeroTimestamp)
+	yesterdayOnlineList, yesterdayTotalCharge := get24hoursChargeCount(platformId, serverId, channelList, yesterdayZeroTimestamp)
+	beforeYesterdayOnlineList, beforeYesterdayTotalCharge := get24hoursChargeCount(platformId, serverId, channelList, beforeYesterdayZeroTimestamp)
+	chargeStatistics := &ChargeStatistics{
+		PlatformId:  platformId,
+		TodayCharge: todayTotalCharge,
+		//TodayCreateRole: GetCreateRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTimestamp, todayZeroTimestamp+86400),
+		YesterdayCharge: yesterdayTotalCharge,
+		//MaxOnlineCount:              GetMaxOnlineCount(node),
+		BeforeYesterdayCharge:     beforeYesterdayTotalCharge,
+		TodayChargeList:           todayOnlineList,
+		YesterdayChargeList:       yesterdayOnlineList,
+		BeforeYesterdayChargeList: beforeYesterdayOnlineList,
+	}
+	return chargeStatistics, nil
+}

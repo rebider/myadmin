@@ -104,3 +104,16 @@ func (c *ChargeController) ChargeLevelDistribution() {
 	result["rows"] = data
 	c.Result(enums.CodeSuccess, "获取等级分布", result)
 }
+
+
+// 每日LTV
+func (c *ChargeController) GetDailyLTV() {
+	var params models.DailyLTVQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("获取每日LTV:%+v", params)
+	data := models.GetDailyLTVList(params)
+	result := make(map[string]interface{})
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "获取每日LTV", result)
+}

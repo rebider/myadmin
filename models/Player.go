@@ -32,6 +32,7 @@ type Player struct {
 	VipLevel         int    `json:"vipLevel" gorm:"-"`
 	Power            int    `json:"power" gorm:"-"`
 	FactionName      string `json:"factionName" gorm:"-"`
+	FriendCode      string `json:"friendCode" gorm:"-"`
 }
 
 type PlayerQueryParam struct {
@@ -358,7 +359,7 @@ func GetPlayerIngot(gameDb *gorm.DB, playerId int) int {
 //}
 
 type ServerOnlineStatistics struct {
-	PlatformId string `json:"platformId"`
+	PlatformId string `json:"platformId"`0
 	//ServerId                    string    `json:"serverId"`
 	TodayCreateRole             int       `json:"todayCreateRole"`
 	TodayRegister               int       `json:"todayRegister"`
@@ -375,38 +376,30 @@ type ServerOnlineStatistics struct {
 }
 
 func GetServerOnlineStatistics(platformId string, serverId string, channelList [] string) (*ServerOnlineStatistics, error) {
-	//return nil , nil
-	gameServer, err := GetGameServerOne(platformId, serverId)
-	utils.CheckError(err)
-	if err != nil {
-		return nil, err
-	}
-	node := gameServer.Node
-	gameDb, err := GetGameDbByNode(node)
 
-	utils.CheckError(err)
-	if err != nil {
-		return nil, err
-	}
-	defer gameDb.Close()
 	todayZeroTimestamp := utils.GetTodayZeroTimestamp()
 	yesterdayZeroTimestamp := todayZeroTimestamp - 86400
 	beforeYesterdayZeroTimestamp := yesterdayZeroTimestamp - 86400
+
+	todayOnlineList, nowOnline := get24hoursOnlineCount(platformId, serverId, channelList, todayZeroTimestamp)
+	yesterdayOnlineList, _ := get24hoursOnlineCount(platformId, serverId, channelList, yesterdayZeroTimestamp)
+	beforeYesterdayOnlineList, _ := get24hoursOnlineCount(platformId, serverId, channelList, beforeYesterdayZeroTimestamp)
+	todayRegisterList, todayRegister := get24hoursRegisterCount(platformId, serverId, channelList, todayZeroTimestamp)
+	yesterdayRegisterList, _ := get24hoursRegisterCount(platformId, serverId, channelList, yesterdayZeroTimestamp)
+	beforeYesterdayRegisterList, _ := get24hoursRegisterCount(platformId, serverId, channelList, beforeYesterdayZeroTimestamp)
 	serverOnlineStatistics := &ServerOnlineStatistics{
 		PlatformId: platformId,
 		//ServerId:                    serverId,
-		TodayCreateRole: GetCreateRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTimestamp, todayZeroTimestamp+86400),
-		TodayRegister:   GetRegisterRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTimestamp, todayZeroTimestamp+86400),
-		OnlineCount:     GetNowOnlineCount2(gameDb, serverId, channelList),
-		OnlineIpCount:   GetNowOnlineIpCount(gameDb, serverId, channelList),
+		OnlineCount: nowOnline,
+		//TodayCreateRole: GetCreateRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTimestamp, todayZeroTimestamp+86400),
+		TodayRegister:   todayRegister,
 		//MaxOnlineCount:              GetMaxOnlineCount(node),
-		TodayOnlineList:             get24hoursOnlineCount(platformId, serverId, channelList, todayZeroTimestamp),
-		YesterdayOnlineList:         get24hoursOnlineCount(platformId, serverId, channelList, yesterdayZeroTimestamp),
-		BeforeYesterdayOnlineList:   get24hoursOnlineCount(platformId, serverId, channelList, beforeYesterdayZeroTimestamp),
-		TodayRegisterList:           get24hoursRegisterCount(platformId, serverId, channelList, todayZeroTimestamp),
-		YesterdayRegisterList:       get24hoursRegisterCount(platformId, serverId, channelList, yesterdayZeroTimestamp),
-		BeforeYesterdayRegisterList: get24hoursRegisterCount(platformId, serverId, channelList, beforeYesterdayZeroTimestamp),
-		AverageOnlineCount:          GetThatDayAvgOnlineCount(platformId, serverId, channelList, todayZeroTimestamp, todayZeroTimestamp+86400),
+		TodayOnlineList:             todayOnlineList,
+		YesterdayOnlineList:         yesterdayOnlineList,
+		BeforeYesterdayOnlineList:   beforeYesterdayOnlineList,
+		TodayRegisterList:           todayRegisterList,
+		YesterdayRegisterList:      yesterdayRegisterList,
+		BeforeYesterdayRegisterList: beforeYesterdayRegisterList,
 	}
 	return serverOnlineStatistics, nil
 }

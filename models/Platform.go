@@ -8,7 +8,7 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
 	"sort"
-	"github.com/astaxie/beego/logs"
+	//"github.com/astaxie/beego/logs"
 )
 
 type Platform struct {
@@ -87,7 +87,7 @@ func GetPlatformListByUserId(userId int) []*Platform {
 		for rows.Next() {
 			var channel Channel
 			Db.ScanRows(rows, &channel)
-			logs.Debug("channel:%+v", channel)
+			//logs.Debug("channel:%+v", channel)
 			channelList = append(channelList, &channel)
 		}
 		flag := make(map[string]bool)

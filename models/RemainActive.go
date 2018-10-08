@@ -97,6 +97,11 @@ func UpdateRemainActive(platformId string, serverId string, channel string, time
 	openDayZeroTimestamp := utils.GetThatZeroTimestamp(int64(serverNode.OpenTime))
 
 	for i := 1; i < 30; i++ {
+		//if i == 1 || i == 2 || i == 3 || i == 6 || i == 13 || i == 29  {
+		//
+		//} else {
+		//	continue
+		//}
 		thatDayZeroTimestamp := timestamp - i*86400
 		if openDayZeroTimestamp > thatDayZeroTimestamp {
 			continue

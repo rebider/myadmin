@@ -614,20 +614,33 @@ func GetRemainTime(platformId string, serverId string, channelList [] string) []
 	//return data
 }
 
-func get24hoursOnlineCount(platformId string, serverId string, channelList [] string, zeroTimestamp int) [] string {
+func get24hoursOnlineCount(platformId string, serverId string, channelList [] string, zeroTimestamp int) ([] string, int) {
 	onlineCountList := make([] string, 0, 144)
 	now := utils.GetTimestamp()
 	//gameServer, _ := GetGameServerOne(platformId, serverId)
+	nowOnline := 0
 	for i := zeroTimestamp; i < zeroTimestamp+86400; i = i + 10*60 {
 		if i < now {
 			var data struct {
 				Sum int
 			}
+			whereArray := make([] string, 0)
+			whereArray = append(whereArray, fmt.Sprintf("time = %d", i))
+			whereArray = append(whereArray, fmt.Sprintf("platform_id = '%s'", platformId))
+			if serverId != "" {
+				whereArray = append(whereArray, fmt.Sprintf("server_id = '%s'", serverId))
+			}
+			whereArray = append(whereArray, fmt.Sprintf("channel in(%s)", GetSQLWhereParam(channelList)))
+			whereParam := strings.Join(whereArray, " and ")
+			if whereParam != "" {
+				whereParam = " where " + whereParam
+			}
 			sql := fmt.Sprintf(
-				`SELECT sum(online_count) as sum from ten_minute_statistics where time = %d and platform_id = '%s' and server_id = '%s' and channel in(%s)`, i, platformId, serverId, GetSQLWhereParam(channelList))
+				`SELECT sum(online_count) as sum from ten_minute_statistics %s`, whereParam)
 			err := Db.Raw(sql).Scan(&data).Error
 			//utils.CheckError(err)
 			if err == nil {
+				nowOnline =data.Sum
 				onlineCountList = append(onlineCountList, strconv.Itoa(data.Sum))
 			} else {
 				onlineCountList = append(onlineCountList, "null")
@@ -666,23 +679,36 @@ func get24hoursOnlineCount(platformId string, serverId string, channelList [] st
 		//}
 	}
 	//logs.Info("%+v", len(onlineCountList))
-	return onlineCountList
+	return onlineCountList, nowOnline
 }
 
-func get24hoursRegisterCount(platformId string, serverId string, channelList [] string, zeroTimestamp int) [] string {
+func get24hoursRegisterCount(platformId string, serverId string, channelList [] string, zeroTimestamp int) ([] string, int) {
 	onlineCountList := make([] string, 0, 144)
 	now := utils.GetTimestamp()
+	totalCount := 0
 	//gameServer, _ := GetGameServerOne(platformId, serverId)
 	for i := zeroTimestamp; i < zeroTimestamp+86400; i = i + 10*60 {
 		if i < now {
 			var data struct {
 				Sum int
 			}
+			whereArray := make([] string, 0)
+			whereArray = append(whereArray, fmt.Sprintf("time = %d", i))
+			whereArray = append(whereArray, fmt.Sprintf("platform_id = '%s'", platformId))
+			if serverId != "" {
+				whereArray = append(whereArray, fmt.Sprintf("server_id = '%s'", serverId))
+			}
+			whereArray = append(whereArray, fmt.Sprintf("channel in(%s)", GetSQLWhereParam(channelList)))
+			whereParam := strings.Join(whereArray, " and ")
+			if whereParam != "" {
+				whereParam = " where " + whereParam
+			}
 			sql := fmt.Sprintf(
-				`SELECT sum(register_count) as sum from ten_minute_statistics where time = %d and platform_id = '%s' and server_id = '%s' and channel in(%s) `, i, platformId, serverId, GetSQLWhereParam(channelList))
+				`SELECT sum(register_count) as sum from ten_minute_statistics %s`, whereParam)
 			err := Db.Raw(sql).Scan(&data).Error
 			utils.CheckError(err)
 			if err == nil {
+				totalCount += data.Sum
 				onlineCountList = append(onlineCountList, strconv.Itoa(data.Sum))
 			} else {
 				onlineCountList = append(onlineCountList, "null")
@@ -718,7 +744,46 @@ func get24hoursRegisterCount(platformId string, serverId string, channelList [] 
 		//}
 	}
 	//logs.Info("%+v", len(onlineCountList))
-	return onlineCountList
+	return onlineCountList, totalCount
+}
+
+func get24hoursChargeCount(platformId string, serverId string, channelList [] string, zeroTimestamp int) ([] string, int) {
+	chargeCountList := make([] string, 0, 144)
+	now := utils.GetTimestamp()
+	totalCount := 0
+	//gameServer, _ := GetGameServerOne(platformId, serverId)
+	for i := zeroTimestamp + 600; i <= zeroTimestamp+86400; i = i + 10*60 {
+		if i < now {
+			var data struct {
+				Sum int
+			}
+			whereArray := make([] string, 0)
+			whereArray = append(whereArray, fmt.Sprintf("time = %d", i))
+			whereArray = append(whereArray, fmt.Sprintf("platform_id = '%s'", platformId))
+			if serverId != "" {
+				whereArray = append(whereArray, fmt.Sprintf("server_id = '%s'", serverId))
+			}
+			whereArray = append(whereArray, fmt.Sprintf("channel in(%s)", GetSQLWhereParam(channelList)))
+			whereParam := strings.Join(whereArray, " and ")
+			if whereParam != "" {
+				whereParam = " where " + whereParam
+			}
+			sql := fmt.Sprintf(
+				`SELECT sum(charge_count) as sum from ten_minute_statistics %s`, whereParam)
+			err := Db.Raw(sql).Scan(&data).Error
+			utils.CheckError(err)
+			if err == nil {
+				totalCount += data.Sum
+				chargeCountList = append(chargeCountList, strconv.Itoa(totalCount))
+			} else {
+				chargeCountList = append(chargeCountList, "null")
+			}
+		} else {
+			chargeCountList = append(chargeCountList, "null")
+		}
+	}
+	//logs.Info("%+v", len(onlineCountList))
+	return chargeCountList, totalCount
 }
 
 //获取玩家名字
@@ -918,6 +983,22 @@ func GetThadDayServerFirstChargePlayerCount(platformId string, serverId string, 
 	return data.Count
 }
 
+//获取时间内充值的玩家id列表
+func GetChargePlayerIdList(platformId string, serverId string, channel string, startTime int, endTime int) [] int {
+	var data [] struct {
+		Id int
+	}
+	sql := fmt.Sprintf(
+		`select DISTINCT player_id as id from charge_info_record where part_id = '%s' and server_id = '%s' and channel = '%s'  and charge_type = 99 and (record_time between %d and %d) ;`, platformId, serverId, channel, startTime, endTime)
+	err := DbCharge.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	idList := make([] int, 0)
+	for _, e := range data {
+		idList = append(idList, e.Id)
+	}
+	return idList
+}
+
 //获取区服总充值元宝
 func GetServerTotalChargeIngot(platformId string, serverId string, channelList [] string) int {
 	var data struct {
@@ -941,6 +1022,20 @@ func GetTotalChargeMoney(platformId string, serverId string, channel string, sta
 	utils.CheckError(err)
 	return int(data.Count)
 }
+
+
+//获取某天注册的玩家 该时间区间内总充值人民币
+func GetTotalChargeMoneyByRegisterTime(platformId string, serverId string, channel string, startTime int, endTime int, registerTime int) int {
+	var data struct {
+		Count float32
+	}
+	sql := fmt.Sprintf(
+		`select sum(money) as count from charge_info_record where part_id = '%s' and server_id = '%s' and channel = '%s' and charge_type = 99 and record_time between %d and %d and reg_time between %d and %d;`, platformId, serverId, channel, startTime, endTime, registerTime, registerTime + 86400)
+	err := DbCharge.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	return int(data.Count)
+}
+
 
 //获取区服总充值人民币
 func GetServerTotalChargeMoneyByChannelList(platformId string, serverId string, channelList [] string) int {
@@ -1522,6 +1617,8 @@ func InstallNode(node string) error {
 		app = "charge"
 	case 7:
 		app = "war"
+	case 8:
+		app = "web"
 	}
 
 	version := ""
@@ -1533,6 +1630,7 @@ func InstallNode(node string) error {
 		utils.CheckError(err)
 		version = platform.Version
 	}
+	logs.Info("版本库:%s", version)
 	commandArgs = []string{"/data/tool/ansible/do-install.sh", serverNode.Node, app, serverNode.DbName, serverNode.DbHost, strconv.Itoa(serverNode.DbPort), "root", version}
 	out, err := utils.Cmd("sh", commandArgs)
 	utils.CheckError(err, fmt.Sprintf("部署节点失败:%v %v", node, out))
@@ -1590,7 +1688,7 @@ func AfterAddGameServer() error {
 func RefreshGameServer() error {
 	out, err := utils.NodeTool(
 		"mod_server_sync",
-		"push_all_web_node",
+		"push_all_login_server_node",
 	)
 	utils.CheckError(err, out)
 	return err

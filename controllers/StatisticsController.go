@@ -121,3 +121,22 @@ func (c *StatisticsController) GetRealTimeOnline() {
 	//logs.Info("查询实时在线统计成功:%+v", serverOnlineStatistics)
 	c.Result(enums.CodeSuccess, "查询实时在线统计成功", serverOnlineStatistics)
 }
+
+
+func (c *StatisticsController) GetChargeStatistics() {
+	//logs.Info("GetRealTimeOnline")
+	var params struct {
+		PlatformId string    `json:"platformId"`
+		ServerId       string `json:"serverId"`
+		ChannelList [] string `json:"channelList"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询充值对比:%+v", params)
+	//platformId := c.GetString("platformId")
+	//serverId := c.GetString("serverId")
+	serverOnlineStatistics, err := models.GetChargeStatistics(params.PlatformId, params.ServerId, params.ChannelList)
+	c.CheckError(err, "查询充值对比")
+	//logs.Info("查询实时在线统计成功:%+v", serverOnlineStatistics)
+	c.Result(enums.CodeSuccess, "查询充值对比成功", serverOnlineStatistics)
+}

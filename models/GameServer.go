@@ -40,6 +40,15 @@ func (t *GameServer) TableName() string {
 }
 
 //获取所有数据
+func GetAllGameServerDirty() ([]*GameServer, int64) {
+	data := make([]*GameServer, 0)
+	var count int64
+	err := DbCenter.Model(&GameServer{}).Count(&count).Find(&data).Error
+	utils.CheckError(err)
+	return data, count
+}
+
+//获取所有数据
 func GetAllGameServer() ([]*GameServer, int64) {
 	var params GameServerQueryParam
 	params.Limit = -1

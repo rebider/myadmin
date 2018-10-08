@@ -4,6 +4,8 @@ import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/astaxie/beego/logs"
 	"github.com/jinzhu/gorm"
+	"strings"
+	"fmt"
 )
 
 type RemainTotal struct {
@@ -99,6 +101,11 @@ func UpdateRemainTotal(platformId string, serverId string, channel string, times
 	openDayZeroTimestamp := utils.GetThatZeroTimestamp(int64(serverNode.OpenTime))
 
 	for i := 1; i < 30; i++ {
+		if i == 1 || i == 2 || i == 3 || i == 6 || i == 13 || i == 29  {
+
+		} else {
+			continue
+		}
 		thatDayZeroTimestamp := timestamp - i*86400
 		if openDayZeroTimestamp > thatDayZeroTimestamp {
 			continue
@@ -162,64 +169,124 @@ func UpdateRemainTotal(platformId string, serverId string, channel string, times
 			err = Db.Model(&m).Update("Remain3", rate).Error
 		case 3:
 			err = Db.Model(&m).Update("Remain4", rate).Error
-		case 4:
-			err = Db.Model(&m).Update("Remain5", rate).Error
-		case 5:
-			err = Db.Model(&m).Update("Remain6", rate).Error
+		//case 4:
+		//	err = Db.Model(&m).Update("Remain5", rate).Error
+		//case 5:
+		//	err = Db.Model(&m).Update("Remain6", rate).Error
 		case 6:
 			err = Db.Model(&m).Update("Remain7", rate).Error
-
-		case 7:
-			err = Db.Model(&m).Update("Remain8", rate).Error
-		case 8:
-			err = Db.Model(&m).Update("Remain9", rate).Error
-		case 9:
-			err = Db.Model(&m).Update("Remain10", rate).Error
-		case 10:
-			err = Db.Model(&m).Update("Remain11", rate).Error
-		case 11:
-			err = Db.Model(&m).Update("Remain12", rate).Error
-		case 12:
-			err = Db.Model(&m).Update("Remain13", rate).Error
+		//
+		//case 7:
+		//	err = Db.Model(&m).Update("Remain8", rate).Error
+		//case 8:
+		//	err = Db.Model(&m).Update("Remain9", rate).Error
+		//case 9:
+		//	err = Db.Model(&m).Update("Remain10", rate).Error
+		//case 10:
+		//	err = Db.Model(&m).Update("Remain11", rate).Error
+		//case 11:
+		//	err = Db.Model(&m).Update("Remain12", rate).Error
+		//case 12:
+		//	err = Db.Model(&m).Update("Remain13", rate).Error
 
 		case 13:
 			err = Db.Model(&m).Update("Remain14", rate).Error
-		case 14:
-			err = Db.Model(&m).Update("Remain15", rate).Error
-		case 15:
-			err = Db.Model(&m).Update("Remain16", rate).Error
-		case 16:
-			err = Db.Model(&m).Update("Remain17", rate).Error
-		case 17:
-			err = Db.Model(&m).Update("Remain18", rate).Error
-		case 18:
-			err = Db.Model(&m).Update("Remain19", rate).Error
-
-		case 19:
-			err = Db.Model(&m).Update("Remain20", rate).Error
-		case 20:
-			err = Db.Model(&m).Update("Remain21", rate).Error
-		case 21:
-			err = Db.Model(&m).Update("Remain22", rate).Error
-		case 22:
-			err = Db.Model(&m).Update("Remain23", rate).Error
-		case 23:
-			err = Db.Model(&m).Update("Remain24", rate).Error
-		case 24:
-			err = Db.Model(&m).Update("Remain25", rate).Error
-
-		case 25:
-			err = Db.Model(&m).Update("Remain26", rate).Error
-		case 26:
-			err = Db.Model(&m).Update("Remain27", rate).Error
-		case 27:
-			err = Db.Model(&m).Update("Remain28", rate).Error
-		case 28:
-			err = Db.Model(&m).Update("Remain29", rate).Error
+		//case 14:
+		//	err = Db.Model(&m).Update("Remain15", rate).Error
+		//case 15:
+		//	err = Db.Model(&m).Update("Remain16", rate).Error
+		//case 16:
+		//	err = Db.Model(&m).Update("Remain17", rate).Error
+		//case 17:
+		//	err = Db.Model(&m).Update("Remain18", rate).Error
+		//case 18:
+		//	err = Db.Model(&m).Update("Remain19", rate).Error
+		//
+		//case 19:
+		//	err = Db.Model(&m).Update("Remain20", rate).Error
+		//case 20:
+		//	err = Db.Model(&m).Update("Remain21", rate).Error
+		//case 21:
+		//	err = Db.Model(&m).Update("Remain22", rate).Error
+		//case 22:
+		//	err = Db.Model(&m).Update("Remain23", rate).Error
+		//case 23:
+		//	err = Db.Model(&m).Update("Remain24", rate).Error
+		//case 24:
+		//	err = Db.Model(&m).Update("Remain25", rate).Error
+		//
+		//case 25:
+		//	err = Db.Model(&m).Update("Remain26", rate).Error
+		//case 26:
+		//	err = Db.Model(&m).Update("Remain27", rate).Error
+		//case 27:
+		//	err = Db.Model(&m).Update("Remain28", rate).Error
+		//case 28:
+		//	err = Db.Model(&m).Update("Remain29", rate).Error
 		case 29:
 			err = Db.Model(&m).Update("Remain30", rate).Error
 		}
 	}
 
 	return err
+}
+
+
+
+func RepireRemainTotal() {
+	logs.Info("修复 remain_total")
+	data := make([]*RemainTotal, 0)
+	err := Db.Model(&RemainTotal{}).Find(&data).Error
+	utils.CheckError(err)
+	for _, e := range data {
+
+		nodeName := strings.Split(e.Node, "@")[0]
+
+		platform := "wx"
+		serverId := ""
+		if strings.Contains(nodeName, "_") {
+			platform = strings.Split(nodeName, "_")[0]
+			serverId = strings.Split(nodeName, "_")[1]
+		} else {
+			serverId = nodeName
+		}
+		//e.PlatformId = platform
+		//e.ServerId = serverId
+		//err = Db.Save(&e).Error
+		sql := fmt.Sprintf("update remain_total set platform_id = '%s', server_id = '%s', channel = '%s' where node = '%s';", platform, serverId, platform, e.Node)
+		logs.Info("sql:%s\n", sql)
+		err = Db.Debug().Exec(sql).Error
+		//err =Db.Model(&e).Updates(map[string]interface{}{"platform_id": platform, "server_id": serverId, "channel": platform}).Error
+		utils.CheckError(err)
+	}
+	logs.Info("修复remain_total完毕")
+}
+
+func RepireRemainActive() {
+	logs.Info("修复 remain_active")
+	data := make([]*RemainActive, 0)
+	err := Db.Model(&RemainActive{}).Find(&data).Error
+	utils.CheckError(err)
+	for _, e := range data {
+
+		nodeName := strings.Split(e.Node, "@")[0]
+
+		platform := "wx"
+		serverId := ""
+		if strings.Contains(nodeName, "_") {
+			platform = strings.Split(nodeName, "_")[0]
+			serverId = strings.Split(nodeName, "_")[1]
+		} else {
+			serverId = nodeName
+		}
+		//e.PlatformId = platform
+		//e.ServerId = serverId
+		//err = Db.Save(&e).Error
+		sql := fmt.Sprintf("update remain_active set platform_id = '%s', server_id = '%s', channel = '%s' where node = '%s';", platform, serverId, platform, e.Node)
+		logs.Info("sql:%s\n", sql)
+		err = Db.Debug().Exec(sql).Error
+		//err =Db.Model(&e).Updates(map[string]interface{}{"platform_id": platform, "server_id": serverId, "channel": platform}).Error
+		utils.CheckError(err)
+	}
+	logs.Info("修复remain_active完毕")
 }

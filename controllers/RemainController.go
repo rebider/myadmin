@@ -26,6 +26,19 @@ func (c *RemainController) GetTotalRemain() {
 	c.Result(enums.CodeSuccess, "查询总体留存成功", result)
 }
 
+// 付费留存
+func (c *RemainController) GetChargeRemain() {
+	var params models.RemainChargeQueryParam
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询付费留存:+", params)
+	data := models.GetRemainChargeList(&params)
+	result := make(map[string]interface{})
+	result["total"] = 100
+	result["rows"] = data
+	c.Result(enums.CodeSuccess, "查询付费留存成功", result)
+}
+
 // 活跃留存
 func (c *RemainController) GetActiveRemain() {
 	var params models.ActiveRemainQueryParam

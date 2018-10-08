@@ -240,3 +240,26 @@ func GetAllGameNodeByPlatformId(platformId string) []string {
 //	}).First(&serverNode).Error
 //	return serverNode, err
 //}
+
+func CheckAllGameNode() {
+	isCheck := beego.AppConfig.DefaultBool("is_check_node", false)
+	if isCheck {
+		now := utils.GetTimestamp()
+		serverNodeList := GetAllServerNodeList()
+		num := 0
+		for _, e := range serverNodeList {
+			if e.Type == 1 && e.OpenTime + 60 > now {
+				logs.Debug("忽略:%s", e.Node)
+				continue
+			}
+			if e.RunState == 0 {
+				num ++
+			}
+		}
+		if num > 0 {
+			logs.Error("%d个节点未开启!!!!!!!!!!!!", num)
+			utils.ReportMsg("105138", "13616005067")
+			utils.ReportMsg("105138", "19905929917")
+		}
+	}
+}

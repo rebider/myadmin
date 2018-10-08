@@ -26,6 +26,7 @@ func init() {
 	// 定时检测开服
 	go cronAutoCreateServer()
 
+	//go models.RepireTenMinuteStatistics()
 	//now := time.Now()
 	//// 计算下一个整点
 	////next := now.Add(time.Hour * 1)
@@ -33,14 +34,15 @@ func init() {
 	//next1 := next.Add(time.Minute * 10)
 	//logs.Info("整点10分钟剩余时间:%v, %v, %v", next1.Sub(now), now.Minute() / 10, next1.Unix())
 
-	//go Repire()
+	//go models.RepireRemainTotal()
+	//go models.RepireRemainActive()
 	//go DoUpdateAllGameNodeDailyStatistics(1536163200)
 	//go models.RepireTenMinuteStatistics()
 	//go models.RepireRemainActive()
 	//go models.BackDatabases()
 	//models.CreateAnsibleInventory()
 	//models.S()
-	//go models.Repair()
+	//go Repire()
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000)
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400)
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400*2)
@@ -72,6 +74,7 @@ func minuteCron() {
 
 			// 业务
 			go ClockDealAllNoticeLog()
+			go models.CheckAllGameNode()
 		}
 	}
 }
@@ -108,7 +111,11 @@ func cronAutoCreateServer() {
 			for _, platform := range platformList {
 				// 自动开服
 				now := utils.GetTimestamp()
-				models.AutoCreateAndOpenServer(platform.Id, true, now)
+				err = models.AutoCreateAndOpenServer(platform.Id, true, now)
+				if err != nil {
+					utils.ReportMsg("105146", "13616005067")
+					utils.ReportMsg("105146", "19905929917")
+				}
 			}
 		}
 	}
@@ -143,6 +150,8 @@ func dailyZeroClockCron() {
 		go UpdateAllGameNodeDailyStatistics()
 		go UpdateAllGameNodeRemainTotal()
 		go UpdateAllGameNodeRemainActive()
+		go UpdateAllGameNodeDailyLTV()
+		go UpdateAllGameNodeChargeRemain()
 	}
 }
 
