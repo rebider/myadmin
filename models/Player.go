@@ -359,7 +359,7 @@ func GetPlayerIngot(gameDb *gorm.DB, playerId int) int {
 //}
 
 type ServerOnlineStatistics struct {
-	PlatformId string `json:"platformId"`0
+	PlatformId string `json:"platformId"`
 	//ServerId                    string    `json:"serverId"`
 	TodayCreateRole             int       `json:"todayCreateRole"`
 	TodayRegister               int       `json:"todayRegister"`
