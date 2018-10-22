@@ -29,3 +29,11 @@ const (
 	GmSalt = "fretj9tnda3gr7t14terg4es5f4ds514f" //gm 盐值
 	PasswordSalt = "fdsafafa4cw78c8qwcwce8v7rwc7"
 )
+
+
+// 服务器状态
+const (
+	ServerStateMaintenance = 1 //维护
+	ServerStateNormal  = 2 //正常
+	ServerStateHot   = 3 //火爆
+)

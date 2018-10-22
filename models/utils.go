@@ -786,6 +786,47 @@ func get24hoursChargeCount(platformId string, serverId string, channelList [] st
 	return chargeCountList, totalCount
 }
 
+func get24hoursChargePlayerCount(platformId string, serverId string, channelList [] string, zeroTimestamp int) ([] string, int) {
+	chargePlayerCountList := make([] string, 0, 144)
+	now := utils.GetTimestamp()
+	totalCount := 0
+	//gameServer, _ := GetGameServerOne(platformId, serverId)
+	for i := zeroTimestamp + 600; i <= zeroTimestamp+86400; i = i + 10*60 {
+		if i < now {
+			var data struct {
+				Sum int
+			}
+			whereArray := make([] string, 0)
+			whereArray = append(whereArray, fmt.Sprintf("time = %d", i))
+			whereArray = append(whereArray, fmt.Sprintf("platform_id = '%s'", platformId))
+			if serverId != "" {
+				whereArray = append(whereArray, fmt.Sprintf("server_id = '%s'", serverId))
+			}
+			whereArray = append(whereArray, fmt.Sprintf("channel in(%s)", GetSQLWhereParam(channelList)))
+			whereParam := strings.Join(whereArray, " and ")
+			if whereParam != "" {
+				whereParam = " where " + whereParam
+			}
+			sql := fmt.Sprintf(
+				`SELECT sum(charge_player_count) as sum from ten_minute_statistics %s`, whereParam)
+			err := Db.Raw(sql).Scan(&data).Error
+			utils.CheckError(err)
+			if err == nil {
+				if data.Sum > totalCount {
+					totalCount = data.Sum
+				}
+				chargePlayerCountList = append(chargePlayerCountList, strconv.Itoa(totalCount))
+			} else {
+				chargePlayerCountList = append(chargePlayerCountList, "null")
+			}
+		} else {
+			chargePlayerCountList = append(chargePlayerCountList, "null")
+		}
+	}
+	//logs.Info("%+v", len(onlineCountList))
+	return chargePlayerCountList, totalCount
+}
+
 //获取玩家名字
 func GetPlayerName(db *gorm.DB, playerId int) string {
 	var data struct {
@@ -1011,7 +1052,7 @@ func GetServerTotalChargeIngot(platformId string, serverId string, channelList [
 	return data.Count
 }
 
-//获取该天区服总充值人民币
+//获取该时间内区服总充值人民币
 func GetTotalChargeMoney(platformId string, serverId string, channel string, startTime int, endTime int) int {
 	var data struct {
 		Count float32
@@ -1021,6 +1062,17 @@ func GetTotalChargeMoney(platformId string, serverId string, channel string, sta
 	err := DbCharge.Raw(sql).Scan(&data).Error
 	utils.CheckError(err)
 	return int(data.Count)
+}
+//获取该时间内区服充值人数
+func GetTotalChargePlayerCount(platformId string, serverId string, channel string, startTime int, endTime int) int {
+	var data struct {
+		Count int
+	}
+	sql := fmt.Sprintf(
+		`select count(DISTINCT player_id) as count from charge_info_record where part_id = '%s' and server_id = '%s' and channel = '%s' and charge_type = 99 and record_time between %d and %d;`, platformId, serverId, channel, startTime, endTime)
+	err := DbCharge.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Count
 }
 
 
@@ -1148,6 +1200,8 @@ type ChargeActivityDistribution struct {
 	ChargeItemId int     `json:"chargeItemId"`
 	Count        int     `json:"count"`
 	Rate         float32 `json:"rate"`
+	Money        float32     `json:"money"`
+	MoneyRate         float32 `json:"moneyRate"`
 }
 type ChargeActivityDistributionQueryParam struct {
 	BaseQueryParam
@@ -1169,6 +1223,9 @@ func GetChargeActivityDistribution(params ChargeActivityDistributionQueryParam) 
 	if params.IsFirst == 1 {
 		whereArray = append(whereArray, fmt.Sprintf("is_first = 1"))
 	}
+	if params.StartTime > 0 {
+		whereArray = append(whereArray, fmt.Sprintf("record_time between %d and %d", params.StartTime, params.EndTime))
+	}
 	if params.ServerId != "" {
 		whereArray = append(whereArray, fmt.Sprintf("server_id = '%s'", params.ServerId))
 	}
@@ -1178,7 +1235,7 @@ func GetChargeActivityDistribution(params ChargeActivityDistributionQueryParam) 
 	}
 
 	sql := fmt.Sprintf(
-		`SELECT charge_item_id, count(*) as count FROM charge_info_record %s group by charge_item_id `, whereParam)
+		`SELECT charge_item_id, count(*) as count, sum(money) as money FROM charge_info_record %s group by charge_item_id `, whereParam)
 	err := DbCharge.Raw(sql).Find(&data).Error
 	utils.CheckError(err)
 
@@ -1196,15 +1253,21 @@ func GetChargeActivityDistribution(params ChargeActivityDistributionQueryParam) 
 	//}
 
 	sum := 0
+	var moneySum  float32
 	for _, e := range data {
 		sum += e.Count
+		moneySum += e.Money
 	}
 	if sum > 0 {
 		for _, e := range data {
 			e.Rate = float32(e.Count) / float32(sum) * 100
 		}
 	}
-
+	if moneySum > 0 {
+		for _, e := range data {
+			e.MoneyRate = float32(e.Money) / float32(moneySum) * 100
+		}
+	}
 	return data
 }
 
@@ -1560,7 +1623,7 @@ func GetIpOnlinePlayerCount(ip string) int {
 // 向中心服添加game_server
 func AddGameServer(PlatformId string, sid string, desc string, node string, zoneNode string, state int, openTime int, isShow int) (string, error) {
 	logs.Info("向中心服添加game_server:%v", PlatformId, sid, desc, node, zoneNode, state, openTime, isShow)
-	out, err := utils.NodeTool(
+	out, err := utils.CenterNodeTool(
 		"mod_server_mgr",
 		"add_game_server",
 		PlatformId,
@@ -1577,7 +1640,7 @@ func AddGameServer(PlatformId string, sid string, desc string, node string, zone
 
 func AddServerNode(node string, ip string, port int, webPort int, serverType int, platformId string, dbHost string, dbPort int, dbName string) (string, error) {
 	logs.Info("向中心服添加server_node:%v", node, ip, port, webPort, serverType, platformId, dbHost, dbPort, dbName)
-	out, err := utils.NodeTool(
+	out, err := utils.CenterNodeTool(
 		"mod_server_mgr",
 		"add_server_node",
 		node,
@@ -1677,7 +1740,7 @@ func NodeAction(nodes [] string, action string) error {
 }
 
 func AfterAddGameServer() error {
-	out, err := utils.NodeTool(
+	out, err := utils.CenterNodeTool(
 		"mod_server_sync",
 		"after_add_game_node",
 	)
@@ -1686,7 +1749,7 @@ func AfterAddGameServer() error {
 }
 
 func RefreshGameServer() error {
-	out, err := utils.NodeTool(
+	out, err := utils.CenterNodeTool(
 		"mod_server_sync",
 		"push_all_login_server_node",
 	)
@@ -1744,50 +1807,74 @@ func Max(x, y int) int {
 	return y
 }
 
-func S() {
-	logs.Info("开始统计")
-	gameServerList, _ := GetAllGameServer()
-	context := ""
-	for _, e := range gameServerList {
-		var data [] struct {
-			PlayerId int
-		}
-		gameDb, err := GetGameDbByNode(e.Node)
-		utils.CheckError(err)
-		if err != nil {
-			return
-		}
-		defer gameDb.Close()
-		sql := fmt.Sprintf(
-			`select a.player_id as player_id,b.acc_id from player_platform_award AS a,player AS b where a.player_id = b.id and a.id = 1601`)
-		err = gameDb.Raw(sql).Find(&data).Error
-		utils.CheckError(err)
-		for _, i := range data {
-			player, err := GetPlayerOne(e.PlatformId, e.Sid, i.PlayerId)
-			utils.CheckError(err)
-			is2 := IsThatDayPlayerLogin(gameDb, utils.GetThatZeroTimestamp(int64(player.RegTime))+86400, player.Id)
-			is3 := IsThatDayPlayerLogin(gameDb, utils.GetThatZeroTimestamp(int64(player.RegTime))+86400*2, player.Id)
-			var moneyList [] struct {
-				Money        int
-				ChargeItemId int
-			}
-			sql := fmt.Sprintf(
-				`select money , charge_item_id from charge_info_record where player_id = %d;`, i.PlayerId)
-			err = DbCharge.Raw(sql).Find(&moneyList).Error
-			m := make([] string, 0)
-			//logs.Info("moneyList:%+v", moneyList)
-			for _, e := range moneyList {
-				m = append(m, strconv.Itoa(e.Money))
-			}
+//func S() {
+//	logs.Info("开始统计")
+//	gameServerList, _ := GetAllGameServer()
+//	context := ""
+//	for _, e := range gameServerList {
+//		var data [] struct {
+//			PlayerId int
+//		}
+//		gameDb, err := GetGameDbByNode(e.Node)
+//		utils.CheckError(err)
+//		if err != nil {
+//			return
+//		}
+//		defer gameDb.Close()
+//		sql := fmt.Sprintf(
+//			`select a.player_id as player_id,b.acc_id from player_platform_award AS a,player AS b where a.player_id = b.id and a.id = 1601`)
+//		err = gameDb.Raw(sql).Find(&data).Error
+//		utils.CheckError(err)
+//		for _, i := range data {
+//			player, err := GetPlayerOne(e.PlatformId, e.Sid, i.PlayerId)
+//			utils.CheckError(err)
+//			is2 := IsThatDayPlayerLogin(gameDb, utils.GetThatZeroTimestamp(int64(player.RegTime))+86400, player.Id)
+//			is3 := IsThatDayPlayerLogin(gameDb, utils.GetThatZeroTimestamp(int64(player.RegTime))+86400*2, player.Id)
+//			var moneyList [] struct {
+//				Money        int
+//				ChargeItemId int
+//			}
+//			sql := fmt.Sprintf(
+//				`select money , charge_item_id from charge_info_record where player_id = %d;`, i.PlayerId)
+//			err = DbCharge.Raw(sql).Find(&moneyList).Error
+//			m := make([] string, 0)
+//			//logs.Info("moneyList:%+v", moneyList)
+//			for _, e := range moneyList {
+//				m = append(m, strconv.Itoa(e.Money))
+//			}
+//
+//			m1 := make([] string, 0)
+//			//logs.Info("moneyList:%+v", moneyList)
+//			for _, e := range moneyList {
+//				m1 = append(m1, strconv.Itoa(e.ChargeItemId))
+//			}
+//			context += fmt.Sprintf("%s, %d, %s, %t, %t, [%s], [%s]\n", e.Sid, player.Id, player.AccId, is2, is3, strings.Join(m, " "), strings.Join(m1, " "))
+//		}
+//	}
+//	utils.FilePutContext("data.txt", context)
+//	logs.Info("统计完毕")
+//}
 
-			m1 := make([] string, 0)
-			//logs.Info("moneyList:%+v", moneyList)
-			for _, e := range moneyList {
-				m1 = append(m1, strconv.Itoa(e.ChargeItemId))
-			}
-			context += fmt.Sprintf("%s, %d, %s, %t, %t, [%s], [%s]\n", e.Sid, player.Id, player.AccId, is2, is3, strings.Join(m, " "), strings.Join(m1, " "))
-		}
+
+// 获取服务器整形数据
+func GetServerDataInt(db *gorm.DB, serverDataId int) int {
+	var data struct {
+		Data int
 	}
-	utils.FilePutContext("data.txt", context)
-	logs.Info("统计完毕")
+	sql := fmt.Sprintf(
+		`SELECT int_data as data FROM server_data WHERE id =  %d`, serverDataId)
+	err := db.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Data
+}
+// 获取服务器字符串数据
+func GetServerDataStr(db *gorm.DB, serverDataId int) string {
+	var data struct {
+		Data string
+	}
+	sql := fmt.Sprintf(
+		`SELECT str_data as data FROM server_data WHERE id =  %d`, serverDataId)
+	err := db.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Data
 }

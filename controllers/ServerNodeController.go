@@ -67,7 +67,7 @@ func (c *ServerNodeController) Delete() {
 	utils.CheckError(err)
 	logs.Info("删除节点:%+v", ids)
 	for _, str := range ids {
-		out, err := utils.NodeTool(
+		out, err := utils.CenterNodeTool(
 			"mod_server_mgr",
 			"delete_server_node",
 			str,

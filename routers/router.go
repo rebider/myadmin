@@ -96,6 +96,10 @@ func init() {
 	beego.Router("/tool/set_task", &controllers.ToolController{}, "*:SetTask")
 	beego.Router("/tool/active_function", &controllers.ToolController{}, "*:ActiveFunction")
 	beego.Router("/tool/get_ip_origin", &controllers.ToolController{}, "*:GetIpOrigin")
+	beego.Router("/tool/merge", &controllers.ToolController{}, "*:Merge")
+	beego.Router("/tool/get_weixin_args", &controllers.ToolController{}, "*:GetWeixinArgs")
+	beego.Router("/tool/update_weixin_args", &controllers.ToolController{}, "*:UpdateWeixinArgs")
+	beego.Router("/tool/sql_query", &controllers.ToolController{}, "*:SqlQuery")
 
 	//游戏服
 	beego.Router("/game_server/list", &controllers.GameServerController{}, "*:List")

@@ -8,8 +8,6 @@ import (
 	//"strings"
 	//"strings"
 	"github.com/astaxie/beego/logs"
-	"os/exec"
-	"bytes"
 	//"log"
 	"fmt"
 	//"github.com/beego/bee/cmd"
@@ -141,7 +139,7 @@ func GetPlayerPropLogList2(params *PlayerPropLogQueryParam) ([]*PlayerPropLog, i
 	nodeName := strings.Split(serverNode.Node, "@")[0]
 	nodeIp := strings.Split(serverNode.Node, "@")[1]
 	cmd := fmt.Sprintf("ssh -i %s -p%s %s ' /usr/bin/cat /data/log/game/%s/%s/player_prop_log.log %s'", sshKey, sshPort, nodeIp, nodeName, logDir, grepParam)
-	out, err := ExecShell(cmd)
+	out, err := utils.ExecShell(cmd)
 	utils.CheckError(err)
 	//logs.Debug(out)
 
@@ -207,16 +205,3 @@ func GetPlayerPropLogList2(params *PlayerPropLogQueryParam) ([]*PlayerPropLog, i
 	//logs.Debug(out)
 }
 
-func ExecShell(s string) (string, error){
-	fmt.Println(s)
-	cmd := exec.Command("/bin/bash", "-c", s)
-	var out bytes.Buffer
-
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return out.String(), err
-	}
-	//fmt.Printf("%s", out.String())
-	return out.String(), nil
-}

@@ -78,7 +78,7 @@ func (c *GameServerController) Delete() {
 
 	for _, id := range ids {
 
-		out, err := utils.NodeTool(
+		out, err := utils.CenterNodeTool(
 			"mod_server_mgr",
 			"delete_game_server",
 			id.PlatformId,
@@ -107,7 +107,7 @@ func (c *GameServerController) BatchUpdateState() {
 			logs.Error("平台id不能为空")
 			c.Result(enums.CodeFail, "平台id不能为空", 0)
 		}
-		out, err := utils.NodeTool(
+		out, err := utils.CenterNodeTool(
 			"mod_server_mgr",
 			"update_all_game_server_state",
 			param.PlatformId,
@@ -117,7 +117,7 @@ func (c *GameServerController) BatchUpdateState() {
 	} else {
 		for _, node := range param.Nodes {
 
-			out, err := utils.NodeTool(
+			out, err := utils.CenterNodeTool(
 				"mod_server_mgr",
 				"update_node_state",
 				node,

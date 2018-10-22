@@ -20,6 +20,9 @@ func init() {
 	// 每日0点定时器
 	go dailyZeroClockCron()
 
+	// 每日0点5分定时器
+	go dailyZeroClock5MinuteCron()
+
 	//整10分钟
 	go tenMinuteClockCron()
 
@@ -134,7 +137,7 @@ func tenSecondCron() {
 }
 
 
-//每天0天执行
+//每天0点执行
 func dailyZeroClockCron() {
 	for {
 		now := time.Now()
@@ -152,6 +155,27 @@ func dailyZeroClockCron() {
 		go UpdateAllGameNodeRemainActive()
 		go UpdateAllGameNodeDailyLTV()
 		go UpdateAllGameNodeChargeRemain()
+	}
+}
+
+//每天0点5分执行
+func dailyZeroClock5MinuteCron() {
+	for {
+		now := time.Now()
+		// 计算下一个零点5分
+		next := now.Add(time.Hour * 24)
+		next = time.Date(next.Year(), next.Month(), next.Day(), 0, 5, 0, 1, next.Location())
+		logs.Info("每天0点5分执行剩余时间:%v", next.Sub(now))
+		t := time.NewTimer(next.Sub(now))
+		<-t.C
+
+		// 业务
+		logs.Info("0点5分执行定时器")
+		isClockOpenServer := beego.AppConfig.DefaultBool("is_clock_open_server", false)
+		if isClockOpenServer {
+			models.OpenServerNow("af")
+			models.OpenServerNow("djs")
+		}
 	}
 }
 

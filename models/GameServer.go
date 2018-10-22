@@ -9,6 +9,7 @@ import (
 	"github.com/astaxie/beego"
 	"time"
 	"github.com/linclin/gopub/src/github.com/pkg/errors"
+	"sort"
 )
 
 type GameServerQueryParam struct {
@@ -25,6 +26,7 @@ type GameServer struct {
 	Node            string `json:"node"`
 	State           int    `gorm:"-" json:"state"`
 	IsShow          int    `json:"isShow"`
+	Ip            string `json:"ip" gorm:"-"`
 	OpenTime        int    `gorm:"-" json:"openTime"`
 	ZoneNode        string `gorm:"-" json:"zoneNode"`
 	IsAdd           int    `gorm:"-" json:"isAdd"`
@@ -49,13 +51,31 @@ func GetAllGameServerDirty() ([]*GameServer, int64) {
 }
 
 //获取所有数据
-func GetAllGameServer() ([]*GameServer, int64) {
-	var params GameServerQueryParam
-	params.Limit = -1
-	//获取数据列表和总数
-	data, total := GetGameServerList(&params)
-	return data, total
+//func GetAllGameServer() ([]*GameServer, int64) {
+//	var params GameServerQueryParam
+//	params.Limit = -1
+//	//获取数据列表和总数
+//	data, total := GetGameServerList(&params)
+//	return data, total
+//}
+
+type gameServerSlice [] *GameServer
+
+func (s gameServerSlice) Len() int           { return len(s) }
+func (s gameServerSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s gameServerSlice) Less(i, j int) bool {
+	iId, err := strconv.Atoi(SubString(s[i].Sid, 1, len(s[i].Sid)-1))
+	utils.CheckError(err)
+	jId, err := strconv.Atoi(SubString(s[j].Sid, 1, len(s[j].Sid)-1))
+	utils.CheckError(err)
+	return iId > jId
+	}
+
+func sortGameServer(list []*GameServer) []*GameServer {
+	sort.Sort(gameServerSlice(list))
+	return list
 }
+
 
 //获取游戏服列表
 func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
@@ -67,14 +87,27 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
 	}
-	data := make([]*GameServer, 0)
+	tmpData := make([]*GameServer, 0)
 	var count int64
 	err := DbCenter.Model(&GameServer{}).Where(&GameServer{
 		PlatformId: params.PlatformId,
 		Sid:        params.ServerId,
 		Node:       params.Node,
-	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+	}).Count(&count).Offset(params.Offset).Find(&tmpData).Error
 	utils.CheckError(err)
+	sortGameServer(tmpData)
+	data := make([]*GameServer, 0, params.Limit)
+	i:= 0
+	j := 0
+	for _, e := range tmpData {
+		if i >= params.Offset {
+			if j < params.Limit {
+				data = append(data, e)
+				j++
+			}
+		}
+		i++
+	}
 	for _, e := range data {
 		serverNode, err := GetServerNode(e.Node)
 		e.DbVersion = GetDbVersion(e.Node)
@@ -83,6 +116,7 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 		if err == nil {
 			e.State = serverNode.State
 			e.OpenTime = serverNode.OpenTime
+			e.Ip = serverNode.Ip
 			e.ZoneNode = serverNode.ZoneNode
 			e.RunState = serverNode.RunState
 			e.StartTime = GetNodeStartTime(e.Node)
@@ -93,6 +127,42 @@ func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
 	}
 	return data, count
 }
+//func GetGameServerList(params *GameServerQueryParam) ([]*GameServer, int64) {
+//	sortOrder := "Sid"
+//	switch params.Sort {
+//	case "Sid":
+//		sortOrder = "Sid"
+//	}
+//	if params.Order == "descending" {
+//		sortOrder = sortOrder + " desc"
+//	}
+//	data := make([]*GameServer, 0)
+//	var count int64
+//	err := DbCenter.Model(&GameServer{}).Where(&GameServer{
+//		PlatformId: params.PlatformId,
+//		Sid:        params.ServerId,
+//		Node:       params.Node,
+//	}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data).Error
+//	utils.CheckError(err)
+//	for _, e := range data {
+//		serverNode, err := GetServerNode(e.Node)
+//		e.DbVersion = GetDbVersion(e.Node)
+//		utils.CheckError(err)
+//
+//		if err == nil {
+//			e.State = serverNode.State
+//			e.OpenTime = serverNode.OpenTime
+//			e.Ip = serverNode.Ip
+//			e.ZoneNode = serverNode.ZoneNode
+//			e.RunState = serverNode.RunState
+//			e.StartTime = GetNodeStartTime(e.Node)
+//			e.OnlineCount = GetNowOnlineCountByNode(e.Node)
+//			e.CreateRoleCount = GetTotalCreateRoleCountByNode(e.Node)
+//		}
+//
+//	}
+//	return data, count
+//}
 
 //获取游戏服列表
 func GetAllGameServerList() []*GameServer {
@@ -546,7 +616,11 @@ func AutoCreateAndOpenServer(platformId string,isCheck bool, openServerTime int)
 	return nil
 }
 
-
+func OpenServerNow(platformId string) {
+	logs.Info("现在开服:%s", platformId)
+	err := AutoCreateAndOpenServer(platformId,false, utils.GetTimestamp())
+	utils.CheckError(err, "开服失败!!!!!!" + platformId)
+}
 //func AutoCreateAndOpenServer(isCheck bool) error {
 //	if IsNowOpenServer == true {
 //		logs.Warning("正在开服中!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")

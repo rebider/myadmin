@@ -19,6 +19,7 @@ type ForbidController struct {
 
 // 获取封禁列表
 func (c *ForbidController) ForbidLogList() {
+	c.Ctx.Output.Download("","Channel.json")
 	var params models.ForbidLogQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)

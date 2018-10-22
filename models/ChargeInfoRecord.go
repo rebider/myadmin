@@ -184,12 +184,19 @@ func GetChargeInfoRecordList(params *ChargeInfoRecordQueryParam) ([]*ChargeInfoR
 type ChargeStatistics struct {
 	PlatformId string `json:"platformId"`
 	//ServerId                    string    `json:"serverId"`
-	TodayCharge               int       `json:"todayCharge"`
-	YesterdayCharge           int       `json:"yesterdayCharge"`
-	BeforeYesterdayCharge     int       `json:"beforeYesterdayCharge"`
-	TodayChargeList           [] string `json:"todayChargeList"`
-	YesterdayChargeList       [] string `json:"yesterdayChargeList"`
-	BeforeYesterdayChargeList [] string `json:"beforeYesterdayChargeList"`
+	TodayCharge                      int       `json:"todayCharge"`
+	TodayChargePlayerCount           int       `json:"todayChargePlayerCount"`
+	YesterdayCharge                  int       `json:"yesterdayCharge"`
+	YesterdayChargePlayerCount       int       `json:"yesterdayChargePlayerCount"`
+	BeforeYesterdayCharge            int       `json:"beforeYesterdayCharge"`
+	BeforeYesterdayChargePlayerCount int       `json:"beforeYesterdayChargePlayerCount"`
+	TodayChargeList                  [] string `json:"todayChargeList"`
+	YesterdayChargeList              [] string `json:"yesterdayChargeList"`
+	BeforeYesterdayChargeList        [] string `json:"beforeYesterdayChargeList"`
+
+	TodayChargePlayerCountList           [] string `json:"todayChargePlayerCountList"`
+	YesterdayChargePlayerCountList       [] string `json:"yesterdayChargePlayerCountList"`
+	BeforeYesterdayChargePlayerCountList [] string `json:"beforeYesterdayChargePlayerCountList"`
 }
 
 func GetChargeStatistics(platformId string, serverId string, channelList [] string) (*ChargeStatistics, error) {
@@ -201,16 +208,29 @@ func GetChargeStatistics(platformId string, serverId string, channelList [] stri
 	todayOnlineList, todayTotalCharge := get24hoursChargeCount(platformId, serverId, channelList, todayZeroTimestamp)
 	yesterdayOnlineList, yesterdayTotalCharge := get24hoursChargeCount(platformId, serverId, channelList, yesterdayZeroTimestamp)
 	beforeYesterdayOnlineList, beforeYesterdayTotalCharge := get24hoursChargeCount(platformId, serverId, channelList, beforeYesterdayZeroTimestamp)
+
+	todayChargePlayerCountList, todayChargePlayerCount := get24hoursChargePlayerCount(platformId, serverId, channelList, todayZeroTimestamp)
+	yesterdayChargePlayerCountList, yesterdayChargePlayerCount := get24hoursChargePlayerCount(platformId, serverId, channelList, yesterdayZeroTimestamp)
+	beforeYesterdayChargePlayerCountList, beforeYesterdayChargePlayerCount := get24hoursChargePlayerCount(platformId, serverId, channelList, beforeYesterdayZeroTimestamp)
+
 	chargeStatistics := &ChargeStatistics{
-		PlatformId:  platformId,
-		TodayCharge: todayTotalCharge,
+		PlatformId:             platformId,
+		TodayCharge:            todayTotalCharge,
+		TodayChargePlayerCount: todayChargePlayerCount,
 		//TodayCreateRole: GetCreateRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTimestamp, todayZeroTimestamp+86400),
-		YesterdayCharge: yesterdayTotalCharge,
+		YesterdayCharge:            yesterdayTotalCharge,
+		YesterdayChargePlayerCount: yesterdayChargePlayerCount,
 		//MaxOnlineCount:              GetMaxOnlineCount(node),
-		BeforeYesterdayCharge:     beforeYesterdayTotalCharge,
+		BeforeYesterdayCharge:            beforeYesterdayTotalCharge,
+		BeforeYesterdayChargePlayerCount: beforeYesterdayChargePlayerCount,
+
 		TodayChargeList:           todayOnlineList,
 		YesterdayChargeList:       yesterdayOnlineList,
 		BeforeYesterdayChargeList: beforeYesterdayOnlineList,
+
+		TodayChargePlayerCountList:           todayChargePlayerCountList,
+		YesterdayChargePlayerCountList:       yesterdayChargePlayerCountList,
+		BeforeYesterdayChargePlayerCountList: beforeYesterdayChargePlayerCountList,
 	}
 	return chargeStatistics, nil
 }

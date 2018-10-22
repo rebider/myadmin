@@ -29,13 +29,19 @@ func CheckError(err error, msg ... string) {
 	}
 }
 
-func NodeTool(arg ... string) (string, error) {
+func CenterNodeTool(arg ... string) (string, error) {
 	centerNode := beego.AppConfig.String("node::center")
+	out, err := NodeTool(centerNode, arg...)
+	return out, err
+}
+
+func NodeTool(node string, arg ... string) (string, error) {
+
 	cookie := beego.AppConfig.String("node::cookie")
 	commandArgs := []string{
 		"nodetool",
 		"-name",
-		centerNode,
+		node,
 		"-setcookie",
 		cookie,
 		"rpc",
@@ -317,3 +323,30 @@ func Get(apiURL string,params url.Values)(rs[]byte ,err error){
 	return ioutil.ReadAll(resp.Body)
 }
 
+func ExecShell(s string) (string, error){
+	fmt.Println(s)
+	cmd := exec.Command("/bin/bash", "-c", s)
+	var out bytes.Buffer
+
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return out.String(), err
+	}
+	//fmt.Printf("%s", out.String())
+	return out.String(), nil
+}
+
+
+func EnsureDir(dir string) error {
+	_, err := os.Stat(dir)
+	if err == nil {
+		return nil
+	}
+	if os.IsNotExist(err) {
+		err := os.MkdirAll(dir, 0777)
+		return err
+	} else {
+		return err
+	}
+}

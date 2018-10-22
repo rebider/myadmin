@@ -136,7 +136,31 @@ func GetGameDbByNode(node string) (gameDb *gorm.DB, err error) {
 	return gameDb, err
 }
 
-
+// 通过node获取 gorm.DB 实例
+func GetVisitorGameDbByNode(node string) (gameDb *gorm.DB, err error) {
+	if node == "" {
+		return nil, errors.New("节点不能未空")
+	}
+	serverNode, err := GetServerNode(node)
+	utils.CheckError(err)
+	if err != nil {
+		return nil, err
+	}
+	//gameDbName := "game_" + array[0]
+	gameDbName := serverNode.DbName
+	gameDbHost := serverNode.DbHost
+	gameDbPort := serverNode.DbPort
+	//gameDbPwd := beego.AppConfig.String( "game_db_password")
+	dbArgs := fmt.Sprintf("visitor:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local", "game1234", gameDbHost, gameDbPort, gameDbName)
+	//dbArgs := "root:game1234@tcp(" + serverNode.Ip + ":3306)/" + gameDbName +"?charset=utf8&parseTime=True&loc=Local"
+	gameDb, err = gorm.Open("mysql", dbArgs)
+	if err != nil {
+		logs.Error("连接节点(%v)数据库失败:%v", node, dbArgs)
+		return nil, err
+	}
+	gameDb.SingularTable(true)
+	return gameDb, err
+}
 // 通过平台id和区服id 获取ip地址和端口
 func GetIpAndPortByPlatformIdAndSid(platformId string, Sid string) (string, int, error) {
 	gameServer, err := GetGameServerOne(platformId, Sid)
