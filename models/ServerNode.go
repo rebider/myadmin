@@ -92,6 +92,7 @@ func IsServerNodeExists(node string) bool {
 	return ! DbCenter.First(&serverNode).RecordNotFound()
 }
 
+// 获取节点版本
 func GetNodeVersion(node string) int {
 	//return "nullddd"
 	gameDb, err := GetGameDbByNode(node)
@@ -112,6 +113,29 @@ func GetNodeVersion(node string) int {
 		return 0
 	}
 	return data.Version
+}
+
+//获取节点合服时间
+func GetMergeTime(node string) int {
+	//return "nullddd"
+	gameDb, err := GetGameDbByNode(node)
+	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	defer gameDb.Close()
+	var data struct {
+		Time int
+	}
+
+	sql := fmt.Sprintf(
+		`SELECT int_data as time FROM server_data where id = 6 `)
+	err = gameDb.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	if err != nil {
+		return 0
+	}
+	return data.Time
 }
 
 func GetDbVersion(node string) int {

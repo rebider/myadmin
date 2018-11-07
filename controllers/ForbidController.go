@@ -6,11 +6,11 @@ import (
 	"github.com/chnzrb/myadmin/models"
 	"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
-	"net/http"
-	"io/ioutil"
-	"fmt"
-	"time"
-	"encoding/base64"
+	//"net/http"
+	//"io/ioutil"
+	//"fmt"
+	//"time"
+	//"encoding/base64"
 )
 
 type ForbidController struct {
@@ -19,7 +19,7 @@ type ForbidController struct {
 
 // 获取封禁列表
 func (c *ForbidController) ForbidLogList() {
-	c.Ctx.Output.Download("","Channel.json")
+	//c.Ctx.Output.Download("", "Channel.json")
 	var params models.ForbidLogQueryParam
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
 	utils.CheckError(err)
@@ -41,62 +41,73 @@ func (c *ForbidController) ForbidLogList() {
 // 封禁
 func (c *ForbidController) SetForbid() {
 	var params struct {
-		PlatformId string
-		PlayerId   int
-		ServerId   string
-		Type       int32
-		Sec        int32
+		PlatformId string `json:"platformId"`
+		AccId      string `json:"accId"`
+		ServerId   string `json:"serverId"`
+		PlayerId   int    `json:"playerId"`
+		Type       int32  `json:"type"`
+		Sec        int32  `json:"sec"`
+		Range      int32  `json:"range"`
 	}
-	var result struct {
-		ErrorCode int
-	}
+//	var result struct {
+//		ErrorCode int
+//	}
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
-	utils.CheckError(err)
+	c.CheckError(err)
 	logs.Info("封禁:%+v", params)
 
-	_, err = models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
+	player, err := models.GetPlayerOne(params.PlatformId, params.ServerId, params.PlayerId)
 	c.CheckError(err)
+	params.AccId = player.AccId
+	data, err := json.Marshal(params)
+	utils.CheckError(err)
 
+	url := utils.GetCenterURL() + "/set_disable"
+	logs.Info(url)
+	err = utils.HttpRequest(url, string(data))
 
-	data := fmt.Sprintf("player_id=%d&type=%d&sec=%d", params.PlayerId, params.Type, params.Sec)
-	sign := utils.String2md5(data + enums.GmSalt)
-	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
-	url := models.GetGameURLByPlatformIdAndSid(params.PlatformId, params.ServerId) + "/set_disable?" + "data=" + base64Data+ "&sign=" + sign
+	//data := fmt.Sprintf("player_id=%d&type=%d&sec=%d", params.PlayerId, params.Type, params.Sec)
+	//sign := utils.String2md5(data + enums.GmSalt)
+	//base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+	//url := utils.GetCenterURL() + "/set_login_notice"
+	//url := models.GetGameURLByPlatformIdAndSid(params.PlatformId, params.ServerId) + "/set_disable?" + "data=" + base64Data+ "&sign=" + sign
 
-	logs.Info("url:%s", url)
-	resp, err := http.Get(url)
+	//url := utils.GetCenterURL() + "/set_disable?" + "data=" + base64Data + "&sign=" + sign
+	//
+	//logs.Info("url:%s", url)
+	//resp, err := http.Get(url)
+	//c.CheckError(err)
+	//
+	//defer resp.Body.Close()
+	//body, err := ioutil.ReadAll(resp.Body)
+	//c.CheckError(err)
+	//
+	//logs.Info("result:%v", string(body))
+	//
+	//err = json.Unmarshal(body, &result)
+
 	c.CheckError(err)
+//	if result.ErrorCode != 0 {
+//		c.Result(enums.CodeFail, "封禁失败", 0)
+//	}
 
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	c.CheckError(err)
-
-	logs.Info("result:%v", string(body))
-
-	err = json.Unmarshal(body, &result)
-
-	c.CheckError(err)
-	if result.ErrorCode != 0 {
-		c.Result(enums.CodeFail, "封禁失败", 0)
-	}
-
-	var forbidTime int32
-	if params.Sec > 0 {
-		forbidTime = int32(time.Now().Unix()) + params.Sec
-	} else {
-		forbidTime = 0
-	}
-	forbidLog := &models.ForbidLog{
-		PlatformId: params.PlatformId,
-		ServerId:   params.ServerId,
-		PlayerId:   params.PlayerId,
-		ForbidType: params.Type,
-		ForbidTime: forbidTime,
-		Time:       time.Now().Unix(),
-		UserId:     c.curUser.Id,
-	}
-	err = models.Db.Save(&forbidLog).Error
-	c.CheckError(err, "写封禁日志失败")
+	//var forbidTime int32
+	//if params.Sec > 0 {
+	//	forbidTime = int32(time.Now().Unix()) + params.Sec
+	//} else {
+	//	forbidTime = 0
+	//}
+	//forbidLog := &models.ForbidLog{
+	//	PlatformId: params.PlatformId,
+	//	ServerId:   "",
+	//	PlayerId:  0,
+	//	ForbidType: params.Type,
+	//	ForbidTime: forbidTime,
+	//	Time:       time.Now().Unix(),
+	//	UserId:     c.curUser.Id,
+	//}
+	//err = models.Db.Save(&forbidLog).Error
+	//c.CheckError(err, "写封禁日志失败")
 
 	c.Result(enums.CodeSuccess, "封禁成功", 0)
 

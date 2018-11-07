@@ -140,8 +140,8 @@ func GetToolDir() string {
 
 func HttpRequest(url string, data string) error{
 	var result struct {
-		ErrorCode int
-		ErrorMsg string
+		ErrorCode int `json:"error_code"`
+		ErrorMsg string `json:"error_msg"`
 	}
 	sign := String2md5(data + enums.GmSalt)
 	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
@@ -158,8 +158,9 @@ func HttpRequest(url string, data string) error{
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(responseBody, &result)
 
+	err = json.Unmarshal(responseBody, &result)
+	//logs.Info("result:%+v", result)
 	CheckError(err)
 	if err != nil {
 		return err

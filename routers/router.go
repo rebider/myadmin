@@ -100,6 +100,7 @@ func init() {
 	beego.Router("/tool/get_weixin_args", &controllers.ToolController{}, "*:GetWeixinArgs")
 	beego.Router("/tool/update_weixin_args", &controllers.ToolController{}, "*:UpdateWeixinArgs")
 	beego.Router("/tool/sql_query", &controllers.ToolController{}, "*:SqlQuery")
+	beego.Router("/tool/finish_branch_task", &controllers.ToolController{}, "*:FinishBranchTask")
 
 	//游戏服
 	beego.Router("/game_server/list", &controllers.GameServerController{}, "*:List")
@@ -131,6 +132,7 @@ func init() {
 	beego.Router("/player/list", &controllers.PlayerController{}, "*:List")
 	beego.Router("/player/one", &controllers.PlayerController{}, "*:One")
 	beego.Router("/player/detail/", &controllers.PlayerController{}, "*:Detail")
+	beego.Router("/player/account_detail/", &controllers.PlayerController{}, "*:AccountDetail")
 	beego.Router("/player/set_account_type/", &controllers.PlayerController{}, "*:SetAccountType")
 
 

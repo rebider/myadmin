@@ -84,6 +84,13 @@ func GetAllServerList() []*InventoryServer {
 	return data
 }
 
+func GetAllServerListDirty() []*InventoryServer {
+	data := make([]*InventoryServer, 0)
+	err := Db.Model(&InventoryServer{}).Find(&data).Error
+	utils.CheckError(err)
+	return data
+}
+
 func GetMaxFreeServerByPlatformId(platformId string) (*InventoryServer, error) {
 	platform, err := GetPlatformOne(platformId)
 	utils.CheckError(err)
@@ -235,7 +242,7 @@ func CreateAnsibleInventory() error {
 	//		mapList[nodeIp] = append(make([] string, 0), "'"+nodeName+"'")
 	//	}
 	//}
-	serverList := GetAllServerList()
+	serverList := GetAllServerListDirty()
 	//for _, e := range serverOfGameList {
 	//	if _, ok := mapList[e.InnerIp]; ok {
 	//	} else {

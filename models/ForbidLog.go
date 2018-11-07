@@ -1,6 +1,8 @@
 package models
 
-import ()
+import (
+	"github.com/astaxie/beego/logs"
+)
 
 type ForbidLog struct {
 	PlatformId string    `json:"platformId" gorm:"primary_key"`
@@ -17,7 +19,7 @@ type ForbidLog struct {
 type ForbidLogQueryParam struct {
 	BaseQueryParam
 	PlatformId string
-	Node       string `json:"serverId"`
+	ServerId       string `json:"serverId"`
 	PlayerName string
 	PlayerId  int
 	StartTime  int
@@ -32,17 +34,18 @@ func GetForbidLogList(params *ForbidLogQueryParam) ([]*ForbidLog, int64) {
 	if params.Order == "descending" {
 		sortOrder = sortOrder + " desc"
 	}
-	if params.Node == "" {
+	if params.ServerId == "" {
 		Db.Model(&ForbidLog{}).Where(&ForbidLog{
 			PlatformId: params.PlatformId,
 			PlayerId: params.PlayerId,
 		}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	} else {
-		serverIdList := GetGameServerIdListByNode(params.Node)
+		//serverIdList := GetGameServerIdListByNode(params.ServerId)
 		Db.Model(&ForbidLog{}).Where(&ForbidLog{
 			PlatformId: params.PlatformId,
 			PlayerId: params.PlayerId,
-		}).Where("server_id in (?)", serverIdList).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
+			ServerId:params.ServerId,
+		}).Count(&count).Offset(params.Offset).Limit(params.Limit).Order(sortOrder).Find(&data)
 	}
 
 	for _, e := range data {
@@ -52,5 +55,6 @@ func GetForbidLogList(params *ForbidLogQueryParam) ([]*ForbidLog, int64) {
 			e.PlayerName = GetPlayerName_2(params.PlatformId, e.ServerId, e.PlayerId)
 		}
 	}
+	logs.Info(count)
 	return data, count
 }

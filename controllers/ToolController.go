@@ -155,6 +155,41 @@ func (c *ToolController) SetTask() {
 	}
 }
 
+func (c *ToolController) FinishBranchTask() {
+	var params struct {
+		PlayerId   int    `json:"playerId"`
+		PlatformId string `json:"platformId"`
+		ServerId   string `json:"serverId"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("Action:%+v", params)
+	gameServer, err := models.GetGameServerOne(params.PlatformId, params.ServerId)
+	c.CheckError(err)
+	commandArgs := []string{
+		"nodetool",
+		"-name",
+		gameServer.Node,
+		"-setcookie",
+		"game",
+		"rpc",
+		"tool",
+		"finish_branch_task",
+		strconv.Itoa(params.PlayerId),
+	}
+	out, err := utils.Cmd("escript", commandArgs)
+
+	if err != nil {
+		out = strings.Replace(out, " ", "&nbsp", -1)
+		out = strings.Replace(out, "\n", "<br>", -1)
+		out = strings.Replace(out, "\\n", "<br>", -1)
+		c.Result(enums.CodeFail2, "失败:"+out+err.Error(), 0)
+	} else {
+		c.Result(enums.CodeSuccess, "成功!", 0)
+	}
+}
+
+
 func (c *ToolController) ActiveFunction() {
 	var params struct {
 		PlayerId      int    `json:"playerId"`

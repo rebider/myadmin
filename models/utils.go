@@ -877,7 +877,10 @@ func GetPlayerName_2(platformId string, serverId string, playerId int) string {
 		`SELECT server_id, nickname as name FROM player where id = %d `, playerId)
 	//logs.Info("GetPlayerName:%v", playerId)
 	err = gameDb.Raw(sql).Scan(&data).Error
-	utils.CheckError(err)
+	//utils.CheckError(err)
+	if err != nil {
+		return fmt.Sprintf("角色不存在:%s_%d", serverId, playerId )
+	}
 	//logs.Info("ppp:%v,%v", data.MaxLevel)
 	return data.ServerId + "." + data.Name
 }

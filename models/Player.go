@@ -9,30 +9,32 @@ import (
 )
 
 type Player struct {
-	Id               int    `json:"id"`
-	AccId            string `json:"accId"`
-	Nickname         string `json:"nickname"`
-	Sex              int    `json:"sex"`
-	ServerId         string `json:"serverId"`
-	ForbidType       int    `json:"forbidType"`
-	ForbidTime       int    `json:"forbidTime"`
-	RegTime          int    `json:"regTime"`
-	LoginTimes       int    `json:"loginTimes"`
-	LastLoginTime    int    `json:"lastLoginTime"`
-	LastOfflineTime  int    `json:"lastOfflineTime"`
-	TotalOnlineTime  int    `json:"totalOnlineTime"`
-	LastLoginIp      string `json:"lastLoginIp"`
-	From             string `json:"from"`
-	Channel          string `json:"channel"`
-	IsOnline         int    `json:"isOnline"`
-	Type             int    `json:"type" gorm:"-"`
-	Level            int    `json:"level" gorm:"-" `
-	Ingot            int    `json:"ingot" gorm:"-"`
-	TotalChargeMoney int    `json:"totalChargeMoney" gorm:"-"`
-	VipLevel         int    `json:"vipLevel" gorm:"-"`
-	Power            int    `json:"power" gorm:"-"`
-	FactionName      string `json:"factionName" gorm:"-"`
-	FriendCode      string `json:"friendCode" gorm:"-"`
+	Id                int    `json:"id"`
+	AccId             string `json:"accId"`
+	Nickname          string `json:"nickname"`
+	Sex               int    `json:"sex"`
+	ServerId          string `json:"serverId"`
+	ForbidType        int    `json:"forbidType"`
+	ForbidTime        int    `json:"forbidTime"`
+	AccountForbidType int    `json:"accountForbidType" gorm:"-"`
+	AccountForbidTime int    `json:"accountForbidTime" gorm:"-"`
+	RegTime           int    `json:"regTime"`
+	LoginTimes        int    `json:"loginTimes"`
+	LastLoginTime     int    `json:"lastLoginTime"`
+	LastOfflineTime   int    `json:"lastOfflineTime"`
+	TotalOnlineTime   int    `json:"totalOnlineTime"`
+	LastLoginIp       string `json:"lastLoginIp"`
+	From              string `json:"from"`
+	Channel           string `json:"channel"`
+	IsOnline          int    `json:"isOnline"`
+	Type              int    `json:"type" gorm:"-"`
+	Level             int    `json:"level" gorm:"-" `
+	Ingot             int    `json:"ingot" gorm:"-"`
+	TotalChargeMoney  int    `json:"totalChargeMoney" gorm:"-"`
+	VipLevel          int    `json:"vipLevel" gorm:"-"`
+	Power             int    `json:"power" gorm:"-"`
+	FactionName       string `json:"factionName" gorm:"-"`
+	FriendCode        string `json:"friendCode" gorm:"-"`
 }
 
 type PlayerQueryParam struct {
@@ -83,6 +85,9 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 	}
 
 	whereArray := make([] string, 0)
+	if params.ServerId != "" {
+		whereArray = append(whereArray, fmt.Sprintf(" server_id = '%s'", params.ServerId))
+	}
 	if params.Account != "" {
 		whereArray = append(whereArray, fmt.Sprintf(" acc_id = '%s'", params.Account))
 	}
@@ -130,7 +135,12 @@ func GetPlayerList(params *PlayerQueryParam) ([]*Player, int64) {
 		playerChargeData, err := GetPlayerChargeDataOne(e.Id)
 		utils.CheckError(err)
 		e.TotalChargeMoney = int(playerChargeData.TotalMoney)
-		e.Type = GetAccountType(params.PlatformId, e.AccId)
+		globalAccount, err := GetGlobalAccount(params.PlatformId, e.AccId)
+		utils.CheckError(err)
+		e.Type = globalAccount.Type
+		e.AccountForbidType = globalAccount.ForbidType
+		e.AccountForbidTime = globalAccount.ForbidTime
+		//e.Type = GetAccountType(params.PlatformId, e.AccId)
 		//e.LastLoginIp = e.LastLoginIp + "(" + utils.GetIpLocation(e.LastLoginIp) + ")"
 	}
 	return data, count
@@ -176,18 +186,18 @@ func GetPlayerFactionName(gameDb *gorm.DB, playerId int) string {
 }
 
 // 获取单个玩家
-func GetPlayerOneByNode(node string, id int) (*Player, error) {
-	gameDb, err := GetGameDbByNode(node)
-	if err != nil {
-		return nil, err
-	}
-	defer gameDb.Close()
-	player := &Player{
-		Id: id,
-	}
-	err = gameDb.First(&player).Error
-	return player, err
-}
+//func GetPlayerOneByNode(node string, id int) (*Player, error) {
+//	gameDb, err := GetGameDbByNode(node)
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer gameDb.Close()
+//	player := &Player{
+//		Id: id,
+//	}
+//	err = gameDb.First(&player).Error
+//	return player, err
+//}
 
 // 获取单个玩家
 func GetPlayerOne(platformId string, serverId string, id int) (*Player, error) {
@@ -201,7 +211,12 @@ func GetPlayerOne(platformId string, serverId string, id int) (*Player, error) {
 	}
 	err = gameDb.First(&player).Error
 	if err == nil {
-		player.Type = GetAccountType(platformId, player.AccId)
+		globalAccount, err := GetGlobalAccount(platformId, player.AccId)
+		utils.CheckError(err)
+		player.Type = globalAccount.Type
+		player.AccountForbidType = globalAccount.ForbidType
+		player.AccountForbidTime = globalAccount.ForbidTime
+		//player.Type = GetAccountType(platformId, player.AccId)
 	}
 	return player, err
 }
@@ -299,7 +314,12 @@ func GetPlayerDetail(platformId string, serverId string, playerId int) (*PlayerD
 	playerChargeData, err := GetPlayerChargeDataOne(playerId)
 	utils.CheckError(err)
 	playerDetail.TotalChargeMoney = int(playerChargeData.TotalMoney)
-	playerDetail.Player.Type = GetAccountType(platformId, playerDetail.Player.AccId)
+	//playerDetail.Player.Type = GetAccountType(platformId, playerDetail.Player.AccId)
+	globalAccount, err := GetGlobalAccount(platformId, playerDetail.Player.AccId)
+	utils.CheckError(err)
+	playerDetail.Player.Type = globalAccount.Type
+	playerDetail.Player.AccountForbidType = globalAccount.ForbidType
+	playerDetail.Player.AccountForbidTime = globalAccount.ForbidTime
 	//playerDetail.LastLoginIp = playerDetail.LastLoginIp + "(" + utils.GetIpLocation(playerDetail.LastLoginIp) + ")"
 	return playerDetail, err
 }
@@ -323,7 +343,12 @@ func GetPlayerByPlatformIdAndNickname(platformId string, nickname string) (*Play
 		return nil, errors.New(fmt.Sprintf("角色不存在:%s", nickname))
 	}
 	player.Nickname = player.ServerId + "." + player.Nickname
-	player.Type = GetAccountType(platformId, player.AccId)
+	//player.Type = GetAccountType(platformId, player.AccId)
+	globalAccount, err := GetGlobalAccount(platformId, player.AccId)
+	utils.CheckError(err)
+	player.Type = globalAccount.Type
+	player.AccountForbidType = globalAccount.ForbidType
+	player.AccountForbidTime = globalAccount.ForbidTime
 	player.Ingot = GetPlayerIngot(gameDb, player.Id)
 	return player, err
 }
@@ -392,13 +417,13 @@ func GetServerOnlineStatistics(platformId string, serverId string, channelList [
 		//ServerId:                    serverId,
 		OnlineCount: nowOnline,
 		//TodayCreateRole: GetCreateRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTimestamp, todayZeroTimestamp+86400),
-		TodayRegister:   todayRegister,
+		TodayRegister: todayRegister,
 		//MaxOnlineCount:              GetMaxOnlineCount(node),
 		TodayOnlineList:             todayOnlineList,
 		YesterdayOnlineList:         yesterdayOnlineList,
 		BeforeYesterdayOnlineList:   beforeYesterdayOnlineList,
 		TodayRegisterList:           todayRegisterList,
-		YesterdayRegisterList:      yesterdayRegisterList,
+		YesterdayRegisterList:       yesterdayRegisterList,
 		BeforeYesterdayRegisterList: beforeYesterdayRegisterList,
 	}
 	return serverOnlineStatistics, nil

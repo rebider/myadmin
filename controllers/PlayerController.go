@@ -12,6 +12,7 @@ import (
 	//"net/http"
 	//"strings"
 	//"io/ioutil"
+	"github.com/linclin/gopub/src/github.com/pkg/errors"
 )
 
 type PlayerController struct {
@@ -43,6 +44,23 @@ func (c *PlayerController) Detail() {
 	c.CheckError(err, "查询玩家详细信息失败")
 	c.Result(enums.CodeSuccess, "获取玩家详细信息成功", playerDetail)
 }
+
+func (c *PlayerController) AccountDetail() {
+	var params struct {
+		PlatformId string    `json:"platformId"`
+		Account       string `json:"account"`
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	c.CheckError(err)
+	logs.Info("查询帐号详细信息:%+v", params)
+	if params.PlatformId == "" || params.Account == "" {
+		c.CheckError(errors.New("平台和帐号不能为空"), "查询帐号详细信息失败")
+	}
+	playerDetail, err := models.GetGlobalPlayerList(params.PlatformId, params.Account)
+	c.CheckError(err, "查询帐号详细信息失败")
+	c.Result(enums.CodeSuccess, "查询帐号详细信息成功", playerDetail)
+}
+
 
 func (c *PlayerController) One() {
 	platformId := c.GetString("platformId")
