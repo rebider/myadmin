@@ -21,6 +21,13 @@ func (a *GlobalPlayer) TableName() string {
 	return "global_player"
 }
 
+func GetGlobalPlayerOne(playerId int) (*GlobalPlayer, error) {
+	data := &GlobalPlayer{
+		Id: playerId,
+	}
+	err := DbCenter.First(&data).Error
+	return data, err
+}
 func GetGlobalPlayerList(platformId string, accId string) ([] *GlobalPlayer, error) {
 	data := make([] *GlobalPlayer, 0)
 	err := DbCenter.Model(&GlobalPlayer{}).Where(&GlobalPlayer{PlatformId: platformId,

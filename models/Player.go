@@ -182,7 +182,7 @@ func GetPlayerFactionName(gameDb *gorm.DB, playerId int) string {
 	}
 	//logs.Info("faction_name:%s", faction.Name)
 	//logs.Info("ppp:%v,%v", gameServer.Node, data.Count)
-	return faction.Name
+	return fmt.Sprintf("%s(%d)", faction.Name, factionMember.FactionId)
 }
 
 // 获取单个玩家
@@ -246,10 +246,11 @@ type PlayerData struct {
 
 type PlayerDetail struct {
 	Player
-	VipLevel int `json:"vipLevel"`
-	Exp      int `json:"exp"`
-	Level    int `json:"level"`
-	TaskId   int `json:"taskId"`
+	VipLevel  int    `json:"vipLevel"`
+	Exp       int    `json:"exp"`
+	Level     int    `json:"level"`
+	TaskId    int    `json:"taskId"`
+	ExtraData string `json:"extraData"`
 	//FactionId        int `json:"-"`
 	FactionName string `json:"factionName"`
 	TitleId     int
@@ -260,10 +261,90 @@ type PlayerDetail struct {
 	Hit              int            `json:"hit"`
 	Dodge            int            `json:"dodge"`
 	Critical         int            `json:"critical"`
+	Tenacity         int            `json:"tenacity"`
+	RateResistBlock  int            `json:"rateResistBlock"`
+	RateBlock        int            `json:"rateBlock"`
+	HurtAdd          int            `json:"hurtAdd"`
+	HurtReduce       int            `json:"hurtReduce"`
+	CritHurtAdd      int            `json:"critHurtAdd"`
+	CritHurtReduce   int            `json:"critHurtReduce"`
 	Power            int            `json:"power"`
 	LastWorldSceneId int            `json:"lastWorldSceneId"`
 	PlayerPropList   [] *PlayerProp `json:"playerPropList"`
-	EquipList        [] *PlayerProp `json:"equipList"`
+	//EquipList               [] *PlayerProp          `json:"equipList"`
+	PlayerSysCommonDataList  [] *PlayerSysCommonData  `json:"playerSysCommonDataList"`
+	PlayerGodWeaponList      [] *PlayerGodWeapon      `json:"playerGodWeaponList"`
+	PlayerEquipPosList       [] *PlayerEquipPos       `json:"playerEquipList"`
+	PlayerJadeList           [] *PlayerJade           `json:"playerJadeList"`
+	PlayerMagicWeaponPosList [] *PlayerMagicWeaponPos `json:"playerMagicWeaponList"`
+	PlayerHeartList          [] *PlayerHeart          `json:"playerHeartList"`
+	PlayerSysAttrList        [] *PlayerSysAttr        `json:"playerSysAttrList"`
+}
+
+type PlayerSysCommonData struct {
+	PlayerId       int `json:"playerId" gorm:"primary_key"`
+	FunId          int `json:"funId" gorm:"primary_key"`
+	Step           int `json:"step" gorm:"primary_key"`
+	BodyStep       int `json:"bodyStep"`
+	DiathesisLevel int `json:"diathesisLevel"`
+	WishNum        int `json:"wishNum"`
+	WishClearTime  int `json:"wishClearTime"`
+}
+type PlayerGodWeapon struct {
+	PlayerId int `json:"playerId" gorm:"primary_key"`
+	Id       int `json:"id" gorm:"primary_key"`
+	Step     int `json:"step"`
+	Level    int `json:"level"`
+	State    int `json:"state"`
+}
+
+type PlayerSysAttr struct {
+	PlayerId        int `json:"playerId" gorm:"primary_key"`
+	FunId           int `json:"funId" gorm:"primary_key"`
+	Power           int `json:"power"`
+	Hp              int `json:"hp"`
+	Attack          int `json:"attack"`
+	Defense         int `json:"defense"`
+	Hit             int `json:"hit"`
+	Dodge           int `json:"dodge"`
+	Critical        int `json:"critical"`
+	Tenacity        int `json:"tenacity"`
+	HurtAdd         int `json:"hurtAdd"`
+	HurtReduce      int `json:"hurtReduce"`
+	CritHurtAdd     int `json:"critHurtAdd"`
+	CritHurtReduce  int `json:"critHurtReduce"`
+	RateResistBlock int `json:"rateResistBlock"`
+	RateBlock       int `json:"rateBlock"`
+	ChangeTime      int `json:"changeTime"`
+}
+
+type PlayerEquipPos struct {
+	PlayerId   int `json:"playerId" gorm:"primary_key"`
+	PosId      int `json:"posId" gorm:"primary_key"`
+	EquipId    int `json:"equipId"`
+	Level      int `json:"level"`
+	GemLevel   int `json:"gemLevel"`
+	StartLevel int `json:"startLevel"`
+}
+
+type PlayerJade struct {
+	PlayerId int `json:"playerId" gorm:"primary_key"`
+	PosId    int `json:"posId" gorm:"primary_key"`
+	JadeId   int `json:"jadeId"`
+	Level    int `json:"level"`
+}
+
+type PlayerMagicWeaponPos struct {
+	PlayerId int `json:"playerId" gorm:"primary_key"`
+	PosId    int `json:"posId" gorm:"primary_key"`
+	Id       int `json:"id"`
+}
+
+type PlayerHeart struct {
+	PlayerId int `json:"playerId" gorm:"primary_key"`
+	HeartId  int `json:"heartId" gorm:"primary_key"`
+	Level    int `json:"level"`
+	State    int `json:"state"`
 }
 
 type PlayerProp struct {
@@ -271,6 +352,15 @@ type PlayerProp struct {
 	PropType int `json:"propType" gorm:"primary_key"`
 	PropId   int `json:"propId" gorm:"primary_key"`
 	Num      int `json:"num"`
+}
+
+func GetPlayerSysAttrList(gameDb *gorm.DB, playerId int) ([]*PlayerSysAttr, error) {
+	data := make([]*PlayerSysAttr, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_sys_attr WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+
+	return data, err
 }
 
 func GetPlayerPropList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
@@ -282,13 +372,68 @@ func GetPlayerPropList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
 	return playerPropList, err
 }
 
-func GetPlayerEquipList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
-	playerPropList := make([]*PlayerProp, 0)
+func GetPlayerJadeList(gameDb *gorm.DB, playerId int) ([]*PlayerJade, error) {
+	data := make([]*PlayerJade, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_jade WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+
+	return data, err
+}
+
+func GetPlayerHeartList(gameDb *gorm.DB, playerId int) ([]*PlayerHeart, error) {
+	data := make([]*PlayerHeart, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_heart WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+
+	return data, err
+}
+
+func GetPlayerSysCommonDataList(gameDb *gorm.DB, playerId int) ([]*PlayerSysCommonData, error) {
+	data := make([]*PlayerSysCommonData, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_sys_common_data WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+
+	return data, err
+}
+
+func GetPlayerMagicWeaponPosList(gameDb *gorm.DB, playerId int) ([]*PlayerMagicWeaponPos, error) {
+	data := make([]*PlayerMagicWeaponPos, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_magic_weapon_pos WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+
+	return data, err
+}
+func GetPlayerGodWeaponList(gameDb *gorm.DB, playerId int) ([]*PlayerGodWeapon, error) {
+	data := make([]*PlayerGodWeapon, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_god_weapon WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+
+	return data, err
+}
+
+func GetPlayerEquipList(gameDb *gorm.DB, playerId int) ([]*PlayerEquipPos, error) {
+	data := make([]*PlayerEquipPos, 0)
 	sql := fmt.Sprintf(
 		`SELECT * FROM player_equip_pos WHERE player_id = %d `, playerId)
-	err := gameDb.Raw(sql).Scan(&playerPropList).Error
+	err := gameDb.Raw(sql).Scan(&data).Error
 
-	return playerPropList, err
+	return data, err
+}
+
+func GetPlayerExtraData(gameDb *gorm.DB, playerId int) (string) {
+	var data struct {
+		Data string
+	}
+	sql := fmt.Sprintf(
+		`SELECT str_data as data FROM player_game_data  WHERE player_id =  %d and data_id = 12`, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+	utils.CheckError(err)
+	return data.Data
 }
 
 func GetPlayerDetail(platformId string, serverId string, playerId int) (*PlayerDetail, error) {
@@ -309,6 +454,20 @@ func GetPlayerDetail(platformId string, serverId string, playerId int) (*PlayerD
 	playerDetail.Player.Nickname = playerDetail.Player.ServerId + "." + playerDetail.Player.Nickname
 	playerDetail.PlayerPropList, err = GetPlayerPropList(gameDb, playerId)
 	utils.CheckError(err)
+	playerDetail.PlayerSysAttrList, err = GetPlayerSysAttrList(gameDb, playerId)
+	utils.CheckError(err)
+	playerDetail.PlayerJadeList, err = GetPlayerJadeList(gameDb, playerId)
+	utils.CheckError(err)
+	playerDetail.PlayerHeartList, err = GetPlayerHeartList(gameDb, playerId)
+	utils.CheckError(err)
+	playerDetail.PlayerSysCommonDataList, err = GetPlayerSysCommonDataList(gameDb, playerId)
+	utils.CheckError(err)
+	playerDetail.PlayerMagicWeaponPosList, err = GetPlayerMagicWeaponPosList(gameDb, playerId)
+	utils.CheckError(err)
+	playerDetail.PlayerGodWeaponList, err = GetPlayerGodWeaponList(gameDb, playerId)
+	utils.CheckError(err)
+	playerDetail.PlayerEquipPosList, err = GetPlayerEquipList(gameDb, playerId)
+	utils.CheckError(err)
 	playerDetail.FactionName = GetPlayerFactionName(gameDb, playerId)
 	utils.CheckError(err)
 	playerChargeData, err := GetPlayerChargeDataOne(playerId)
@@ -320,6 +479,7 @@ func GetPlayerDetail(platformId string, serverId string, playerId int) (*PlayerD
 	playerDetail.Player.Type = globalAccount.Type
 	playerDetail.Player.AccountForbidType = globalAccount.ForbidType
 	playerDetail.Player.AccountForbidTime = globalAccount.ForbidTime
+	playerDetail.ExtraData = GetPlayerExtraData(gameDb, playerId)
 	//playerDetail.LastLoginIp = playerDetail.LastLoginIp + "(" + utils.GetIpLocation(playerDetail.LastLoginIp) + ")"
 	return playerDetail, err
 }

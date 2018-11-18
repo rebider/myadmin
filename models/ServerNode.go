@@ -277,6 +277,7 @@ func CheckAllGameNode() {
 				continue
 			}
 			if e.RunState == 0 {
+				logs.Info("节点未开启:~p", e.Node)
 				num ++
 			}
 		}

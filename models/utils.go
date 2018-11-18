@@ -1881,3 +1881,118 @@ func GetServerDataStr(db *gorm.DB, serverDataId int) string {
 	utils.CheckError(err)
 	return data.Data
 }
+
+func RRRR() {
+	logs.Info("go")
+	accountList := make([] string, 0)
+	var data [] struct {
+		Id int
+	}
+	content := ""
+	sql := fmt.Sprintf(
+		`SELECT player_id as id FROM player_charge_info_record WHERE total_money  >=  200 and part_id = 'qq'`)
+	err := DbCharge.Raw(sql).Find(&data).Error
+	utils.CheckError(err)
+	if err != nil {
+		return
+	}
+	for _, e := range data {
+		globalPlayer, err := GetGlobalPlayerOne(e.Id)
+		utils.CheckError(err)
+		if err != nil {
+			return
+		}
+		if inArray(globalPlayer.Account, accountList) == false {
+			accountList = append(accountList, globalPlayer.Account)
+		}
+
+	}
+	for _, e := range accountList {
+
+		content += fmt.Sprintf("%s\n", strings.Replace(strings.Replace(e, "ios_", "", -1), "android_", "", -1))
+		//content += "nodes="
+		//content += "\"[" + strings.Join(nodes, ", ") + "]\""
+		//content += "\n\n"
+
+	}
+	err = utils.FilePutContext("account.txt", content)
+	utils.CheckError(err)
+	logs.Info("go finish")
+}
+
+func inArray(v string, array [] string) bool {
+	for _, e := range array {
+		if e == v {
+			return true
+		}
+	}
+	return false
+}
+
+
+func SSS() {
+	logs.Info("go")
+	var data [] struct {
+		Id string
+	}
+
+	//content := ""
+	sql := fmt.Sprintf(
+		`select distinct account as id from  global_player`)
+	err := DbCenter.Raw(sql).Find(&data).Error
+	utils.CheckError(err)
+	logs.Info("go1")
+	if err != nil {
+		return
+	}
+	args := make([] string, 0, len(data))
+	for _, e := range data {
+		args = append(args, e.Id)
+
+	}
+	logs.Info("go2")
+	content := strings.Join(args, "\n")
+	logs.Info("go3")
+	err = utils.FilePutContext("all_account.txt", content)
+	logs.Info("go4")
+	utils.CheckError(err)
+	logs.Info("go finish")
+}
+
+func QQQQ() {
+	logs.Info("go")
+	args := make([] string, 0, 100000)
+	sql := fmt.Sprintf(
+		`select acc_id from player , player_data where player.id = player_data.player_id and player_data.vip_level = 0 and player_data.level > 50 limit 1000;`)
+	for i := 1; i<= 300; i++ {
+		var data [] struct {
+			AccId string
+		}
+		gameDb, err := GetGameDbByPlatformIdAndSid("wx", fmt.Sprintf("s%d", i))
+		utils.CheckError(err)
+		if err != nil {
+			return
+		}
+		defer gameDb.Close()
+		err = gameDb.Raw(sql).Find(&data).Error
+		utils.CheckError(err)
+		for _, e := range data {
+			args = append(args, e.AccId)
+			if len(args) == 100000 {
+				break
+			}
+		}
+		if len(args) == 100000 {
+			break
+		}
+
+	}
+	logs.Info("go2")
+	content := strings.Join(args, "\n")
+	logs.Info("go3")
+	err := utils.FilePutContext("account_20181115.txt", content)
+	logs.Info("go4")
+	utils.CheckError(err)
+	logs.Info("go finish")
+}
+

@@ -162,7 +162,7 @@ func (c *GameServerController) Refresh() {
 	//err = json.Unmarshal(body, &result)
 	//
 	//c.CheckError(err)
-	err = models.AfterAddGameServer()
+	err = models.RefreshGameServer()
 	c.CheckError(err)
 	//if result.ErrorCode != 0 {
 	//	c.Result(enums.CodeFail, "刷新区服入口失败", 0)

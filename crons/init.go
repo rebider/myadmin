@@ -29,6 +29,7 @@ func init() {
 	// 定时检测开服
 	go cronAutoCreateServer()
 
+	//go models.QQQQ()
 	//go models.RepireTenMinuteStatistics()
 	//now := time.Now()
 	//// 计算下一个整点
