@@ -22,7 +22,7 @@ func (c *UserController) Info() {
 	}
 	//utils.CheckError(err)
 	gameServerList := models.GetServerList(platformIdList)
-	channelList := models.GetChannelList()
+	channelList := models.GetChannelListByPlatformIdList(platformIdList)
 	c.Result(enums.CodeSuccess, "获取用户信息成功",
 		struct {
 			Name           string         `json:"name"`
@@ -30,12 +30,14 @@ func (c *UserController) Info() {
 			PlatformList   []*models.Platform
 			ChannelList    []*models.Channel
 			GameServerList []*models.Server
+			IsSuper        int
 		}{
 			Name:           m.Name,
 			ResourceTree:   models.TranMenuList2MenuTree(models.GetMenuListByUserId(m.Id), true),
 			PlatformList:   platformList,
 			GameServerList: gameServerList,
 			ChannelList:    channelList,
+			IsSuper:        m.IsSuper,
 		})
 }
 

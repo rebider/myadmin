@@ -15,10 +15,7 @@ type ChannelController struct {
 // 获取渠道列表
 func (c *ChannelController) List() {
 	list := models.GetChannelList()
-	logs.Info("channelList:%v", list)
-	//c.CheckError(err)
 	result := make(map[string]interface{})
-	//result["total"] = total
 	result["rows"] = list
 	c.Result(enums.CodeSuccess, "获取渠道列表成功", result)
 }

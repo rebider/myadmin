@@ -6,6 +6,8 @@ import (
 	"errors"
 	"strings"
 	"github.com/jinzhu/gorm"
+	//"strconv"
+	//"github.com/astaxie/beego/logs"
 )
 
 type Player struct {
@@ -546,18 +548,20 @@ func GetPlayerIngot(gameDb *gorm.DB, playerId int) int {
 type ServerOnlineStatistics struct {
 	PlatformId string `json:"platformId"`
 	//ServerId                    string    `json:"serverId"`
-	TodayCreateRole             int       `json:"todayCreateRole"`
-	TodayRegister               int       `json:"todayRegister"`
-	OnlineCount                 int       `json:"onlineCount"`
-	OnlineIpCount               int       `json:"onlineIpCount"`
-	MaxOnlineCount              int       `json:"maxOnlineCount"`
-	AverageOnlineCount          int       `json:"averageOnlineCount"`
-	TodayOnlineList             [] string `json:"todayOnlineList"`
-	YesterdayOnlineList         [] string `json:"yesterdayOnlineList"`
-	BeforeYesterdayOnlineList   [] string `json:"beforeYesterdayOnlineList"`
-	TodayRegisterList           [] string `json:"todayRegisterList"`
-	YesterdayRegisterList       [] string `json:"yesterdayRegisterList"`
-	BeforeYesterdayRegisterList [] string `json:"beforeYesterdayRegisterList"`
+	//TodayCreateRole             int                  `json:"todayCreateRole"`
+	TodayRegister               int                  `json:"todayRegister"`
+	OnlineCount                 int                  `json:"onlineCount"`
+	//OnlineIpCount               int                  `json:"onlineIpCount"`
+	//MaxOnlineCount              int                  `json:"maxOnlineCount"`
+	//AverageOnlineCount          int                  `json:"averageOnlineCount"`
+	//TodayOnlineList             [] string            `json:"todayOnlineList"`
+	//YesterdayOnlineList         [] string            `json:"yesterdayOnlineList"`
+	//BeforeYesterdayOnlineList   [] string            `json:"beforeYesterdayOnlineList"`
+	//TodayRegisterList           [] string            `json:"todayRegisterList"`
+	//YesterdayRegisterList       [] string            `json:"yesterdayRegisterList"`
+	//BeforeYesterdayRegisterList [] string            `json:"beforeYesterdayRegisterList"`
+	OnlineData                  [] map[string]string `json:"onlineData"`
+	RegisterData                [] map[string]string `json:"registerData"`
 }
 
 func GetServerOnlineStatistics(platformId string, serverId string, channelList [] string) (*ServerOnlineStatistics, error) {
@@ -572,6 +576,32 @@ func GetServerOnlineStatistics(platformId string, serverId string, channelList [
 	todayRegisterList, todayRegister := get24hoursRegisterCount(platformId, serverId, channelList, todayZeroTimestamp)
 	yesterdayRegisterList, _ := get24hoursRegisterCount(platformId, serverId, channelList, yesterdayZeroTimestamp)
 	beforeYesterdayRegisterList, _ := get24hoursRegisterCount(platformId, serverId, channelList, beforeYesterdayZeroTimestamp)
+	//data1 := make([] int, 0)
+	//for i := 0; i < 86400; i = i + 10*60 {
+	//	data1 = append(data1, i)
+	//}
+
+	onlineData := make([]map[string]string, 0, 144)
+	//logs.Info("len:%d", len(todayOnlineList))
+	for i := 0; i < 6*24; i = i + 1 {
+		m := make(map[string]string, 4)
+		m["时间"] = utils.FormatTime(i * 10 * 60)
+		m["今日在线"] = todayOnlineList[i]
+		m["昨日在线"] = yesterdayOnlineList[i]
+		m["前日在线"] = beforeYesterdayOnlineList[i]
+		//logs.Info(i)
+		onlineData = append(onlineData, m)
+	}
+
+	registerData := make([]map[string]string, 0, 144)
+	for i := 0; i < 6*24; i = i + 1 {
+		m := make(map[string]string, 4)
+		m["时间"] = utils.FormatTime(i * 10 * 60)
+		m["今日注册"] = todayRegisterList[i]
+		m["昨日注册"] = yesterdayRegisterList[i]
+		m["前日注册"] = beforeYesterdayRegisterList[i]
+		registerData = append(registerData, m)
+	}
 	serverOnlineStatistics := &ServerOnlineStatistics{
 		PlatformId: platformId,
 		//ServerId:                    serverId,
@@ -579,12 +609,14 @@ func GetServerOnlineStatistics(platformId string, serverId string, channelList [
 		//TodayCreateRole: GetCreateRoleCountByChannelList(gameDb, serverId, channelList, todayZeroTimestamp, todayZeroTimestamp+86400),
 		TodayRegister: todayRegister,
 		//MaxOnlineCount:              GetMaxOnlineCount(node),
-		TodayOnlineList:             todayOnlineList,
-		YesterdayOnlineList:         yesterdayOnlineList,
-		BeforeYesterdayOnlineList:   beforeYesterdayOnlineList,
-		TodayRegisterList:           todayRegisterList,
-		YesterdayRegisterList:       yesterdayRegisterList,
-		BeforeYesterdayRegisterList: beforeYesterdayRegisterList,
+		//TodayOnlineList:             todayOnlineList,
+		//YesterdayOnlineList:         yesterdayOnlineList,
+		//BeforeYesterdayOnlineList:   beforeYesterdayOnlineList,
+		//TodayRegisterList:           todayRegisterList,
+		//YesterdayRegisterList:       yesterdayRegisterList,
+		//BeforeYesterdayRegisterList: beforeYesterdayRegisterList,
+		OnlineData:                  onlineData,
+		RegisterData:                registerData,
 	}
 	return serverOnlineStatistics, nil
 }

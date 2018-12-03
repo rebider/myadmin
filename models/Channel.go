@@ -25,15 +25,17 @@ type ChannelParam struct {
 }
 
 //获取渠道列表
+func GetChannelListByPlatformIdList(platformIdList  [] string) []*Channel {
+	data := make([]*Channel, 0)
+	err := Db.Model(&Channel{}).Where("platform_id in (?)", platformIdList).Find(&data).Error
+	utils.CheckError(err)
+	return data
+}
+
 func GetChannelList() []*Channel {
 	data := make([]*Channel, 0)
 	err := Db.Model(&Channel{}).Find(&data).Error
 	utils.CheckError(err)
-	//for _, e := range  data {
-		//platform, err := GetPlatformOne(e.PlatformId)
-		//utils.CheckError(err)
-		//e.Name = platform.Name + "-" + e.Name
-	//}
 	return data
 }
 

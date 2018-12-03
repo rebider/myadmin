@@ -18,6 +18,15 @@ import (
 //	}
 //}
 
+func RepairAllGameNodeDailyStatistics() {
+	todayZeroTimestamp := utils.GetTodayZeroTimestamp()
+	DoUpdateAllGameNodeDailyStatistics(todayZeroTimestamp - 86400)
+	DoUpdateAllGameNodeDailyStatistics(todayZeroTimestamp - 86400*2)
+	DoUpdateAllGameNodeDailyStatistics(todayZeroTimestamp - 86400*3)
+	DoUpdateAllGameNodeDailyStatistics(todayZeroTimestamp - 86400*4)
+	DoUpdateAllGameNodeDailyStatistics(todayZeroTimestamp - 86400*5)
+}
+
 //更新所有游戏节点  DailyStatistics
 func UpdateAllGameNodeDailyStatistics() {
 	todayZeroTimestamp := utils.GetTodayZeroTimestamp()
@@ -45,7 +54,6 @@ func UpdateAllGameNodeChargeRemain() {
 //	}
 //}
 
-
 func Repire() {
 	//1532016000
 	//1536163200 退1536422400
@@ -54,8 +62,6 @@ func Repire() {
 		DoUpdateAllGameNodeReaminCharge(i)
 	}
 }
-
-
 
 func DoUpdateAllGameNodeTenMinuteStatistics(timestamp int) {
 	logs.Info("更新每10分钟统计:%v", timestamp)
@@ -72,14 +78,13 @@ func DoUpdateAllGameNodeTenMinuteStatistics(timestamp int) {
 		if timestamp < utils.GetThatZeroTimestamp(int64(gameServer.OpenTime)) {
 			continue
 		}
-		for _, channel := range channelList {
-			err := models.UpdateTenMinuteStatistics(platformId, serverId, channel.Channel, timestamp)
-			utils.CheckError(err)
-		}
+		//for _, channel := range channelList {
+		err := models.UpdateTenMinuteStatistics(platformId, serverId, channelList, timestamp)
+		utils.CheckError(err)
+		//}
 	}
 	logs.Info("更新每10分钟完毕.")
 }
-
 
 func DoUpdateAllGameNodeDailyStatistics(timestamp int) {
 	//todayZeroTimestamp := utils.GetTodayZeroTimestamp()
@@ -99,14 +104,15 @@ func DoUpdateAllGameNodeDailyStatistics(timestamp int) {
 		if timestamp < utils.GetThatZeroTimestamp(int64(gameServer.OpenTime)) {
 			continue
 		}
-		for _, channel := range channelList {
-			err := models.UpdateDailyStatistics(platformId, serverId, channel.Channel, timestamp)
-			utils.CheckError(err)
-		}
+		err := models.UpdateDailyStatistics(platformId, serverId, channelList, timestamp)
+		utils.CheckError(err)
+		//for _, channel := range channelList {
+		//	err := models.UpdateDailyStatistics(platformId, serverId, channel.Channel, timestamp)
+		//	utils.CheckError(err)
+		//}
 	}
 	logs.Info("更新每日统计完毕.")
 }
-
 
 func DoUpdateAllGameNodeDailyLTV(timestamp int) {
 	//todayZeroTimestamp := utils.GetTodayZeroTimestamp()
@@ -125,14 +131,13 @@ func DoUpdateAllGameNodeDailyLTV(timestamp int) {
 		if timestamp < utils.GetThatZeroTimestamp(int64(gameServer.OpenTime)) {
 			continue
 		}
-		for _, channel := range channelList {
-			err := models.UpdateDailyLTV(platformId, serverId, channel.Channel, timestamp)
-			utils.CheckError(err)
-		}
+		//for _, channel := range channelList {
+		err := models.UpdateDailyLTV(platformId, serverId, channelList, timestamp)
+		utils.CheckError(err)
+		//}
 	}
 	logs.Info("更新每日LTV完毕.")
 }
-
 
 func DoUpdateAllGameNodeReaminCharge(timestamp int) {
 	//todayZeroTimestamp := utils.GetTodayZeroTimestamp()
@@ -143,19 +148,19 @@ func DoUpdateAllGameNodeReaminCharge(timestamp int) {
 		//utils.CheckError(err)
 		platformId := gameServer.PlatformId
 		//if platformId == "af" || platformId == "djs" {
-			serverId := gameServer.Sid
-			channelList := models.GetChannelListByPlatformId(platformId)
-			if len(channelList) == 0 {
-				logs.Error("渠道未配置:%v %+v", platformId, channelList)
-			}
+		serverId := gameServer.Sid
+		channelList := models.GetChannelListByPlatformId(platformId)
+		if len(channelList) == 0 {
+			logs.Error("渠道未配置:%v %+v", platformId, channelList)
+		}
 
-			if timestamp < utils.GetThatZeroTimestamp(int64(gameServer.OpenTime)) {
-				continue
-			}
-			for _, channel := range channelList {
-				err := models.UpdateRemainCharge(platformId, serverId, channel.Channel, timestamp)
-				utils.CheckError(err)
-			}
+		if timestamp < utils.GetThatZeroTimestamp(int64(gameServer.OpenTime)) {
+			continue
+		}
+		//for _, channel := range channelList {
+		err := models.UpdateRemainCharge(platformId, serverId, channelList, timestamp)
+		utils.CheckError(err)
+		//}
 		//}
 	}
 	logs.Info("更新付费留存完毕.")
@@ -180,11 +185,34 @@ func DoUpdateAllGameNodeReaminCharge(timestamp int) {
 //	}
 //}
 
+func RepireRemainTotal() {
+	todayZeroTimestamp := utils.GetTodayZeroTimestamp()
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 2)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 3)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 4)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 5)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 6)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 7)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 8)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 9)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 10)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 11)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 12)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 13)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 14)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400 * 15)
+}
 //更新所有游戏节点  RemainTotal
 func UpdateAllGameNodeRemainTotal() {
-	now := utils.GetTimestamp()
 	todayZeroTimestamp := utils.GetTodayZeroTimestamp()
-	logs.Info("更新所有总体留存:%v", todayZeroTimestamp)
+	DoUpdateAllGameNodeRemainTotal(todayZeroTimestamp - 86400)
+}
+
+func DoUpdateAllGameNodeRemainTotal(timestamp int) {
+	now := utils.GetTimestamp()
+	//todayZeroTimestamp := utils.GetTodayZeroTimestamp()
+	logs.Info("更新所有总体留存:%v", timestamp)
 	gameServerList, _ := models.GetAllGameServerDirty()
 
 	for _, gameServer := range gameServerList {
@@ -196,15 +224,15 @@ func UpdateAllGameNodeRemainTotal() {
 		if len(channelList) == 0 {
 			logs.Error("渠道未配置:%v %+v", platformId, channelList)
 		}
-		if now >= serverNode.OpenTime {
-			for _, channel := range channelList {
-				err := models.UpdateRemainTotal(platformId, serverId, channel.Channel, todayZeroTimestamp-86400)
-				utils.CheckError(err)
-			}
+		if now >= serverNode.OpenTime && now <= serverNode.OpenTime+86400*32 {
+			//for _, channel := range channelList {
+			err := models.UpdateRemainTotal(platformId, serverId, channelList, timestamp)
+			utils.CheckError(err)
+			//}
 		}
 	}
+	logs.Info("更新所有总体留存完毕。")
 }
-
 
 //func UpdateAllGameNodeLTV() {
 //	now := utils.GetTimestamp()
@@ -229,7 +257,6 @@ func UpdateAllGameNodeRemainTotal() {
 //		}
 //	}
 //}
-
 
 //func UpdateAllGameNodeRemainTotal() {
 //	now := utils.GetTimestamp()
@@ -295,5 +322,3 @@ func UpdateAllGameNodeRemainActive() {
 //
 //	}
 //}
-
-

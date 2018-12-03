@@ -140,3 +140,24 @@ func (c *StatisticsController) GetChargeStatistics() {
 	//logs.Info("查询实时在线统计成功:%+v", serverOnlineStatistics)
 	c.Result(enums.CodeSuccess, "查询充值对比成功", serverOnlineStatistics)
 }
+
+
+func (c *StatisticsController) GetIncomeStatistics() {
+	//logs.Info("GetRealTimeOnline")
+	var params struct {
+		PlatformId string    `json:"platformId"`
+		ServerId      string `json:"serverId"`
+		ChannelList [] string `json:"channelList"`
+		StartTime   int
+		EndTime     int
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("查询总流水:%+v", params)
+	//platformId := c.GetString("platformId")
+	//serverId := c.GetString("serverId")
+	serverOnlineStatistics := models.GetIncomeStatisticsChartData(params.PlatformId, params.ServerId, params.ChannelList, params.StartTime, params.EndTime)
+	c.CheckError(err, "查询总流水")
+	//logs.Info("查询实时在线统计成功:%+v", serverOnlineStatistics)
+	c.Result(enums.CodeSuccess, "查询总流水", serverOnlineStatistics)
+}

@@ -6,7 +6,7 @@ import (
 )
 
 type RemainCharge struct {
-	Node       string `json:"node" gorm:"primary_key"`
+	//Node       string `json:"node" gorm:"primary_key"`
 	PlatformId string `json:"platformId" gorm:"primary_key"`
 	ServerId   string `json:"serverId" gorm:"primary_key"`
 	Channel    string `json:"channel" gorm:"primary_key"`
@@ -130,8 +130,8 @@ func GetRemainChargeList(params *RemainChargeQueryParam) ([]*RemainCharge) {
 }
 
 //更新 付费留存
-func UpdateRemainCharge(platformId string, serverId string, channel string, timestamp int) error {
-	logs.Info("付费留存:%v, %v, %v, %v", platformId, serverId, channel, timestamp)
+func UpdateRemainCharge(platformId string, serverId string, channelList [] * Channel, timestamp int) error {
+	logs.Info("付费留存:%v, %v, %v, %v", platformId, serverId, len(channelList), timestamp)
 	gameServer, err := GetGameServerOne(platformId, serverId)
 	if err != nil {
 		return err
@@ -149,64 +149,70 @@ func UpdateRemainCharge(platformId string, serverId string, channel string, time
 	defer gameDb.Close()
 	openDayZeroTimestamp := utils.GetThatZeroTimestamp(int64(serverNode.OpenTime))
 
-	for i := 1; i < 30; i++ {
-		//if i == 1 || i == 2 || i == 3 || i == 6 || i == 13 || i == 29 {
+	for _, e := range channelList {
+		channel := e.Channel
+		for i := 1; i < 30; i++ {
+			//if i == 1 || i == 2 || i == 3 || i == 6 || i == 13 || i == 29 {
 			if i == 1  {
 
-		} else {
-			continue
-		}
-		thatDayZeroTimestamp := timestamp - i*86400
-		if openDayZeroTimestamp > thatDayZeroTimestamp {
-			continue
-		}
-		chargePlayerIdList := GetChargePlayerIdList(platformId, serverId, channel, thatDayZeroTimestamp, thatDayZeroTimestamp+86400)
-		chargeNum := len(chargePlayerIdList)
-		rate := 0
-		loginNum := 0
-		if chargeNum > 0 {
-			for _, playerId := range chargePlayerIdList {
-				if IsThatDayPlayerLogin(gameDb, timestamp, playerId) {
-					loginNum += 1
+			} else {
+				continue
+			}
+			thatDayZeroTimestamp := timestamp - i*86400
+			if openDayZeroTimestamp > thatDayZeroTimestamp {
+				continue
+			}
+			chargePlayerIdList := GetChargePlayerIdList(platformId, serverId, channel, thatDayZeroTimestamp, thatDayZeroTimestamp+86400)
+			chargeNum := len(chargePlayerIdList)
+			rate := 0
+			loginNum := 0
+			if chargeNum > 0 {
+				for _, playerId := range chargePlayerIdList {
+					if IsThatDayPlayerLogin(gameDb, timestamp, playerId) {
+						loginNum += 1
+					}
+				}
+				//rate = int(float32(loginNum) / float32(chargeNum) * 10000)
+				rate = loginNum
+				m := &RemainCharge{
+					//Node:       node,
+					PlatformId: platformId,
+					ServerId:   serverId,
+					Channel:    channel,
+					ChargeNum:  chargeNum,
+					Time:       thatDayZeroTimestamp,
+					Remain2:    -1,
+					Remain3:    -1,
+					Remain4:    -1,
+					Remain7:    -1,
+					Remain14:   -1,
+					Remain30:   -1,
+				}
+				err = Db.FirstOrCreate(&m).Error
+				if err != nil {
+					return err
+				}
+				switch i {
+				case 1:
+					err = Db.Model(&m).Update("Remain2", rate).Error
+				case 2:
+					err = Db.Model(&m).Update("Remain3", rate).Error
+				case 3:
+					err = Db.Model(&m).Update("Remain4", rate).Error
+				case 6:
+					err = Db.Model(&m).Update("Remain7", rate).Error
+
+				case 13:
+					err = Db.Model(&m).Update("Remain14", rate).Error
+				case 29:
+					err = Db.Model(&m).Update("Remain30", rate).Error
 				}
 			}
-			//rate = int(float32(loginNum) / float32(chargeNum) * 10000)
-			rate = loginNum
-		}
-		m := &RemainCharge{
-			Node:       node,
-			PlatformId: platformId,
-			ServerId:   serverId,
-			Channel:    channel,
-			ChargeNum:  chargeNum,
-			Time:       thatDayZeroTimestamp,
-			Remain2:    -1,
-			Remain3:    -1,
-			Remain4:    -1,
-			Remain7:    -1,
-			Remain14:   -1,
-			Remain30:   -1,
-		}
-		err = Db.FirstOrCreate(&m).Error
-		if err != nil {
-			return err
-		}
-		switch i {
-		case 1:
-			err = Db.Model(&m).Update("Remain2", rate).Error
-		case 2:
-			err = Db.Model(&m).Update("Remain3", rate).Error
-		case 3:
-			err = Db.Model(&m).Update("Remain4", rate).Error
-		case 6:
-			err = Db.Model(&m).Update("Remain7", rate).Error
 
-		case 13:
-			err = Db.Model(&m).Update("Remain14", rate).Error
-		case 29:
-			err = Db.Model(&m).Update("Remain30", rate).Error
+			if err != nil {
+				return err
+			}
 		}
 	}
-
-	return err
+		return nil
 }

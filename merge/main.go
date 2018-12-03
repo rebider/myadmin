@@ -364,7 +364,7 @@ func MergeDb(dbConfig *dbConfig) error {
 	if err != nil {
 		return err
 	}
-	sql = fmt.Sprintf("INSERT INTO `server_data` VALUES (7,1,''),(6,%d,'');", GetTimestamp())
+	sql = fmt.Sprintf("INSERT INTO `server_data` VALUES (7,0,1,'',0),(6,0,%d,'',0);", GetTimestamp())
 	_, err = dbConfig.TargetDb.Db.Exec(sql)
 	utils.CheckError(err, "设置目标服执行合服脚本失败:"+sql)
 

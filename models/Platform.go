@@ -48,14 +48,20 @@ type PlatformParam struct {
 //}
 
 //获取平台列表
-func GetPlatformList() []*Platform {
+func GetPlatformListByPlatformIdList(platformIdList [] string) []*Platform {
 	data := make([]*Platform, 0)
-	err := Db.Model(&Platform{}).Find(&data).Error
-	utils.CheckError(err)
+	if len(platformIdList) == 0 {
+		err := Db.Model(&Platform{}).Find(&data).Error
+		utils.CheckError(err)
+	} else {
+		err := Db.Model(&Platform{}).Where( "id in (?)", platformIdList).Find(&data).Error
+		utils.CheckError(err)
+	}
+
 	for _, v := range data {
 		v.InventorySeverIds = make([] int, 0)
 
-		err = Db.Model(&v).Related(&v.PlatformInventorySeverRel).Error
+		err := Db.Model(&v).Related(&v.PlatformInventorySeverRel).Error
 		utils.CheckError(err)
 
 		for _, e := range v.PlatformInventorySeverRel {
@@ -65,6 +71,11 @@ func GetPlatformList() []*Platform {
 		v.ChannelList = GetChannelListByPlatformId(v.Id)
 	}
 	return data
+}
+
+//获取平台列表
+func GetPlatformList() []*Platform {
+	return GetPlatformListByPlatformIdList([] string {})
 }
 
 //获取平台列表

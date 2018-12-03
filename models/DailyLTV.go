@@ -6,7 +6,7 @@ import (
 )
 
 type DailyLTV struct {
-	Node         string  `json:"node" gorm:"primary_key"`
+	//Node         string  `json:"node" gorm:"primary_key"`
 	PlatformId   string  `json:"platformId" gorm:"primary_key"`
 	ServerId     string  `json:"serverId" gorm:"primary_key"`
 	Channel      string  `json:"channel" gorm:"primary_key"`
@@ -139,8 +139,8 @@ func GetDailyLTVList(params DailyLTVQueryParam) ([]*DailyLTV) {
 }
 
 //更新 每日ltv
-func UpdateDailyLTV(platformId string, serverId string, channel string, timestamp int) error {
-	logs.Info("更新每日ltv:%v, %v, %v, %v", platformId, serverId, channel, timestamp)
+func UpdateDailyLTV(platformId string, serverId string, channelList [] * Channel, timestamp int) error {
+	logs.Info("更新每日ltv:%v, %v, %v, %v", platformId, serverId, len(channelList), timestamp)
 	gameServer, err := GetGameServerOne(platformId, serverId)
 	if err != nil {
 		return err
@@ -158,68 +158,75 @@ func UpdateDailyLTV(platformId string, serverId string, channel string, timestam
 	defer gameDb.Close()
 	openDayZeroTimestamp := utils.GetThatZeroTimestamp(int64(serverNode.OpenTime))
 
-	for i := 1; i <= 120; i++ {
-		if i == 1 || i == 2 || i == 3 || i == 7 || i == 14 || i == 30 || i == 60 || i == 90 || i == 120 {
+	for _, e := range channelList {
+		channel := e.Channel
+		for i := 1; i <= 120; i++ {
+			if i == 1 || i == 2 || i == 3 || i == 7 || i == 14 || i == 30 || i == 60 || i == 90 || i == 120 {
 
-		} else {
-			continue
-		}
-		thatDayZeroTimestamp := timestamp - i*86400
-		if openDayZeroTimestamp > thatDayZeroTimestamp {
-			continue
-		}
+			} else {
+				continue
+			}
+			thatDayZeroTimestamp := timestamp - i*86400
+			if openDayZeroTimestamp > thatDayZeroTimestamp {
+				continue
+			}
 
-		//dailyStatistics, err := GetDailyStatisticsOne(platformId, serverId, channel, thatDayZeroTimestamp)
+			//dailyStatistics, err := GetDailyStatisticsOne(platformId, serverId, channel, thatDayZeroTimestamp)
 
-		//registerNum := dailyStatistics.RegisterCount
-		//createNum := dailyStatistics.CreateRoleCount
-		totalCharge := GetTotalChargeMoneyByRegisterTime(platformId, serverId, channel, 0, timestamp, thatDayZeroTimestamp)
-		rate := totalCharge
-		//if createNum > 0 {
-		//	rate = int(float32(totalCharge) / float32(createNum))
-		//}
+			//registerNum := dailyStatistics.RegisterCount
+			//createNum := dailyStatistics.CreateRoleCount
+			totalCharge := GetTotalChargeMoneyByRegisterTime(platformId, serverId, channel, 0, timestamp, thatDayZeroTimestamp)
+			if totalCharge > 0 {
+				rate := totalCharge
+				//if createNum > 0 {
+				//	rate = int(float32(totalCharge) / float32(createNum))
+				//}
 
-		m := &DailyLTV{
-			Node:       node,
-			PlatformId: platformId,
-			ServerId:   serverId,
-			Channel:    channel,
-			Time:       thatDayZeroTimestamp,
-			C1:       0,
-			C2:       0,
-			C3:       0,
-			C7:       0,
-			C14:      0,
-			C30:      0,
-			C60:      0,
-			C90:      0,
-			C120:     0,
-		}
-		err = Db.FirstOrCreate(&m).Error
-		if err != nil {
-			return err
-		}
-		switch i {
-		case 1:
-			err = Db.Model(&m).Update("c1", rate).Error
-		case 2:
-			err = Db.Model(&m).Update("c2", rate).Error
-		case 3:
-			err = Db.Model(&m).Update("c3", rate).Error
-		case 7:
-			err = Db.Model(&m).Update("c7", rate).Error
-		case 14:
-			err = Db.Model(&m).Update("c14", rate).Error
-		case 30:
-			err = Db.Model(&m).Update("c30", rate).Error
-		case 60:
-			err = Db.Model(&m).Update("c60", rate).Error
-		case 90:
-			err = Db.Model(&m).Update("c90", rate).Error
-		case 120:
-			err = Db.Model(&m).Update("c120", rate).Error
+				m := &DailyLTV{
+					//Node:       node,
+					PlatformId: platformId,
+					ServerId:   serverId,
+					Channel:    channel,
+					Time:       thatDayZeroTimestamp,
+					C1:       0,
+					C2:       0,
+					C3:       0,
+					C7:       0,
+					C14:      0,
+					C30:      0,
+					C60:      0,
+					C90:      0,
+					C120:     0,
+				}
+				err = Db.FirstOrCreate(&m).Error
+				if err != nil {
+					return err
+				}
+				switch i {
+				case 1:
+					err = Db.Model(&m).Update("c1", rate).Error
+				case 2:
+					err = Db.Model(&m).Update("c2", rate).Error
+				case 3:
+					err = Db.Model(&m).Update("c3", rate).Error
+				case 7:
+					err = Db.Model(&m).Update("c7", rate).Error
+				case 14:
+					err = Db.Model(&m).Update("c14", rate).Error
+				case 30:
+					err = Db.Model(&m).Update("c30", rate).Error
+				case 60:
+					err = Db.Model(&m).Update("c60", rate).Error
+				case 90:
+					err = Db.Model(&m).Update("c90", rate).Error
+				case 120:
+					err = Db.Model(&m).Update("c120", rate).Error
+				}
+			}
+			if err != nil {
+				return err
+			}
 		}
 	}
-
-	return err
+		return nil
 }

@@ -3,86 +3,145 @@ package models
 import (
 	"github.com/chnzrb/myadmin/utils"
 	"github.com/astaxie/beego/logs"
-	"github.com/jinzhu/gorm"
-	"strings"
-	"fmt"
 )
 
 type RemainTotal struct {
-	Node         string `json:"node" gorm:"primary_key"`
+	//Node         string `json:"node" gorm:"primary_key"`
 	PlatformId   string `json:"platformId" gorm:"primary_key"`
 	ServerId     string `json:"serverId" gorm:"primary_key"`
 	Channel      string `json:"channel" gorm:"primary_key"`
 	Time         int    `json:"time" gorm:"primary_key"`
-	RegisterRole int    `json:"registerRole" gorm:"-"`
-	CreateRole   int    `json:"createRole" gorm:"-"`
+	RegisterRole int    `json:"registerRole"`
+	CreateRole   int    `json:"createRole"`
 	Remain2      int    `json:"remain2"`
 	Remain3      int    `json:"remain3"`
 	Remain4      int    `json:"remain4"`
-	Remain5      int    `json:"remain5"`
-	Remain6      int    `json:"remain6"`
-	Remain7      int    `json:"remain7"`
-	Remain8      int    `json:"remain8"`
-	Remain9      int    `json:"remain9"`
-	Remain10     int    `json:"remain10"`
-	Remain11     int    `json:"remain11"`
-	Remain12     int    `json:"remain12"`
-	Remain13     int    `json:"remain13"`
-	Remain14     int    `json:"remain14"`
-	Remain15     int    `json:"remain15"`
-	Remain16     int    `json:"remain16"`
-	Remain17     int    `json:"remain17"`
-	Remain18     int    `json:"remain18"`
-	Remain19     int    `json:"remain19"`
-	Remain20     int    `json:"remain20"`
-	Remain21     int    `json:"remain21"`
-	Remain22     int    `json:"remain22"`
-	Remain23     int    `json:"remain23"`
-	Remain24     int    `json:"remain24"`
-	Remain25     int    `json:"remain25"`
-	Remain26     int    `json:"remain26"`
-	Remain27     int    `json:"remain27"`
-	Remain28     int    `json:"remain28"`
-	Remain29     int    `json:"remain29"`
-	Remain30     int    `json:"remain30"`
+	//Remain5      int    `json:"remain5"`
+	//Remain6      int    `json:"remain6"`
+	Remain7 int `json:"remain7"`
+	//Remain8      int    `json:"remain8"`
+	//Remain9      int    `json:"remain9"`
+	//Remain10     int    `json:"remain10"`
+	//Remain11     int    `json:"remain11"`
+	//Remain12     int    `json:"remain12"`
+	//Remain13     int    `json:"remain13"`
+	Remain14 int `json:"remain14"`
+	//Remain15     int    `json:"remain15"`
+	//Remain16     int    `json:"remain16"`
+	//Remain17     int    `json:"remain17"`
+	//Remain18     int    `json:"remain18"`
+	//Remain19     int    `json:"remain19"`
+	//Remain20     int    `json:"remain20"`
+	//Remain21     int    `json:"remain21"`
+	//Remain22     int    `json:"remain22"`
+	//Remain23     int    `json:"remain23"`
+	//Remain24     int    `json:"remain24"`
+	//Remain25     int    `json:"remain25"`
+	//Remain26     int    `json:"remain26"`
+	//Remain27     int    `json:"remain27"`
+	//Remain28     int    `json:"remain28"`
+	//Remain29     int    `json:"remain29"`
+	Remain30 int `json:"remain30"`
 }
 
 type TotalRemainQueryParam struct {
 	BaseQueryParam
 	PlatformId string
 	//ServerId   string
-	ServerId  string `json:"serverId"`
+	ServerId    string    `json:"serverId"`
 	ChannelList [] string `json:"channelList"`
-	Channel string
-	StartTime int
-	EndTime   int
+	Channel     string
+	StartTime   int
+	EndTime     int
 }
 
 // 获取总体留存
 func GetRemainTotalList(params *TotalRemainQueryParam) ([]*RemainTotal, int64) {
-	data := make([]*RemainTotal, 0)
+	if params.EndTime < params.StartTime || params.StartTime == 0 {
+		logs.Error("开始结束时间错误")
+		return nil, 0
+	}
+	data := make([]*RemainTotal, 0, (params.EndTime-params.StartTime)/86400)
 	var count int64
-	f := func(db *gorm.DB) *gorm.DB {
-		if params.StartTime > 0 {
-			return db.Where("time between ? and ?", params.StartTime, params.EndTime)
-		}
-		return db
-	}
-	err := f(Db.Model(&RemainTotal{}).Where(&RemainTotal{PlatformId: params.PlatformId, ServerId: params.ServerId, Channel:params.Channel})).Where(" channel in (?)", params.ChannelList).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
-	utils.CheckError(err)
-	for _, e := range data {
-		dailyStatistics, err := GetDailyStatisticsOne(e.PlatformId, e.ServerId, e.Channel, e.Time)
-		//logs.Info("dailyStatistics:%+v", dailyStatistics)
+	//f := func(db *gorm.DB) *gorm.DB {
+	//	if params.StartTime > 0 {
+	//		return db.Where("time between ? and ?", params.StartTime, params.EndTime)
+	//	}
+	//	return db
+	//}
+	//err := Db.Model(&RemainTotal{}).Where(&RemainTotal{PlatformId: params.PlatformId, ServerId: params.ServerId, Channel: params.Channel}).Where(" channel in (?)", params.ChannelList).Count(&count).Offset(params.Offset).Limit(params.Limit).Find(&data).Error
+	//utils.CheckError(err)
+
+	channelLen := len(params.ChannelList)
+	for i := params.StartTime; i <= params.EndTime; i = i + 86400 {
+		tmpData := make([]*RemainTotal, 0, channelLen)
+		err := Db.Model(&RemainTotal{}).Where(&RemainTotal{PlatformId: params.PlatformId, ServerId: params.ServerId, Time: i}).Where(" channel in (?)", params.ChannelList).Find(&tmpData).Error
+		//err := Db.Model(&RemainCharge{}).Where(&RemainCharge{PlatformId: params.PlatformId, ServerId: params.ServerId, Time: i}).Where("channel in (?)", params.ChannelList).Find(&tmpData).Error
 		utils.CheckError(err)
-		e.CreateRole = dailyStatistics.CreateRoleCount
-		e.RegisterRole = dailyStatistics.RegisterCount
+		if len(tmpData) > 0 {
+			tmpE := &RemainTotal{
+				PlatformId: params.PlatformId,
+				ServerId:   params.ServerId,
+				Time:       i,
+			}
+			for _, e := range tmpData {
+				tmpE.CreateRole += e.CreateRole
+				tmpE.RegisterRole += e.RegisterRole
+				tmpE.Remain2 += e.Remain2
+				tmpE.Remain3 += e.Remain3
+				tmpE.Remain4 += e.Remain4
+				tmpE.Remain7 += e.Remain7
+				tmpE.Remain14 += e.Remain14
+				tmpE.Remain30 += e.Remain30
+			}
+			data = append(data, tmpE)
+		}
 	}
+	for _, e := range data {
+		if e.CreateRole > 0 {
+			e.Remain2 = int(float32(e.Remain2) / float32(e.CreateRole) * 10000)
+		} else {
+			e.Remain2 = 0
+		}
+		if e.CreateRole > 0 {
+			e.Remain3 = int(float32(e.Remain3) / float32(e.CreateRole) * 10000)
+		} else {
+			e.Remain3 = 0
+		}
+		if e.CreateRole > 0 {
+			e.Remain4 = int(float32(e.Remain4) / float32(e.CreateRole) * 10000)
+		} else {
+			e.Remain4 = 0
+		}
+		if e.CreateRole > 0 {
+			e.Remain7 = int(float32(e.Remain7) / float32(e.CreateRole) * 10000)
+		} else {
+			e.Remain7 = 0
+		}
+		if e.CreateRole > 0 {
+			e.Remain14 = int(float32(e.Remain14) / float32(e.CreateRole) * 10000)
+		} else {
+			e.Remain14 = 0
+		}
+		if e.CreateRole > 0 {
+			e.Remain30 = int(float32(e.Remain30) / float32(e.CreateRole) * 10000)
+		} else {
+			e.Remain30 = 0
+		}
+	}
+	//for _, e := range data {
+	//	dailyStatistics, err := GetDailyStatisticsOne(e.PlatformId, e.ServerId, e.Channel, e.Time)
+	//	//logs.Info("dailyStatistics:%+v", dailyStatistics)
+	//	utils.CheckError(err)
+	//	//e.CreateRole = dailyStatistics.CreateRoleCount
+	//	e.RegisterRole = dailyStatistics.RegisterCount
+	//}
 	return data, count
 }
 
 //更新 总体留存
-func UpdateRemainTotal(platformId string, serverId string, channel string, timestamp int) error {
-	logs.Info("总体总体留存:%v, %v, %v, %v", platformId, serverId, channel, timestamp)
+func UpdateRemainTotal(platformId string, serverId string, channelList [] *Channel, timestamp int) error {
+	logs.Info("更新总体留存:%v, %v, %v, %v", platformId, serverId, len(channelList), timestamp)
 	gameServer, err := GetGameServerOne(platformId, serverId)
 	if err != nil {
 		return err
@@ -100,193 +159,133 @@ func UpdateRemainTotal(platformId string, serverId string, channel string, times
 	defer gameDb.Close()
 	openDayZeroTimestamp := utils.GetThatZeroTimestamp(int64(serverNode.OpenTime))
 
-	for i := 1; i < 30; i++ {
-		if i == 1 || i == 2 || i == 3 || i == 6 || i == 13 || i == 29  {
+	for _, e := range channelList {
+		channel := e.Channel
+		//logs.Info("%s", channel)
+		for i := 1; i < 30; i++ {
+			if i == 1 || i == 2 || i == 3 || i == 6 || i == 13 || i == 29 {
 
-		} else {
-			continue
-		}
-		thatDayZeroTimestamp := timestamp - i*86400
-		if openDayZeroTimestamp > thatDayZeroTimestamp {
-			continue
-		}
-		createRolePlayerIdList := GetThatDayCreateRolePlayerIdList(gameDb, serverId, channel, thatDayZeroTimestamp)
-		createRoleNum := len(createRolePlayerIdList)
-		rate := 0
-		if createRoleNum > 0 {
-			loginNum := 0
-			for _, playerId := range createRolePlayerIdList {
-				if IsThatDayPlayerLogin(gameDb, timestamp, playerId) {
-					loginNum += 1
+			} else {
+				continue
+			}
+			thatDayZeroTimestamp := timestamp - i*86400
+			if openDayZeroTimestamp > thatDayZeroTimestamp {
+				continue
+			}
+			createRolePlayerIdList := GetThatDayCreateRolePlayerIdList(gameDb, serverId, channel, thatDayZeroTimestamp)
+			registerCount := GetRegisterRoleCount(gameDb, serverId, channel, thatDayZeroTimestamp, thatDayZeroTimestamp+86400)
+			createRoleNum := len(createRolePlayerIdList)
+			rate := 0
+			if createRoleNum > 0 {
+				loginNum := 0
+				for _, playerId := range createRolePlayerIdList {
+					if IsThatDayPlayerLogin(gameDb, timestamp, playerId) {
+						loginNum += 1
+					}
+				}
+				rate = loginNum
+				//rate = int(float32(loginNum) / float32(createRoleNum) * 10000)
+				m := &RemainTotal{
+					//Node:       node,
+					PlatformId: platformId,
+					ServerId:   serverId,
+					Channel:    channel,
+					CreateRole: createRoleNum,
+					Time:       thatDayZeroTimestamp,
+					Remain2:    -1,
+					Remain3:    -1,
+					Remain4:    -1,
+					Remain7:    -1,
+					Remain14:   -1,
+					Remain30:   -1,
+				}
+				err = Db.FirstOrCreate(&m).Error
+				if err != nil {
+					return err
+				}
+				err = Db.Model(&m).Update("create_role", createRoleNum).Error
+				utils.CheckError(err)
+				err = Db.Model(&m).Update("register_role", registerCount).Error
+				utils.CheckError(err)
+				switch i {
+				case 1:
+					err = Db.Model(&m).Update("Remain2", rate).Error
+				case 2:
+					err = Db.Model(&m).Update("Remain3", rate).Error
+				case 3:
+					err = Db.Model(&m).Update("Remain4", rate).Error
+				case 6:
+					err = Db.Model(&m).Update("Remain7", rate).Error
+				case 13:
+					err = Db.Model(&m).Update("Remain14", rate).Error
+				case 29:
+					err = Db.Model(&m).Update("Remain30", rate).Error
 				}
 			}
-			rate = int(float32(loginNum) / float32(createRoleNum) * 10000)
-		}
-		m := &RemainTotal{
-			Node:     node,
-			PlatformId:platformId,
-			ServerId:serverId,
-			Channel:channel,
-			Time:     thatDayZeroTimestamp,
-			Remain2:  -1,
-			Remain3:  -1,
-			Remain4:  -1,
-			Remain5:  -1,
-			Remain6:  -1,
-			Remain7:  -1,
-			Remain8:  -1,
-			Remain9:  -1,
-			Remain10: -1,
-			Remain11: -1,
-			Remain12: -1,
-			Remain13: -1,
-			Remain14: -1,
-			Remain15: -1,
-			Remain16: -1,
-			Remain17: -1,
-			Remain18: -1,
-			Remain19: -1,
-			Remain20: -1,
-			Remain21: -1,
-			Remain22: -1,
-			Remain23: -1,
-			Remain24: -1,
-			Remain25: -1,
-			Remain26: -1,
-			Remain27: -1,
-			Remain28: -1,
-			Remain29: -1,
-			Remain30: -1,
-		}
-		err = Db.FirstOrCreate(&m).Error
-		if err != nil {
-			return err
-		}
-		switch i {
-		case 1:
-			err = Db.Model(&m).Update("Remain2", rate).Error
-		case 2:
-			err = Db.Model(&m).Update("Remain3", rate).Error
-		case 3:
-			err = Db.Model(&m).Update("Remain4", rate).Error
-		//case 4:
-		//	err = Db.Model(&m).Update("Remain5", rate).Error
-		//case 5:
-		//	err = Db.Model(&m).Update("Remain6", rate).Error
-		case 6:
-			err = Db.Model(&m).Update("Remain7", rate).Error
-		//
-		//case 7:
-		//	err = Db.Model(&m).Update("Remain8", rate).Error
-		//case 8:
-		//	err = Db.Model(&m).Update("Remain9", rate).Error
-		//case 9:
-		//	err = Db.Model(&m).Update("Remain10", rate).Error
-		//case 10:
-		//	err = Db.Model(&m).Update("Remain11", rate).Error
-		//case 11:
-		//	err = Db.Model(&m).Update("Remain12", rate).Error
-		//case 12:
-		//	err = Db.Model(&m).Update("Remain13", rate).Error
 
-		case 13:
-			err = Db.Model(&m).Update("Remain14", rate).Error
-		//case 14:
-		//	err = Db.Model(&m).Update("Remain15", rate).Error
-		//case 15:
-		//	err = Db.Model(&m).Update("Remain16", rate).Error
-		//case 16:
-		//	err = Db.Model(&m).Update("Remain17", rate).Error
-		//case 17:
-		//	err = Db.Model(&m).Update("Remain18", rate).Error
-		//case 18:
-		//	err = Db.Model(&m).Update("Remain19", rate).Error
-		//
-		//case 19:
-		//	err = Db.Model(&m).Update("Remain20", rate).Error
-		//case 20:
-		//	err = Db.Model(&m).Update("Remain21", rate).Error
-		//case 21:
-		//	err = Db.Model(&m).Update("Remain22", rate).Error
-		//case 22:
-		//	err = Db.Model(&m).Update("Remain23", rate).Error
-		//case 23:
-		//	err = Db.Model(&m).Update("Remain24", rate).Error
-		//case 24:
-		//	err = Db.Model(&m).Update("Remain25", rate).Error
-		//
-		//case 25:
-		//	err = Db.Model(&m).Update("Remain26", rate).Error
-		//case 26:
-		//	err = Db.Model(&m).Update("Remain27", rate).Error
-		//case 27:
-		//	err = Db.Model(&m).Update("Remain28", rate).Error
-		//case 28:
-		//	err = Db.Model(&m).Update("Remain29", rate).Error
-		case 29:
-			err = Db.Model(&m).Update("Remain30", rate).Error
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	return err
+	return nil
 }
 
+//func RepireRemainTotal() {
+//	logs.Info("修复 remain_total")
+//	data := make([]*RemainTotal, 0)
+//	err := Db.Model(&RemainTotal{}).Find(&data).Error
+//	utils.CheckError(err)
+//	for _, e := range data {
+//
+//		nodeName := strings.Split(e.Node, "@")[0]
+//
+//		platform := "wx"
+//		serverId := ""
+//		if strings.Contains(nodeName, "_") {
+//			platform = strings.Split(nodeName, "_")[0]
+//			serverId = strings.Split(nodeName, "_")[1]
+//		} else {
+//			serverId = nodeName
+//		}
+//		//e.PlatformId = platform
+//		//e.ServerId = serverId
+//		//err = Db.Save(&e).Error
+//		sql := fmt.Sprintf("update remain_total set platform_id = '%s', server_id = '%s', channel = '%s' where node = '%s';", platform, serverId, platform, e.Node)
+//		logs.Info("sql:%s\n", sql)
+//		err = Db.Debug().Exec(sql).Error
+//		//err =Db.Model(&e).Updates(map[string]interface{}{"platform_id": platform, "server_id": serverId, "channel": platform}).Error
+//		utils.CheckError(err)
+//	}
+//	logs.Info("修复remain_total完毕")
+//}
 
-
-func RepireRemainTotal() {
-	logs.Info("修复 remain_total")
-	data := make([]*RemainTotal, 0)
-	err := Db.Model(&RemainTotal{}).Find(&data).Error
-	utils.CheckError(err)
-	for _, e := range data {
-
-		nodeName := strings.Split(e.Node, "@")[0]
-
-		platform := "wx"
-		serverId := ""
-		if strings.Contains(nodeName, "_") {
-			platform = strings.Split(nodeName, "_")[0]
-			serverId = strings.Split(nodeName, "_")[1]
-		} else {
-			serverId = nodeName
-		}
-		//e.PlatformId = platform
-		//e.ServerId = serverId
-		//err = Db.Save(&e).Error
-		sql := fmt.Sprintf("update remain_total set platform_id = '%s', server_id = '%s', channel = '%s' where node = '%s';", platform, serverId, platform, e.Node)
-		logs.Info("sql:%s\n", sql)
-		err = Db.Debug().Exec(sql).Error
-		//err =Db.Model(&e).Updates(map[string]interface{}{"platform_id": platform, "server_id": serverId, "channel": platform}).Error
-		utils.CheckError(err)
-	}
-	logs.Info("修复remain_total完毕")
-}
-
-func RepireRemainActive() {
-	logs.Info("修复 remain_active")
-	data := make([]*RemainActive, 0)
-	err := Db.Model(&RemainActive{}).Find(&data).Error
-	utils.CheckError(err)
-	for _, e := range data {
-
-		nodeName := strings.Split(e.Node, "@")[0]
-
-		platform := "wx"
-		serverId := ""
-		if strings.Contains(nodeName, "_") {
-			platform = strings.Split(nodeName, "_")[0]
-			serverId = strings.Split(nodeName, "_")[1]
-		} else {
-			serverId = nodeName
-		}
-		//e.PlatformId = platform
-		//e.ServerId = serverId
-		//err = Db.Save(&e).Error
-		sql := fmt.Sprintf("update remain_active set platform_id = '%s', server_id = '%s', channel = '%s' where node = '%s';", platform, serverId, platform, e.Node)
-		logs.Info("sql:%s\n", sql)
-		err = Db.Debug().Exec(sql).Error
-		//err =Db.Model(&e).Updates(map[string]interface{}{"platform_id": platform, "server_id": serverId, "channel": platform}).Error
-		utils.CheckError(err)
-	}
-	logs.Info("修复remain_active完毕")
-}
+//func RepireRemainActive() {
+//	logs.Info("修复 remain_active")
+//	data := make([]*RemainActive, 0)
+//	err := Db.Model(&RemainActive{}).Find(&data).Error
+//	utils.CheckError(err)
+//	for _, e := range data {
+//
+//		nodeName := strings.Split(e.Node, "@")[0]
+//
+//		platform := "wx"
+//		serverId := ""
+//		if strings.Contains(nodeName, "_") {
+//			platform = strings.Split(nodeName, "_")[0]
+//			serverId = strings.Split(nodeName, "_")[1]
+//		} else {
+//			serverId = nodeName
+//		}
+//		//e.PlatformId = platform
+//		//e.ServerId = serverId
+//		//err = Db.Save(&e).Error
+//		sql := fmt.Sprintf("update remain_active set platform_id = '%s', server_id = '%s', channel = '%s' where node = '%s';", platform, serverId, platform, e.Node)
+//		logs.Info("sql:%s\n", sql)
+//		err = Db.Debug().Exec(sql).Error
+//		//err =Db.Model(&e).Updates(map[string]interface{}{"platform_id": platform, "server_id": serverId, "channel": platform}).Error
+//		utils.CheckError(err)
+//	}
+//	logs.Info("修复remain_active完毕")
+//}

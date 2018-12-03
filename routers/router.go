@@ -144,6 +144,7 @@ func init() {
 	beego.Router("/statistics/real_time_online/", &controllers.StatisticsController{}, "*:GetRealTimeOnline")
 	beego.Router("/statistics/daily_statistics/", &controllers.StatisticsController{}, "*:DailyStatisticsList")
 	beego.Router("/statistics/charge_statistics/", &controllers.StatisticsController{}, "*:GetChargeStatistics")
+	beego.Router("/statistics/income_statistics/", &controllers.StatisticsController{}, "*:GetIncomeStatistics")
 	//beego.Router("/statistics/get_active_statistics/", &controllers.StatisticsController{}, "*:ActiveStatisticsList")
 
 	//封禁

@@ -19,7 +19,7 @@ type TenMinuteStatistics struct {
 	ChargePlayerCount int    `json:"chargePlayerCount"`
 }
 
-func UpdateTenMinuteStatistics(platformId string, serverId string, channel string, timestamp int) error {
+func UpdateTenMinuteStatistics(platformId string, serverId string, channelList [] *Channel, timestamp int) error {
 	//logs.Info("UpdateTenMinuteStatistics:%v, %v, %v, %v", platformId, serverId, channel, timestamp)
 	serverNode, err := GetGameServerOne(platformId, serverId)
 	if err != nil {
@@ -37,32 +37,99 @@ func UpdateTenMinuteStatistics(platformId string, serverId string, channel strin
 	if timestamp == zeroTime {
 		zeroTime = zeroTime - 86400
 	}
-
-	m := &TenMinuteStatistics{
-		//Node:          serverNode.Node,
-		PlatformId:      platformId,
-		ServerId:        serverId,
-		Channel:         channel,
-		Time:            timestamp,
-		OnlineCount:     GetNowOnlineCount2(gameDb, serverId, [] string{channel}),
-		RegisterCount:   GetRegisterRoleCount(gameDb, serverId, channel, timestamp-600, timestamp-1),
-		CreateRoleCount: GetCreateRoleCount(gameDb, serverId, channel, timestamp-600, timestamp-1),
-		ChargeCount:     GetTotalChargeMoney(platformId, serverId, channel, timestamp-600, timestamp-1),
-		ChargePlayerCount:GetTotalChargePlayerCount(platformId, serverId, channel, zeroTime, timestamp),
+	for _, e := range channelList {
+		channel := e.Channel
+		onlineCount := GetNowOnlineCount2(gameDb, serverId, [] string{channel})
+		registerCount := GetRegisterRoleCount(gameDb, serverId, channel, timestamp-600, timestamp-1)
+		chargePlayerCount := GetTotalChargePlayerCount(platformId, serverId, channel, zeroTime, timestamp)
+		if onlineCount > 0 || registerCount > 0 || chargePlayerCount > 0 {
+			m := &TenMinuteStatistics{
+				//Node:          serverNode.Node,
+				PlatformId:        platformId,
+				ServerId:          serverId,
+				Channel:           channel,
+				Time:              timestamp,
+				OnlineCount:       onlineCount,
+				RegisterCount:     registerCount,
+				CreateRoleCount:   GetCreateRoleCount(gameDb, serverId, channel, timestamp-600, timestamp-1),
+				ChargeCount:       GetTotalChargeMoney(platformId, serverId, channel, timestamp-600, timestamp-1),
+				ChargePlayerCount: chargePlayerCount,
+			}
+			err = Db.Save(&m).Error
+			if err != nil {
+				return err
+			}
+		}
 	}
-	err = Db.Save(&m).Error
-	return err
+	return nil
+}
+
+func UpdateTenMinuteStatistics2(platformId string, serverId string, channelList [] *Channel, timestamp int) error {
+	logs.Info("666666666666:%v, %v, %v, %v", platformId, serverId, len(channelList), timestamp)
+	serverNode, err := GetGameServerOne(platformId, serverId)
+	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+	logs.Info("0")
+	//node := serverNode.Node
+	gameDb, err := GetGameDbByNode(serverNode.Node)
+	utils.CheckError(err)
+	if err != nil {
+		return err
+	}
+	logs.Info("1")
+	defer gameDb.Close()
+
+	zeroTime := utils.GetThatZeroTimestamp(int64(timestamp))
+
+	if timestamp == zeroTime {
+		zeroTime = zeroTime - 86400
+	}
+	logs.Info("2")
+	for _, e := range channelList {
+		channel := e.Channel
+		registerCount := GetRegisterRoleCount(gameDb, serverId, channel, timestamp-600, timestamp-1)
+		chargePlayerCount := GetTotalChargePlayerCount(platformId, serverId, channel, zeroTime, timestamp)
+		//logs.Info("go:%s, %d, %d", channel, registerCount, chargePlayerCount)
+		if registerCount > 0 || chargePlayerCount > 0 {
+			m := &TenMinuteStatistics{
+				//Node:          serverNode.Node,
+				PlatformId: platformId,
+				ServerId:   serverId,
+				Channel:    channel,
+				Time:       timestamp,
+			}
+			//err = Db.Save(&m).Error
+			//if timestamp <= 1543708800 + 600{
+			m.RegisterCount = registerCount
+			m.CreateRoleCount = GetCreateRoleCount(gameDb, serverId, channel, timestamp-600, timestamp-1)
+			m.ChargeCount = GetTotalChargeMoney(platformId, serverId, channel, timestamp-600, timestamp-1)
+			m.ChargePlayerCount = chargePlayerCount
+			err = Db.Save(&m).Error
+			//} else {
+			//	err = Db.Debug().Model(&m).Updates(TenMinuteStatistics{
+			//		RegisterCount: registerCount,
+			//		CreateRoleCount: GetCreateRoleCount(gameDb, serverId, channel, timestamp-600, timestamp-1),
+			//		ChargeCount: GetTotalChargeMoney(platformId, serverId, channel, timestamp-600, timestamp-1),
+			//		ChargePlayerCount:chargePlayerCount,
+			//	}).Error
+			//}
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func RepireTenMinuteStatistics() {
 	logs.Info("开始修复每10分钟统计")
 	gameServerList, _ := GetAllGameServerDirty()
-	for i := 1538928000; i <= 1539156000; i += 600 {
+	for i := 1543766400; i <= 1543807800; i += 600 {
 		for _, gameServer := range gameServerList {
-			//err := models.UpdateDailyStatistics(serverNode.Node, todayZeroTimestamp - 86400)
-			//utils.CheckError(err)
 			platformId := gameServer.PlatformId
-			//if platformId == "af" || platformId == "djs" {
 			serverId := gameServer.Sid
 			channelList := GetChannelListByPlatformId(platformId)
 			if len(channelList) == 0 {
@@ -72,10 +139,9 @@ func RepireTenMinuteStatistics() {
 			if i < utils.GetThatZeroTimestamp(int64(gameServer.OpenTime)) {
 				continue
 			}
-			for _, channel := range channelList {
-				err := DoRepireTenMinuteStatistics(platformId, serverId, channel.Channel, i)
-				utils.CheckError(err)
-			}
+			//for _, channel := range channelList {
+			err := UpdateTenMinuteStatistics2(platformId, serverId, channelList, i)
+			utils.CheckError(err)
 			//}
 		}
 	}
@@ -96,7 +162,6 @@ func DoRepireTenMinuteStatistics(platformId string, serverId string, channel str
 	err := Db.Model(&m).Update("charge_player_count", c).Error
 	return err
 }
-
 
 //func RepireTenMinuteStatistics() {
 //	logs.Info("开始修复每10分钟统计")

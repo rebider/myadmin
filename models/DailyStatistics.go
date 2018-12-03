@@ -4,10 +4,12 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/chnzrb/myadmin/utils"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type DailyStatistics struct {
-	Node       string `json:"node" gorm:"primary_key"`
+	//Node       string `json:"node" gorm:"primary_key"`
 	PlatformId string `json:"platformId" gorm:"primary_key"`
 	ServerId   string `json:"serverId" gorm:"primary_key"`
 	Channel    string `json:"channel" gorm:"primary_key"`
@@ -21,6 +23,7 @@ type DailyStatistics struct {
 	ARPU                   float32 `json:"arpu" gorm:"-"`
 	ActiveARPU             float32 `json:"active_arpu" gorm:"-"`
 	NewChargePlayerCount   int     `json:"newChargePlayerCount"`
+	FirstChargePlayerCount   int     `json:"firstChargePlayerCount"`
 	//ActivePlayerCount    int     `json:"activePlayerCount" gorm:"-"`
 	ActiveChargeRate float32 `json:"activeChargeRate" gorm:"-"`
 
@@ -31,10 +34,10 @@ type DailyStatistics struct {
 	ShareCreateRoleCount int `json:"shareCreateRoleCount"`
 	TotalCreateRoleCount int `json:"totalCreateRoleCount"`
 
-	MaxOnlineCount int `json:"maxOnline"`
-	MinOnlineCount int `json:"minOnline"`
-	AvgOnlineCount int `json:"avgOnline"`
-	AvgOnlineTime  int `json:"avgOnlineTime"`
+	// MaxOnlineCount int `json:"maxOnline"`
+	//MinOnlineCount int `json:"minOnline"`
+	//AvgOnlineCount int `json:"avgOnline"`
+	AvgOnlineTime int `json:"avgOnlineTime"`
 
 	RegisterCount      int `json:"registerCount"`
 	TotalRegisterCount int `json:"totalRegisterCount"`
@@ -51,6 +54,49 @@ type DailyStatisticsQueryParam struct {
 	EndTime     int
 }
 
+func GetIncomeStatisticsChartData(platformId string, serverId  string, channelList [] string, startTime int, endTime int) [] map[string] string {
+	today := utils.GetTodayZeroTimestamp()
+	if endTime > today {
+		endTime = today
+	}
+	if startTime > today {
+		startTime = today
+	}
+	if endTime < startTime || startTime == 0 {
+		logs.Error("开始结束时间错误")
+		return nil
+	}
+
+
+
+	chargeData := make([]map[string] string, 0, (endTime-startTime)/86400)
+	for i := startTime; i < endTime; i = i + 86400 {
+		var data struct {
+			Count float32
+		}
+		whereArray := make([] string, 0)
+
+		whereArray = append(whereArray, fmt.Sprintf("platform_id = '%s'", platformId))
+		whereArray = append(whereArray, fmt.Sprintf("channel in(%s)", GetSQLWhereParam(channelList)))
+		whereArray = append(whereArray, fmt.Sprintf("time = %d", i))
+		if serverId != "" {
+			whereArray = append(whereArray, fmt.Sprintf("server_id = %s", serverId))
+		}
+		whereParam := strings.Join(whereArray, " and ")
+		if whereParam != "" {
+			whereParam = " where " + whereParam
+		}
+		sql := fmt.Sprintf(
+			`SELECT sum(total_charge_money) as count FROM daily_statistics %s `, whereParam)
+		err := Db.Raw(sql).Scan(&data).Error
+		utils.CheckError(err)
+		m := make(map[string]string, 2)
+		m["时间"] = utils.FormatDate(int64(i))
+		m["流水"] = strconv.Itoa(int(data.Count))
+		chargeData = append(chargeData, m)
+	}
+	return chargeData
+}
 func GetDailyStatisticsList(params *DailyStatisticsQueryParam) []*DailyStatistics {
 	if params.EndTime < params.StartTime {
 		logs.Error("开始结束时间错误")
@@ -75,14 +121,15 @@ func GetDailyStatisticsList(params *DailyStatisticsQueryParam) []*DailyStatistic
 				tmpE.ChargePlayerCount += e.ChargePlayerCount
 				tmpE.TotalChargePlayerCount += e.TotalChargePlayerCount
 				tmpE.NewChargePlayerCount += e.NewChargePlayerCount
+				tmpE.FirstChargePlayerCount += e.FirstChargePlayerCount
 
 				tmpE.LoginTimes += e.LoginTimes
 				tmpE.LoginPlayerCount += e.LoginPlayerCount
 				tmpE.ActivePlayerCount += e.ActivePlayerCount
 
-				tmpE.MaxOnlineCount += e.MaxOnlineCount
-				tmpE.MinOnlineCount += e.MinOnlineCount
-				tmpE.AvgOnlineCount += e.AvgOnlineCount
+				//tmpE.MaxOnlineCount += e.MaxOnlineCount
+				// tmpE.MinOnlineCount += e.MinOnlineCount
+				// tmpE.AvgOnlineCount += e.AvgOnlineCount
 				tmpE.AvgOnlineTime += e.AvgOnlineTime
 
 				tmpE.RegisterCount += e.RegisterCount
@@ -112,8 +159,8 @@ func GetDailyStatisticsOne(platformId string, serverId string, channel string, t
 	}).First(&data).Error
 	return data, err
 }
-func UpdateDailyStatistics(platformId string, serverId string, channel string, timestamp int) error {
-	logs.Info("UpdateDailyStatistics:%v, %v, %v, %v", platformId, serverId, channel, timestamp)
+func UpdateDailyStatistics(platformId string, serverId string, channelList [] *Channel, timestamp int) error {
+	logs.Info("UpdateDailyStatistics:%v, %v, %v, %v", platformId, serverId, len(channelList), timestamp)
 	serverNode, err := GetGameServerOne(platformId, serverId)
 	if err != nil {
 		return err
@@ -124,47 +171,45 @@ func UpdateDailyStatistics(platformId string, serverId string, channel string, t
 		return err
 	}
 	defer gameDb.Close()
+	for _, e := range channelList {
+		channel := e.Channel
+		createRoleCount := GetCreateRoleCount(gameDb, serverId, channel, timestamp, timestamp+86400)
+		registerRoleCount := GetRegisterRoleCount(gameDb, serverId, channel, timestamp, timestamp+86400)
+		totalChargeMoney := GetTotalChargeMoney(platformId, serverId, channel, 0, timestamp+86400)
+		chargeMoney := GetTotalChargeMoney(platformId, serverId, channel, timestamp, timestamp+86400)
+		//logs.Info("%d: %d | %d", timestamp, chargeMoney, totalChargeMoney)
+		m := &DailyStatistics{
+		//	Node:                   serverNode.Node,
+			PlatformId:             platformId,
+			ServerId:               serverId,
+			Channel:                channel,
+			Time:                   timestamp,
+			TotalChargeMoney:       totalChargeMoney,
+			ChargeMoney:            chargeMoney,
+			NewChargeMoney:         GetThatDayNewChargeMoney(platformId, serverId, channel, timestamp),
+			ChargePlayerCount:      GetThatDayServerChargePlayerCount(platformId, serverId, channel, timestamp),
+			TotalChargePlayerCount: GetThatDayChargePlayerCount(platformId, serverId, channel, timestamp+86400),
+			NewChargePlayerCount:   GetThadDayNewChargePlayerCount(platformId, serverId, channel, timestamp),
+			FirstChargePlayerCount:   GetThadDayServerFirstChargePlayerCount(platformId, serverId, channel, timestamp),
 
-	createRoleCount := GetCreateRoleCount(gameDb, serverId, channel, timestamp, timestamp+86400)
-	registerRoleCount := GetRegisterRoleCount(gameDb, serverId, channel, timestamp, timestamp+86400)
-	totalChargeMoney := GetTotalChargeMoney(platformId, serverId, channel, 0, timestamp+86400)
-	chargeMoney := GetTotalChargeMoney(platformId, serverId, channel, timestamp, timestamp+86400)
-	//logs.Info("%d: %d | %d", timestamp, chargeMoney, totalChargeMoney)
-	m := &DailyStatistics{
-		Node:                   serverNode.Node,
-		PlatformId:             platformId,
-		ServerId:               serverId,
-		Channel:                channel,
-		Time:                   timestamp,
-		TotalChargeMoney:       totalChargeMoney,
-		ChargeMoney:            chargeMoney,
-		NewChargeMoney:         GetThatDayNewChargeMoney(platformId, serverId, channel, timestamp),
-		ChargePlayerCount:      GetThatDayServerChargePlayerCount(platformId, serverId, channel, timestamp),
-		TotalChargePlayerCount: GetThatDayChargePlayerCount(platformId, serverId, channel, timestamp+86400),
-		NewChargePlayerCount:   GetThadDayServerFirstChargePlayerCount(platformId, serverId, channel, timestamp),
+			LoginTimes:        GetThatDayLoginTimes(gameDb, serverId, channel, timestamp),
+			LoginPlayerCount:  GetThatDayLoginPlayerCount(gameDb, serverId, channel, timestamp),
+			ActivePlayerCount: GetThatDayActivePlayerCount(gameDb, serverId, channel, timestamp),
 
-		LoginTimes:        GetThatDayLoginTimes(gameDb, serverId, channel, timestamp),
-		LoginPlayerCount:  GetThatDayLoginPlayerCount(gameDb, serverId, channel, timestamp),
-		ActivePlayerCount: GetThatDayActivePlayerCount(gameDb, serverId, channel, timestamp),
-
-		TotalCreateRoleCount: GetHistoryCreateRoleCount(platformId, serverId, channel, timestamp) + createRoleCount,
-		TotalRegisterCount:   GetHistoryRegisterRoleCount(platformId, serverId, channel, timestamp) + registerRoleCount,
-		//TotalCreateRoleCount: GetCreateRoleCount(gameDb, serverId, channel, 0, timestamp+86400),
-		//TotalRegisterCount: GetRegisterRoleCount(gameDb, serverId, channel, 0, timestamp+86400),
-
-		MaxOnlineCount: GetThatDayMaxOnlineCount(platformId, serverId, [] string{channel}, timestamp, timestamp+86400),
-		MinOnlineCount: GetThatDayMinOnlineCount(platformId, serverId, [] string{channel}, timestamp, timestamp+86400),
-		AvgOnlineCount: GetThatDayAvgOnlineCount(platformId, serverId, [] string{channel}, timestamp, timestamp+86400),
-		AvgOnlineTime:  GetOnlineTime(node, serverId, channel, timestamp),
-
-
-		RegisterCount:        registerRoleCount,
-		CreateRoleCount:      createRoleCount,
-		ShareCreateRoleCount: GetThatDayShareCreateRoleCountByChannel(gameDb, serverId, channel, timestamp),
-		ValidRoleCount:       GetThatDayValidCreateRoleCountByChannel(gameDb, serverId, channel, timestamp),
+			TotalCreateRoleCount: GetHistoryCreateRoleCount(platformId, serverId, channel, timestamp) + createRoleCount,
+			TotalRegisterCount:   GetHistoryRegisterRoleCount(platformId, serverId, channel, timestamp) + registerRoleCount,
+			AvgOnlineTime:        GetOnlineTime(node, serverId, channel, timestamp),
+			RegisterCount:        registerRoleCount,
+			CreateRoleCount:      createRoleCount,
+			ShareCreateRoleCount: GetThatDayShareCreateRoleCountByChannel(gameDb, serverId, channel, timestamp),
+			ValidRoleCount:       GetThatDayValidCreateRoleCountByChannel(gameDb, serverId, channel, timestamp),
+		}
+		err = Db.Save(&m).Error
+		if err != nil {
+			return err
+		}
 	}
-	err = Db.Save(&m).Error
-	return err
+	return nil
 }
 
 func GetHistoryCreateRoleCount(platformId string, serverId string, channel string, time int) int {

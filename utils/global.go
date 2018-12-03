@@ -107,6 +107,17 @@ func GetTodayZeroTimestamp() int {
 	return int(tm1.Unix())
 }
 
+func FormatTime(sec int) string {
+	h := sec / (60 * 60)
+	m := sec % (60 * 60) / 60
+	return fmt.Sprintf("%d:%d", h, m)
+}
+
+func FormatDate(timestamp int64) string {
+	t := time.Unix(timestamp, 0)
+	return 	fmt.Sprintf("%d-%d-%d", t.Year(), t.Month(), t.Day())
+
+}
 //获取昨日0点时间戳
 func GetYesterdayZeroTimestamp() int {
 	t := time.Now()
@@ -291,7 +302,7 @@ func ReportMsg(msgId string, phone string){
 
 
 	//发送请求
-	data,err:=Get(juheURL,param)
+	data,err:=HttpGet(juheURL,param)
 	if err!=nil{
 		logs.Error("请求失败,错误信息:\r\n%v",err)
 	}else{
@@ -306,22 +317,56 @@ func ReportMsg(msgId string, phone string){
 
 
 // get 网络请求
-func Get(apiURL string,params url.Values)(rs[]byte ,err error){
+func HttpGet(apiURL string,params url.Values)(rs[]byte ,err error){
 	var Url *url.URL
 	Url,err=url.Parse(apiURL)
 	if err!=nil{
-		fmt.Printf("解析url错误:\r\n%v",err)
+		logs.Error("解析url错误:",err)
 		return nil,err
 	}
 	//如果参数中有中文参数,这个方法会进行URLEncode
 	Url.RawQuery=params.Encode()
 	resp,err:=http.Get(Url.String())
 	if err!=nil{
-		fmt.Println("err:",err)
+		logs.Error("HttpGet:", err)
 		return nil,err
 	}
 	defer resp.Body.Close()
 	return ioutil.ReadAll(resp.Body)
+}
+
+
+func HttpPost(url string, data string) error{
+	var result struct {
+		ErrorCode int `json:"error_code"`
+		ErrorMsg string `json:"error_msg"`
+	}
+	sign := String2md5(data + enums.GmSalt)
+	base64Data := base64.URLEncoding.EncodeToString([]byte(data))
+	requestBody := "data=" + base64Data + "&sign=" + sign
+	resp, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(requestBody))
+	CheckError(err)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	CheckError(err)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(responseBody, &result)
+	//logs.Info("result:%+v", result)
+	CheckError(err)
+	if err != nil {
+		return err
+	}
+	if result.ErrorCode != 0 {
+		return errors.New(result.ErrorMsg)
+	}
+	return nil
 }
 
 func ExecShell(s string) (string, error){

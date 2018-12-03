@@ -29,6 +29,7 @@ func init() {
 	// 定时检测开服
 	go cronAutoCreateServer()
 
+	//go models.RepireTenMinuteStatistics()
 	//go models.QQQQ()
 	//go models.RepireTenMinuteStatistics()
 	//now := time.Now()
@@ -53,6 +54,11 @@ func init() {
 	//go TmpUpdateAllGameNodeRemainTotal(1530720000 - 86400*3)
 	//
 	//
+	// go RepairAllGameNodeDailyStatistics()
+	// go RepireRemainTotal()
+	//go UpdateAllGameNodeRemainActive()
+	//go UpdateAllGameNodeDailyLTV()
+	//go UpdateAllGameNodeChargeRemain()
 	//todayZeroTime := utils.GetTodayZeroTimestamp()
 	//for i := 1529856000; i <= todayZeroTime; i += 86400 {
 	//	go TmpUpdateAllGameNodeRemainActive(i)
@@ -153,7 +159,7 @@ func dailyZeroClockCron() {
 		logs.Info("0点执行定时器")
 		go UpdateAllGameNodeDailyStatistics()
 		go UpdateAllGameNodeRemainTotal()
-		go UpdateAllGameNodeRemainActive()
+		//go UpdateAllGameNodeRemainActive()
 		go UpdateAllGameNodeDailyLTV()
 		go UpdateAllGameNodeChargeRemain()
 	}
@@ -176,6 +182,7 @@ func dailyZeroClock5MinuteCron() {
 		if isClockOpenServer {
 			models.OpenServerNow("af")
 			models.OpenServerNow("djs")
+			models.OpenServerNow("qq")
 		}
 	}
 }

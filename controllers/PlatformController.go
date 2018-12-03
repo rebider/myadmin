@@ -13,11 +13,14 @@ type PlatformController struct {
 }
 
 func (c *PlatformController) List() {
-	list := models.GetPlatformList()
-	logs.Info("platformList:%v", list)
-	//c.CheckError(err)
+	var params struct {
+		PlatformIdList [] string
+	}
+	err := json.Unmarshal(c.Ctx.Input.RequestBody, &params)
+	utils.CheckError(err)
+	logs.Info("获取平台列表:%+v", params)
+	list := models.GetPlatformListByPlatformIdList(params.PlatformIdList)
 	result := make(map[string]interface{})
-	//result["total"] = total
 	result["rows"] = list
 	c.Result(enums.CodeSuccess, "获取平台列表成功", result)
 }
