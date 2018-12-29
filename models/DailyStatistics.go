@@ -72,7 +72,8 @@ func GetIncomeStatisticsChartData(platformId string, serverId  string, channelLi
 	chargeData := make([]map[string] string, 0, (endTime-startTime)/86400)
 	for i := startTime; i < endTime; i = i + 86400 {
 		var data struct {
-			Count float32
+			ChargeCount float32
+			CreateRoleCount float32
 		}
 		whereArray := make([] string, 0)
 
@@ -80,19 +81,20 @@ func GetIncomeStatisticsChartData(platformId string, serverId  string, channelLi
 		whereArray = append(whereArray, fmt.Sprintf("channel in(%s)", GetSQLWhereParam(channelList)))
 		whereArray = append(whereArray, fmt.Sprintf("time = %d", i))
 		if serverId != "" {
-			whereArray = append(whereArray, fmt.Sprintf("server_id = %s", serverId))
+			whereArray = append(whereArray, fmt.Sprintf("server_id = '%s'", serverId))
 		}
 		whereParam := strings.Join(whereArray, " and ")
 		if whereParam != "" {
 			whereParam = " where " + whereParam
 		}
 		sql := fmt.Sprintf(
-			`SELECT sum(total_charge_money) as count FROM daily_statistics %s `, whereParam)
+			`SELECT sum(total_charge_money) as charge_count FROM daily_statistics %s `, whereParam)
 		err := Db.Raw(sql).Scan(&data).Error
 		utils.CheckError(err)
 		m := make(map[string]string, 2)
 		m["时间"] = utils.FormatDate(int64(i))
-		m["流水"] = strconv.Itoa(int(data.Count))
+		m["流水"] = strconv.Itoa(int(data.ChargeCount))
+		//m["创角"] = strconv.Itoa(int(data.CreateRoleCount))
 		chargeData = append(chargeData, m)
 	}
 	return chargeData

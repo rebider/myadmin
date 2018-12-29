@@ -281,6 +281,8 @@ type PlayerDetail struct {
 	PlayerMagicWeaponPosList [] *PlayerMagicWeaponPos `json:"playerMagicWeaponList"`
 	PlayerHeartList          [] *PlayerHeart          `json:"playerHeartList"`
 	PlayerSysAttrList        [] *PlayerSysAttr        `json:"playerSysAttrList"`
+	PlayerMissionList        [] *PlayerMission        `json:"playerMissionList"`
+	PlayerTimesList        [] *PlayerTimesData       `json:"playerTimesList"`
 }
 
 type PlayerSysCommonData struct {
@@ -300,6 +302,12 @@ type PlayerGodWeapon struct {
 	State    int `json:"state"`
 }
 
+type PlayerMission struct {
+	PlayerId    int `json:"playerId" gorm:"primary_key"`
+	MissionType int `json:"missionType" gorm:"primary_key"`
+	MissionId   int `json:"missionId"`
+	Time        int `json:"time"`
+}
 type PlayerSysAttr struct {
 	PlayerId        int `json:"playerId" gorm:"primary_key"`
 	FunId           int `json:"funId" gorm:"primary_key"`
@@ -356,6 +364,15 @@ type PlayerProp struct {
 	Num      int `json:"num"`
 }
 
+type PlayerTimesData struct {
+	PlayerId    int `json:"playerId" gorm:"primary_key"`
+	TimesId     int `json:"timesId" gorm:"primary_key"`
+	UseTimes    int `json:"useTimes"`
+	LeftTimes   int `json:"leftTimes"`
+	BuyTimes    int `json:"buyTimes"`
+	UpdateTime int `json:"updateTime"`
+}
+
 func GetPlayerSysAttrList(gameDb *gorm.DB, playerId int) ([]*PlayerSysAttr, error) {
 	data := make([]*PlayerSysAttr, 0)
 	sql := fmt.Sprintf(
@@ -373,6 +390,16 @@ func GetPlayerPropList(gameDb *gorm.DB, playerId int) ([]*PlayerProp, error) {
 
 	return playerPropList, err
 }
+
+func GetPlayerTimesList(gameDb *gorm.DB, playerId int) ([]*PlayerTimesData, error) {
+	data := make([]*PlayerTimesData, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_times_data WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+
+	return data, err
+}
+
 
 func GetPlayerJadeList(gameDb *gorm.DB, playerId int) ([]*PlayerJade, error) {
 	data := make([]*PlayerJade, 0)
@@ -418,6 +445,14 @@ func GetPlayerGodWeaponList(gameDb *gorm.DB, playerId int) ([]*PlayerGodWeapon, 
 	return data, err
 }
 
+func GetPlayerMissionList(gameDb *gorm.DB, playerId int) ([]*PlayerMission, error) {
+	data := make([]*PlayerMission, 0)
+	sql := fmt.Sprintf(
+		`SELECT * FROM player_mission_data WHERE player_id = %d `, playerId)
+	err := gameDb.Raw(sql).Scan(&data).Error
+
+	return data, err
+}
 func GetPlayerEquipList(gameDb *gorm.DB, playerId int) ([]*PlayerEquipPos, error) {
 	data := make([]*PlayerEquipPos, 0)
 	sql := fmt.Sprintf(
@@ -457,6 +492,10 @@ func GetPlayerDetail(platformId string, serverId string, playerId int) (*PlayerD
 	playerDetail.PlayerPropList, err = GetPlayerPropList(gameDb, playerId)
 	utils.CheckError(err)
 	playerDetail.PlayerSysAttrList, err = GetPlayerSysAttrList(gameDb, playerId)
+	utils.CheckError(err)
+	playerDetail.PlayerMissionList, err = GetPlayerMissionList(gameDb, playerId)
+	utils.CheckError(err)
+	playerDetail.PlayerTimesList, err = GetPlayerTimesList(gameDb, playerId)
 	utils.CheckError(err)
 	playerDetail.PlayerJadeList, err = GetPlayerJadeList(gameDb, playerId)
 	utils.CheckError(err)
@@ -549,8 +588,8 @@ type ServerOnlineStatistics struct {
 	PlatformId string `json:"platformId"`
 	//ServerId                    string    `json:"serverId"`
 	//TodayCreateRole             int                  `json:"todayCreateRole"`
-	TodayRegister               int                  `json:"todayRegister"`
-	OnlineCount                 int                  `json:"onlineCount"`
+	TodayRegister int `json:"todayRegister"`
+	OnlineCount   int `json:"onlineCount"`
 	//OnlineIpCount               int                  `json:"onlineIpCount"`
 	//MaxOnlineCount              int                  `json:"maxOnlineCount"`
 	//AverageOnlineCount          int                  `json:"averageOnlineCount"`
@@ -560,8 +599,8 @@ type ServerOnlineStatistics struct {
 	//TodayRegisterList           [] string            `json:"todayRegisterList"`
 	//YesterdayRegisterList       [] string            `json:"yesterdayRegisterList"`
 	//BeforeYesterdayRegisterList [] string            `json:"beforeYesterdayRegisterList"`
-	OnlineData                  [] map[string]string `json:"onlineData"`
-	RegisterData                [] map[string]string `json:"registerData"`
+	OnlineData   [] map[string]string `json:"onlineData"`
+	RegisterData [] map[string]string `json:"registerData"`
 }
 
 func GetServerOnlineStatistics(platformId string, serverId string, channelList [] string) (*ServerOnlineStatistics, error) {
@@ -615,8 +654,8 @@ func GetServerOnlineStatistics(platformId string, serverId string, channelList [
 		//TodayRegisterList:           todayRegisterList,
 		//YesterdayRegisterList:       yesterdayRegisterList,
 		//BeforeYesterdayRegisterList: beforeYesterdayRegisterList,
-		OnlineData:                  onlineData,
-		RegisterData:                registerData,
+		OnlineData:   onlineData,
+		RegisterData: registerData,
 	}
 	return serverOnlineStatistics, nil
 }

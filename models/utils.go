@@ -1951,3 +1951,53 @@ func QQQQ() {
 	utils.CheckError(err)
 	logs.Info("go finish")
 }
+
+//
+//func GetALlServerNode(platformId string) [] string{
+//	GetALlServerNode()
+//}
+
+func PowerSearch(platformId string) {
+	//todayZeroTimestamp := utils.GetTodayZeroTimestamp()
+	serverNodeList := GetAllGameServerNodeByPlatformId(platformId)
+	//gameServerList, serverCount := GetAllGameServerDirtyByPlatfomrId(platformId)
+	logs.Info("PowerSearch:%v", len(serverNodeList))
+	r := make(map[int] int)
+	for _, serverNode := range serverNodeList {
+		gameDb, err := GetGameDbByNode(serverNode.Node)
+		utils.CheckError(err)
+		if err != nil {
+			return
+		}
+		defer gameDb.Close()
+
+		for i := 10000000; i< 100000000; i+= 10000000 {
+			var data struct {
+				Count int
+			}
+			sql := fmt.Sprintf(
+				`select count(player_id) as count from player left join player_data on player.id = player_data.player_id and player_data.power between %d and %d and player.last_login_time > 1543852800;`, i , i + 10000000 - 1)
+			err = gameDb.Raw(sql).Scan(&data).Error
+			utils.CheckError(err)
+			if v,ok := r[i]; ok {
+				r[i] = data.Count + v
+			} else {
+				r[i] = data.Count
+			}
+		}
+		var data struct {
+			Count int
+		}
+		sql := fmt.Sprintf(
+			`select count(player_id) as count from player left join player_data on player.id = player_data.player_id and player_data.power >= 100000000 and player.last_login_time > 1543852800;`)
+		err = gameDb.Raw(sql).Scan(&data).Error
+		if v,ok := r[100000000]; ok {
+			r[100000000] = data.Count + v
+		} else {
+			r[100000000] = data.Count
+		}
+
+
+	}
+	logs.Info("PowerSearch完毕%+v.", r)
+}

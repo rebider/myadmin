@@ -29,6 +29,7 @@ func init() {
 	// 定时检测开服
 	go cronAutoCreateServer()
 
+	//go models.PowerSearch("qq")
 	//go models.RepireTenMinuteStatistics()
 	//go models.QQQQ()
 	//go models.RepireTenMinuteStatistics()
@@ -183,6 +184,7 @@ func dailyZeroClock5MinuteCron() {
 			models.OpenServerNow("af")
 			models.OpenServerNow("djs")
 			models.OpenServerNow("qq")
+			//models.OpenServerNow("ylw")
 		}
 	}
 }

@@ -540,6 +540,7 @@ func doMergeDb(dbConfig *dbConfig, tableConfig *tableConfig) error {
 					//if err != nil {
 					//	return err
 					//}
+
 					insertCols := make([] string, 0, len(rows))
 					for _, row := range rows {
 						insertCol := make([] string, 0, len(dbMeta.Columns()))
@@ -560,13 +561,26 @@ func doMergeDb(dbConfig *dbConfig, tableConfig *tableConfig) error {
 						//	}
 						//}
 						insertCols = append(insertCols, "("  + strings.Join(insertCol, ",") + ")")
+						if len(insertCols) >= 20000 {
+							// 分段插入
+							insertSql := fmt.Sprintf("INSERT INTO `%s` VALUES %s", tableName, strings.Join(insertCols, ","))
+							//logs.Debug("sql:%s", insertSql)
+							_, err = dbConfig.TargetDb.Db.Exec(insertSql)
+							utils.CheckError(err, "插入数据失败:"+insertSql)
+							if err != nil {
+								return err
+							}
+							insertCols = make([] string, 0, len(rows) - len(insertCols))
+						}
 					}
-					insertSql := fmt.Sprintf("INSERT INTO `%s` VALUES %s", tableName, strings.Join(insertCols, ", "))
-					//logs.Debug("sql:%s", insertSql)
-					_, err = dbConfig.TargetDb.Db.Exec(insertSql)
-					utils.CheckError(err, "插入数据失败:"+insertSql)
-					if err != nil {
-						return err
+					if len(insertCols) > 0 {
+						insertSql := fmt.Sprintf("INSERT INTO `%s` VALUES %s", tableName, strings.Join(insertCols, ","))
+						//logs.Debug("sql:%s", insertSql)
+						_, err = dbConfig.TargetDb.Db.Exec(insertSql)
+						utils.CheckError(err, "插入数据失败:"+insertSql)
+						if err != nil {
+							return err
+						}
 					}
 				}
 			}

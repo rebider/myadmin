@@ -50,6 +50,14 @@ func GetAllGameServerDirty() ([]*GameServer, int64) {
 	return data, count
 }
 
+func GetAllGameServerDirtyByPlatfomrId(platformId string) ([]*GameServer, int64) {
+	data := make([]*GameServer, 0)
+	var count int64
+	err := DbCenter.Model(&GameServer{}).Where(&GameServer{PlatformId:platformId}).Count(&count).Find(&data).Error
+	utils.CheckError(err)
+	return data, count
+}
+
 //获取所有数据
 //func GetAllGameServer() ([]*GameServer, int64) {
 //	var params GameServerQueryParam
